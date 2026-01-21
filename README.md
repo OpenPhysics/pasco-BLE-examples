@@ -364,10 +364,12 @@ The library works in browsers using the Web Bluetooth API:
 
 ## Examples
 
-See the `pasco-ts/examples/` directory for complete examples:
+See the `examples/` directory for complete examples:
 
 - `basic-usage.ts` - Basic sensor reading with Node.js
 - `code-node-example.ts` - Code.Node LED and sound control
+- `control-node-example.ts` - Control.Node motor and servo control
+- `pasco-bot-example.ts` - PascoBot robotics interface
 - `force-sensor.html` - Browser-based force sensor demo
 
 For more project examples, see our [pasco_python_examples repository](https://github.com/PASCOscientific/pasco_python_examples).
