@@ -1,50 +1,52 @@
-[![Python](https://img.shields.io/badge/python-3.11-blue)](https://pypi.org/project/pasco/)
+[![TypeScript](https://img.shields.io/badge/typescript-5.3+-blue)](https://www.npmjs.com/package/pasco-ble)
+[![Node.js](https://img.shields.io/badge/node.js-18+-green)](https://nodejs.org/)
+[![Platform](https://img.shields.io/badge/platform-node.js%20%7C%20browser-lightgrey)](https://www.npmjs.com/package/pasco-ble)
 
-![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey)
+# PASCO BLE Library
 
-# README
+The official TypeScript/JavaScript library for connecting to PASCO Wireless sensors. Create your own data collection applications, integrate sensors with other hardware, or build unique solutions for science education!
 
-This PASCO Python library allows users to connect to PASCO Wireless sensors using Python. Create your own data collection application, use sensors to interact with other hardware devices, or come up with your own unique solution!
+## Contents
 
-For project examples, view our [pasco_python_examples repository](https://github.com/PASCOscientific/pasco_python_examples).
-
-# Contents:
-- [Getting Started](#how-do-i-get-started)
+- [Getting Started](#getting-started)
 - [Compatible Sensors](#compatible-sensors)
-- [Connecting to a Sensor](#step-1-import-the-appropriate-module)
-- [Collecting Data](#lets-put-it-all-together)
+- [Quick Start](#quick-start)
+- [API Reference](#api-reference)
 - [//code.Node](#codenode)
 - [//control.Node](#controlnode)
+- [PascoBot](#pascobot)
+- [Browser Usage](#browser-usage)
+- [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
-# How do I get started?
+## Getting Started
 
-First, make sure you are working with Python 3.11 (see [Troubleshooting](#troubleshooting) for Python version help)
+### Installation
 
-To install the PASCO package into your Python environment, type this into your Terminal
-
-```
-pip install pasco
+```bash
+npm install pasco-ble
 ```
 
-If you are using Anaconda to manage your packages you can run
+### Node.js Setup
 
+For Node.js, you'll also need the Noble BLE library:
+
+```bash
+npm install @abandonware/noble
 ```
-conda install pascoscientific::pasco
-```
 
+> **Note:** Noble has platform-specific requirements. See the [Noble documentation](https://github.com/abandonware/noble#readme) for setup instructions on your OS.
 
-In your project file, import the `PASCOBLEDevice` class, the `CodeNodeDevice` class, and/or the `ControlNodeDevice` class.
+### Browser Setup
 
+No additional setup required. The library uses the Web Bluetooth API built into Chrome and Edge browsers. **HTTPS is required for Web Bluetooth.**
 
+## Compatible Sensors
 
-
-# Compatible Sensors
-
-- /\/control.Node
-- /\/code.Node
+- //control.Node
+- //code.Node
 - Smart Cart
-- Wireless Acceleration Altimter
+- Wireless Acceleration Altimeter
 - Wireless CO2
 - Wireless Conductivity
 - Wireless Current
@@ -64,449 +66,353 @@ In your project file, import the `PASCOBLEDevice` class, the `CodeNodeDevice` cl
 - Wireless Voltage
 - Wireless Weather
 
+## Quick Start
 
-# Connecting to a sensor
+### Basic Sensor Reading
 
-## Device Structure
+```typescript
+import { PASCOBLEDevice } from 'pasco-ble';
 
-Device: A physical PASCO wireless sensor is a device.
+async function main() {
+  const sensor = new PASCOBLEDevice();
 
-Sensor: A device can have multiple sensors built in.
+  // Connect by device ID (printed on sensor)
+  await sensor.connectById('055-808');
 
-Measurements: A sensor can offer multiple measurements.
+  // Read temperature
+  const temp = await sensor.readData('Temperature');
+  const units = sensor.getMeasurementUnit('Temperature');
+  console.log(`${temp} ${units}`);
 
-**Device Structure Example**
+  await sensor.disconnect();
+}
 
-A Wireless Weather Sensor would be a "device".
-The "device" has 4 sensors
-`['WirelessWeatherSensor', 'WirelessGPSSensor', 'WirelessLightSensor', 'WirelessCompass']`
-
-Each "sensor" can have multiple measurements
-
-- WirelessWeatherSensor: `['Temperature', 'RelativeHumidity', 'AbsoluteHumidity', 'BarometricPressure', 'WindSpeed', 'DewPoint', 'WindChill', 'Humidex']`
-- WirelessGPSSensor: `['SatelliteCount', 'Latitude', 'Longitude', 'Altitude', 'Speed']`
-- WirelessLightSensor: `['UVIndex', 'Illuminance', 'SolarIrradiance', 'SolarPAR']`
-- WirelessCompass: `['WindDirection', 'MagneticHeading', 'TrueHeading']`
-
-### Available Commands
-
-`device = PASCOBLEDevice()` Create a Bluetooth device object  
-`device.scan(sensor_name_filter: string [optional])` Scan for available bluetooth devices. Returns a list of available devices  
-`device.connect(ble_device: BLEDevice)` Connect to a device using the object returned from the scan command.  
-`device.connect_by_id(pasco_device_id: string)` Connect to a device using the 6 digit ID printed on the sensor.  
-`device.disconnect()` Disconnect from a device  
-`device.is_connected()` Returns true/false to tell device connection state  
-`device.get_sensor_list()` Get a list of sensors that a device has  
-`device.get_measurement_list(sensor_name: string [optional])` Returns all the measurements that a device has  
-`device.read_data(measurement: string)` Get a single reading from a single measurement  
-`device.read_data_list(measurements: List[string])` Get a list of readings for multiple measurements  
-`device.get_measurement_unit(measurement: string)` Get the default units for a single measurement  
-`device.get_measurement_unit_list(measurements: List[string])` Get a list of default units for multiple measurements
-
-
----
-
-## Step 1: Import the appropriate module
-
-For a regular wireless sensor:
-
-```
-from pasco.pasco_ble_device import PASCOBLEDevice
+main();
 ```
 
-To connect to a /\/code.Node (Note: The Icons package is optional):
+### Scan and Select Device
 
-```
-from pasco.code_node_device import CodeNodeDevice, Icons
-```
+```typescript
+import { PASCOBLEDevice } from 'pasco-ble';
 
-To connect to a /\/control.Node:
+async function main() {
+  const sensor = new PASCOBLEDevice();
 
-```
-from pasco.control_node_device import ControlNodeDevice
-```
+  // Scan for devices
+  const devices = await sensor.scan();
 
-## Step 2: Create an object for the device
+  if (devices.length === 0) {
+    console.log('No devices found');
+    return;
+  }
 
-```
-my_sensor = PASCOBLEDevice()
-```
+  console.log('Devices found:');
+  devices.forEach((d, i) => console.log(`${i}: ${d.name}`));
 
-If you know the device's 6-digit serial ID (printed on the device) you can quickly scan and connect using the command:
-`my_sensor.connect_by_id('111-123')`
+  // Connect to first device
+  await sensor.connect(devices[0]);
 
-Otherwise perform Steps 2 & 3 to scan/connect.
+  // Get available measurements
+  const measurements = sensor.getMeasurementList();
+  console.log('Available measurements:', measurements);
 
-## Step 3: Scan for available bluetooth (BLE) sensors
+  // Read data continuously
+  for (let i = 0; i < 10; i++) {
+    const temp = await sensor.readData('Temperature');
+    console.log(`Temperature: ${temp}`);
+  }
 
-`my_sensor.scan()` Returns list of BLE devices found in the scan. `my_sensor.scan('Temperature')` Returns a list of Temperature sensors found
+  await sensor.disconnect();
+}
 
-How to use:
-
-```
-found_devices = my_sensor.scan()
-```
-
-## Step 4: Connect to a BLE sensor found from the scan
-
-The scan command will return a list of found devices. Iterate through that list to determine which device you want to connect to.
-
-One way is to print the list and prompt the user like this:
-
-```
-if found_devices:
-    print('\nDevices Found')
-    for i, ble_device in enumerate(found_devices):
-        print(f'{i}: {ble_device.name}')
-
-    selected_device = input('Select a device: ') if len(found_devices) > 1 else 0
-    code_node_device.connect(found_devices[int(selected_device)])
-else:
-    print("No Devices Found")
-    exit(1)
+main();
 ```
 
-### Putting it all together:
+## API Reference
 
-```
-from pasco.pasco_ble_device import PASCOBLEDevice
+### Device Structure
 
-my_sensor = PASCOBLEDevice()
-found_devices = my_sensor.scan()
+- **Device**: A physical PASCO wireless sensor
+- **Sensor**: A device can have multiple sensors built in
+- **Measurements**: Each sensor can offer multiple measurements
 
-if found_devices:
-    print('\nDevices Found')
-    for i, ble_device in enumerate(found_devices):
-        print(f'{i}: {ble_device.name}')
+**Example:** A Wireless Weather Sensor has 4 sensors:
+- `WirelessWeatherSensor`: Temperature, RelativeHumidity, BarometricPressure, WindSpeed, DewPoint, etc.
+- `WirelessGPSSensor`: Latitude, Longitude, Altitude, Speed
+- `WirelessLightSensor`: UVIndex, Illuminance, SolarIrradiance
+- `WirelessCompass`: WindDirection, MagneticHeading, TrueHeading
 
-    selected_device = input('Select a device: ') if len(found_devices) > 1 else 0
-    my_sensor.connect(found_devices[int(selected_device)])
-else:
-    print("No Devices Found")
-    exit(1)
+### PASCOBLEDevice
 
-print(f"measurements: {my_sensor.get_measurement_list()}")
-my_sensor.disconnect()
-```
+```typescript
+import { PASCOBLEDevice } from 'pasco-ble';
 
-## Step 5: View Device Sensor(s)
+const device = new PASCOBLEDevice();
 
-A device can have one or more on-board sensors. To view the list of sensors use the command `my_sensor.get_sensor_list()`. This returns a list of sensor names that a device has.
+// Scanning & Connection
+await device.scan(filter?: string);           // Scan for devices (optional name filter)
+await device.connect(bleDevice);              // Connect to a scanned device
+await device.connectById('123-456');          // Connect by 6-digit device ID
+await device.disconnect();                    // Disconnect from device
+device.isConnected();                         // Check connection status
 
-## Step 6: View Device Measurement(s)
+// Device Information
+device.name;                                  // Device name
+device.serialId;                              // Device serial ID
+device.address;                               // BLE address
 
-Each sensor in the device can have one or more measurements. If you want to view all the measurements that a device has, use the command `my_sensor.get_measurement_list()`.
+// Sensors & Measurements
+device.getSensorList();                       // Get list of sensors
+device.getMeasurementList(sensorName?);       // Get available measurements
+device.getMeasurementUnit(measurement);       // Get unit for a measurement
+device.getMeasurementUnitList(measurements);  // Get units for multiple measurements
 
-To view only the measurements that a sensor has, use the sensor name (from the list in Step 4) like this `my_sensor.get_measurement_list('WirelessWeatherSensor')`.
-
-## Step 7: Start collecting data!
-
-The measurement variable names come from Step 4
-
-To read the `Temperature`
-`my_temperature_sensor.read_data('Temperature')`
-
-To read the `RelativeHumidity`
-`my_weather_sensor.read_data('RelativeHumidity')`
-
-To read a multiple measurements at one time
-`my_weather_sensor.read_data_list(['Temperature','RelativeHumidity'])`
-
-To get the units for a single measurement
-`my_temperature_sensor.get_measurement_unit('Temperature')`
-
-To get the units for a list of measurements
-`my_weather_sensor.get_measurement_unit_list(['Temperature','RelativeHumidity'])`
-
-# Let's put it all together
-
-##  Example: One shot read
-
-```
-from pasco.pasco_ble_device import PASCOBLEDevice
-
-
-temp_sensor = PASCOBLEDevice()
-temp_sensor.connect_by_id('055-808') # replace with your sensor's 6-digit id
-
-temp_value = temp_sensor.read_data('Temperature')
-temp_units = temp_sensor.get_measurement_unit('Temperature')
-print(f'{temp_value} {temp_units}')
-
-temp_sensor.disconnect()
+// Reading Data
+await device.readData(measurement);           // Read single measurement
+await device.readDataList(measurements);      // Read multiple measurements
 ```
 
-## Example: Scan/select a sensor and read data
+## //code.Node
 
-Scan for a sensor and get the current temperature. In this example we can use a Temperature, Weather or /\/code.Node to read the temperature measurement. We do not need to specify a device type. We will continuously read and display the result.
+The //code.Node features a 5x5 LED matrix, RGB LED, speaker, and various sensors.
 
-```
-from pasco.pasco_ble_device import PASCOBLEDevice
+```typescript
+import { CodeNodeDevice, Icons } from 'pasco-ble';
 
+const codeNode = new CodeNodeDevice();
+await codeNode.connectById('481-782');
 
-my_sensor = PASCOBLEDevice()
-found_devices = my_sensor.scan()
+// 5x5 LED Matrix
+await codeNode.setLedInArray(2, 2, 255);              // Set single LED (x, y, intensity)
+await codeNode.setLedsInArray([[0,0], [1,1]], 128);   // Set multiple LEDs
+await codeNode.scrollTextInArray('HELLO');            // Scroll text
+await codeNode.showImageInArray(Icons.smile);         // Display icon
 
-if found_devices:
-    print('\nDevices Found')   
-    for i, ble_device in enumerate(found_devices):
-        print(f'{i}: {ble_device.name}')
+// RGB LED
+await codeNode.setRgbLed(255, 0, 0);                  // Red
 
-    selected_device = input('Select a device: ') if len(found_devices) > 1 else 0
-    my_sensor.connect(found_devices[int(selected_device)])
-else:
-    print("No Devices Found")
-    exit(1)
+// Speaker
+await codeNode.setSoundFrequency(440);                // 440 Hz tone
+await codeNode.setSoundFrequency(0);                  // Turn off
 
-# Loop that will read/display the data 100 times
-for i in range(100):
-    current_temp = my_sensor.read_data('Temperature')
-    print(f'The current temp is {current_temp}')
+// Reset all outputs
+await codeNode.reset();
 
-my_sensor.disconnect()
-```
----
-
-# /\/code.Node
-
-In order to connect to a /\/code.Node we must import the `CodeNodeDevice` object and (optionally) the character library which allows a user to display icons on the 5x5 LED Array.
-
-```
-from pasco.code_node_device import CodeNodeDevice, Icons
+// Read sensors
+const brightness = await codeNode.readData('Brightness');
+const button = await codeNode.readData('Button1');
 ```
 
-`my_code_node = CodeNodeDevice()` Create /\/code.Node Bluetooth device object  
-`my_code_node.set_led_in_array()` Set an individual LED in the 5x5 LED Array  
-`my_code_node.set_leds_in_array()` Set multiple LEDs in the 5x5 LED Array  
-`my_code_node.set_rgb_led()` Set the RGB LED  
-`my_code_node.set_sound_frequency()` Set the speaker frequency  
-`my_code_node.scroll_text_in_array` Scroll text on the 5x5 LED Array  
-`my_code_node.show_image_in_array()` Display an image in the 5x5 LED Array  
-`my_code_node.reset()` Reset all of the /\/code.Node outputs
-
-### Set LEDs on the 5x5 Display
+### LED Matrix Coordinates
 
 ```
-x, y coordinates on the //code.Node 5x5 LED display
----------------------------
 | 0,0  1,0  2,0  3,0  4,0 |
 | 0,1  1,1  2,1  3,1  4,1 |
 | 0,2  1,2  2,2  3,2  4,2 |
 | 0,3  1,3  2,3  3,3  4,3 |
 | 0,4  1,4  2,4  3,4  4,4 |
----------------------------
-
-intensity range is 0-255
 ```
 
-### Set one LED
+### Available Icons
 
-`code_node_device.set_led_in_array(x, y, intensity)`
+```typescript
+import { Icons } from 'pasco-ble';
 
-Example: This will turn the top center LED on at max brightness
-
-```
-code_node_device.set_led_in_array(2, 0, 255)
-```
-
-### Set multiple LEDs at once
-
-`code_node_device.set_leds_in_array(led_list, intensity)`
-
-```
-led_list = [[4,4], [0,4], [2,2]]
-code_node_device.set_leds_in_array(led_list, 128)
+Icons.heart      Icons.heartSmall   Icons.smile
+Icons.sad        Icons.surprise     Icons.star
+Icons.arrowTop   Icons.arrowLeft    Icons.arrowBottom
+Icons.arrowRight Icons.alien
 ```
 
-### Set the RGB LED
+## //control.Node
 
-`code_node_device.set_rgb_led(r, g, b)`
-`r`, `g`, `b` indicate brightness ranges between 0 and 255.
+The //control.Node can control stepper motors, servos, and power outputs, plus connect to plugin sensors.
 
-```
-r = 20
-g = 100
-b = 200
-code_node_device.set_rgb_led(r, g, b)
-```
+```typescript
+import { ControlNodeDevice } from 'pasco-ble';
 
-### Turn the speaker on/off
-
-`code_node_device.set_sound_frequency(frequency)`
-Send `frequency` (int) in Hz
-
-```
-code_node_device.set_sound_frequency(440)
-```
-Turn the speaker off
-```
-code_node_device.set_sound_frequency(0)
+const controlNode = new ControlNodeDevice();
+await controlNode.connectById('664-591');
 ```
 
-### Scroll Text on the 5x5 LED Array
+### Stepper Motors
 
-`code_node_device.scroll_text_in_array(text)`
-This will scroll the text on the /\/code.Node's display
+```typescript
+// Rotate both steppers continuously (speed in deg/s, acceleration in deg/s²)
+await controlNode.rotateSteppersContinuously(360, 360, 360, 360);
 
-```
-code_node_device.scroll_text_in_array('HELLO WORLD')
-```
+// Rotate single stepper continuously
+await controlNode.rotateStepperContinuously('A', 360, 360);
 
-### The character library
+// Rotate through a specific angle
+await controlNode.rotateSteppersThrough(
+  360, 360, 180,  // Speed A, Accel A, Distance A (degrees)
+  360, 360, 180,  // Speed B, Accel B, Distance B (degrees)
+  true            // Wait for completion
+);
 
-`code_node_device.show_image_in_array(Icons().smile)`
-If we import the `Icons` class from the `character_library` to our project we can show unique images on the 5x5 LED Array. Refer to the library file to see available options. Examples:
+// Stop steppers
+await controlNode.stopSteppers(360, 360);  // With deceleration
 
-```
-code_node_device.show_image_in_array(Icons().smile)
-code_node_device.show_image_in_array(Icons().heart)
-```
-
-### Reset the code_node outputs
-
-`code_node_device.reset()`
-Turn the 5x5 LED display, RGB LED and speaker off.
-
-
-
-## Example: Working with the /\/code.Node
-
-Below is a simple example that shows how to connect to a /\/code.Node, read a measurement and control an output.
-
-```
-from pasco.code_node_device import CodeNodeDevice
-
-
-code_node = CodeNodeDevice()
-code_node.connect_by_id('481-782') # replace with your device's 6-digit id
-
-while code_node.read_data('Button1') == 0:
-    if code_node.read_data('Brightness') < 2:
-        code_node.set_rgb_led(100,100,100)
-    else:
-        code_node.set_rgb_led(0,0,0)
-
-code_node.scroll_text_in_array('Goodbye')
-
-code_node.reset()
-code_node.disconnect()
+// Read stepper position
+const angleA = await controlNode.readData('Angle', 'A');
+const angleB = await controlNode.readData('Angle', 'B');
 ```
 
-## Example: Connect to multiple sensors
+### Servos
 
-We can also connect to multiple sensors. Here we are connecting to a /\/code.Node and Wireless Force Sensor. We are also using /\/code.Node specific commands and testing the Character Library.
+```typescript
+// Standard servo (angle: -90 to 90 degrees)
+await controlNode.setServo(1, 'standard', 45);
 
+// Continuous servo (speed: -100 to 100 percent)
+await controlNode.setServo(2, 'continuous', 50);
+
+// Control both servos
+await controlNode.setServos('standard', 45, 'continuous', -50);
+
+// Read servo current (for detecting resistance)
+const current = await controlNode.readData('ServoCurrentOrd', 1);
 ```
-from pasco.pasco_ble_device import PASCOBLEDevice
-from pasco.code_node_device import CodeNodeDevice, Icons
 
+### Power Output Board
 
-code_node_device = CodeNodeDevice()
-found_devices = code_node_device.scan('//code.Node')
+```typescript
+// USB output (on/off: 0 or 1)
+await controlNode.setPowerOut('A', 1, 'USB', 1);
 
-if found_devices:
-    for i, ble_device in enumerate(found_devices):
-        print(f'{i}: {ble_device.name}')
-
-    selected_device = input('Select a device: ') if len(found_devices) > 1 else 0
-    code_node_device.connect(found_devices[int(selected_device)])
-else:
-    print("No Devices Found")
-    exit(1)
-
-force_accel_device = PASCOBLEDevice()
-found_devices = force_accel_device.scan('Force')
-
-if found_devices:
-    for i, ble_device in enumerate(found_devices):
-        print(f'{i}: {ble_device.name}')
-
-    selected_device = input('Select a device: ') if len(found_devices) > 1 else 0
-    force_accel_device.connect(found_devices[int(selected_device)])
-else:
-    print("No Devices Found")
-    exit(1)
-
-code_node_device.reset()
-light_on = False
-
-for i in range (1000):
-    if force_accel_device.read_data('Force') > 10:
-        if light_on == False:
-            code_node_device.set_rgb_led(100,100,100)
-            code_node_device.set_sound_frequency(200)
-            code_node_device.show_image_in_array(Icons().alien)
-            light_on = True
-        else:
-            code_node_device.reset()
-            light_on = False
-        while force_accel_device.read_data('Force') > 10:
-            pass
-
-code_node_device.disconnect()
-force_accel_device.disconnect()
+// Terminal output (PWM duty cycle: 0-100%)
+await controlNode.setPowerOut('B', 2, 'terminal', 75);
 ```
----
-# /\/control.Node
-The control node has an internal speaker and x,y,z acceleration sensor. But what makes the control node unique is that it can also connect to external devices such as a rangefinder, steppers, and servos. Any sensor plugged into the control node is automatically accessible just like a built-in sensor.
 
-The control.Node has commands for setting steppers, servos, and the power output board as well as sensing from steppers, servos, and plugin sensors. 
+### Greenhouse Light
 
-
-
-If you know the 6-digit code of your control node device, you can just connect:
-
-    from pasco.control_node_device import ControlNodeDevice
-    import time
-
-    controlNode = ControlNodeDevice()
-    controlNode.connect_by_id('664-591') # replace with your device's 6-digit id
-
-Now put the \/\/control.Node into the pascobot. Plug in the steppers into ports A and B on the \/\/control.Node, and run the following code. 
-
-    from pasco.control_node_device import ControlNodeDevice
-    import time
-
-    controlNode = ControlNodeDevice()
-    controlNode.connect_by_id('664-591') # replace with your device's 6-digit id
-    
-    controlNode.rotate_steppers_continuously(360, 360, 360, 360)
-    time.sleep(1)
-    controlNode.stop_steppers(360, 360)
-    print(controlNode.read_data('Angle', 'A'))
-    controlNode.disconnect()
-
-This accelerates both steppers to 360 deg/s at an acceleration of 360 deg/s/s, waits a second, stops them at an acceleration of 360 deg/s/s, and reads the angle of stepper A.
-More examples of steppers, servos, plugin sensors, and the power output board are in `controlnode_examples.py` and `grabberbot.py`.
-
----
-# Troubleshooting
-
-### 1. Are you working with Python 3.11?
-To check your version type in your terminal
+```typescript
+// Control red and blue LEDs (0-100%)
+await controlNode.setGreenhouseLight('A', 50, 75);
 ```
-python --version
-```
-If that doesn't work try 
-```
-python3 --version
-```
-If that doesn't work you don't have python installed. Go to https://www.python.org/ and install.
 
-If you have an older version of python installed, uninstall it and reinstall 3.11. 
-After you reinstall Python you will also need to reinstall the pasco package. 
-### 2. Is pasco installed?
-If you get an error like `no module named "<module name>"` try
-```
-pip install pasco
-``````
-Or
-```
-conda install pascoscientific::pasco
-``````
+### Speaker
 
-### 3. Is the device on?
-Check if the red light is blinking. If so you're good to go.
-### 4. Is the device already connected?
-Check if the light is green. If so, hold down the power button to turn the device off, and press it to turn the device on again. When the light blinks red you're good.
-### 5. Fire the intern.
+```typescript
+await controlNode.setSoundFrequency(440);  // 440 Hz
+```
+
+## PascoBot
+
+High-level robotics interface for wheeled robots.
+
+```typescript
+import { PascoBot } from 'pasco-ble';
+
+const bot = new PascoBot();
+await bot.connectById('664-591');
+
+// Drive forward (speed in cm/s, acceleration in cm/s²)
+await bot.drive(10, 5);
+
+// Turn (angle in degrees, velocity in deg/s)
+await bot.turn(90, 180);
+
+// Turn continuously (angular velocity in deg/s)
+await bot.turnContinuous(45);
+
+// Stop
+await bot.stop();
+
+await bot.disconnect();
+```
+
+## Browser Usage
+
+The library works in browsers using the Web Bluetooth API:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PASCO Sensor Demo</title>
+</head>
+<body>
+  <button id="connect">Connect to Sensor</button>
+  <div id="output"></div>
+
+  <script type="module">
+    import { PASCOBLEDevice } from 'https://unpkg.com/pasco-ble/dist/index.js';
+
+    document.getElementById('connect').onclick = async () => {
+      const sensor = new PASCOBLEDevice();
+
+      // In browsers, scan() opens a device picker dialog
+      const devices = await sensor.scan();
+
+      if (devices.length > 0) {
+        await sensor.connect(devices[0]);
+
+        const temp = await sensor.readData('Temperature');
+        document.getElementById('output').textContent = `Temperature: ${temp}`;
+
+        await sensor.disconnect();
+      }
+    };
+  </script>
+</body>
+</html>
+```
+
+> **Note:** Web Bluetooth requires HTTPS and a user gesture (button click) to initiate scanning/connecting.
+
+## Examples
+
+See the `pasco-ts/examples/` directory for complete examples:
+
+- `basic-usage.ts` - Basic sensor reading with Node.js
+- `code-node-example.ts` - Code.Node LED and sound control
+- `force-sensor.html` - Browser-based force sensor demo
+
+For more project examples, see our [pasco_python_examples repository](https://github.com/PASCOscientific/pasco_python_examples).
+
+## Troubleshooting
+
+### 1. Node.js: Noble installation issues
+
+Noble requires native compilation. On Windows, you may need:
+```bash
+npm install --global windows-build-tools
+```
+
+On Linux, you may need:
+```bash
+sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
+```
+
+See [Noble documentation](https://github.com/abandonware/noble#prerequisites) for full details.
+
+### 2. Browser: Web Bluetooth not working
+
+- Ensure you're using Chrome or Edge
+- Ensure the page is served over HTTPS (or localhost)
+- Check that Bluetooth is enabled on your device
+- The scan must be initiated by a user gesture (button click)
+
+### 3. Device not found during scan
+
+- Check if the device's red light is blinking (ready to connect)
+- If the light is green, the device is already connected elsewhere
+- Hold the power button to turn off, then press to turn on again
+
+### 4. Connection drops or times out
+
+- Move closer to the device
+- Ensure no other application is connected to the device
+- Try resetting the device (power off/on)
+
+### 5. Cannot read measurement
+
+- Use `getMeasurementList()` to see available measurements
+- Measurement names are case-sensitive
+- Some measurements require specific sensors to be connected
+
+## License
+
+See LICENSE file for details.

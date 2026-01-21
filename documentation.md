@@ -1,100 +1,438 @@
-# Documentation
-### A more detailed description of how pasco python works
-# Contents:
-- [Background](#motivation)
-- [`pasco_ble_device` under the hood](#pasco_ble_devicepy)
-- [`control_node_device` under the hood](#control_node_devicepy)
-# Motivation:
-The goal of this python API is to connect a pasco device such as the control node to a python program. To do this we use bleak, a Bluetooth Low Energy (BLE) python library. Because communicating over bluetooth involves a time delay this involves using the asyncio library to handle asynchronous tasks such as reading and writing over bluetooth.
-For more on these tools check out these links:
-- bleak: https://nabeelvalley.co.za/docs/iot/bluetooth-intro/
-- asyncio: 5-part tutorial: https://bbc.github.io/cloudfit-public-docs/asyncio/asyncio-part-1.html
----
-# This API is made up of three layers:
-1. `pasco_ble_device.py` is the base class for pasco devices, providing functionality for connecting, writing commands and reading data.
-2. device-specific libraries such as `control_node_device.py` and `code_node_device.py` provide more specialized functionality for their devices such as controlling steppers, servos, and speakers. 
-3. `pasco_bot.py` provides functionality for the pasco bot such as driving and turning.
----
-# `pasco_ble_device.py`
-This file does all the heavy lifting for the library, handling connecting to interfaces, initializing sensors, and all of the communication with the pasco devices. 
-### Pasco devices consist of three layers:
-1. Interface. This is the device you can hold, such as the control node. An interface can have many sensors, such as position, velocity, acceleration, light, temperature, etc.  
-2. Sensors. These are the pieces of the interface you communicate with. Each sensor has its own bluetooth characteristic to receive commands and send data back to the computer. Each sensor has one to many measurements.
-3. Measurements. These are the data requested and returned by the sensors, such as acceleration in the x direction or light intensity or temperature.
+# Technical Documentation
 
-For the API, sensors are the most important layer, because they are where the BLE communication happens.
+### A detailed description of how the PASCO BLE library works
+
+## Contents
+
+- [Architecture Overview](#architecture-overview)
+- [BLE Communication](#ble-communication)
+- [Device Initialization](#device-initialization)
+- [Data Decoding Pipeline](#data-decoding-pipeline)
+- [Platform Adapters](#platform-adapters)
+- [Control Node Specifics](#control-node-specifics)
 
 ---
-## BLE communication
 
-Bluetooth Low Energy is a network protocol that allows the computer to communicate with pasco devices.
+## Architecture Overview
 
-BLE communication consists of two steps: (1) the computer sends a `write` command to a sensor channel (a BLE `characteristic`) and in response (2) the device sends a `callback`. When the device is connected the computer starts 'listening' for callbacks, and `start_notify()` links the device's bluetooth callbacks to `_notify_callback()`, so that whenever the device sends a callback `_notify_callback()` runs. 
+The PASCO BLE library provides a TypeScript interface for communicating with PASCO wireless sensors over Bluetooth Low Energy (BLE). The library is designed to work in both Node.js and browser environments through a platform abstraction layer.
 
-Let's look at an example of reading the light intensity from the code node:
-1. The computer connects to the code node and starts 'listening' for callbacks.
-2. The computer sends a `write` command to the light sensor characteristic on the code node, then waits to hear back.
-3. The code node sends a callback with the data.
-4. The computer receives the callback in `_notify_callback()`, processes the data, and continues execution.
+### Library Layers
 
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      User Application                        │
+├─────────────────────────────────────────────────────────────┤
+│   PascoBot          CodeNodeDevice      ControlNodeDevice   │
+│   (robotics)        (LED/sound)         (motors/servos)     │
+├─────────────────────────────────────────────────────────────┤
+│                      PASCOBLEDevice                          │
+│              (base class: connection, data reading)          │
+├─────────────────────────────────────────────────────────────┤
+│              BLE Adapter Abstraction Layer                   │
+│         (BLEAdapterBase / BLEClientBase)                    │
+├───────────────────────┬─────────────────────────────────────┤
+│   WebBluetoothAdapter │         NobleAdapter                │
+│   (Browser)           │         (Node.js)                   │
+└───────────────────────┴─────────────────────────────────────┘
+```
 
-### Synchronizing communication
-It is very important that execution waits for a callback from the device because bluetooth communication takes an arbitrary amount of time. This synchronization is enabled by `write_await_callback()`. 
+### Module Structure
 
-`write_await_callback()` uses tools from `asyncio` to package writing and receiving callbacks into a single task which blocks further execution until it completes. This task does the following:
-1. It uses `write()` to send a command such as 'read light intensity'.
-2. It calls `check_callback()` to wait for an `asyncio.Queue` object to be updated by `_notify_callback()`, indicating that a callback was received. 
-3. Meanwhile, the callback is received and `_notify_callback()` updates the `Queue` object.
-4. This unblocks `check_callback()` which in turn unblocks `write_await_callback()`, allowing execution to continue. 
+```
+src/
+├── index.ts                 # Public API exports
+├── pasco-ble-device.ts      # Base device class
+├── code-node-device.ts      # Code.Node controls
+├── control-node-device.ts   # Control.Node controls
+├── pasco-bot.ts             # Robotics interface
+├── character-library.ts     # LED matrix characters/icons
+├── datasheets.ts            # Sensor definitions
+├── ble/
+│   ├── ble-adapter.ts       # Abstract BLE interface
+│   ├── web-bluetooth-adapter.ts  # Browser implementation
+│   ├── noble-adapter.ts     # Node.js implementation
+│   └── index.ts             # Platform detection
+├── types/
+│   ├── ble.ts               # BLE type definitions
+│   ├── measurement.ts       # Measurement types
+│   └── device.ts            # Device/sensor types
+└── utils/
+    ├── binary.ts            # Binary data utilities
+    ├── math.ts              # Mathematical functions
+    └── equation-parser.ts   # Safe equation evaluation
+```
+
+### Device Hierarchy
+
+PASCO devices have three conceptual layers:
+
+1. **Interface**: The physical device (e.g., Control Node, Temperature Sensor)
+2. **Sensors**: Components within the device that provide data channels
+3. **Measurements**: Individual data points from each sensor
+
+**Example**: Wireless Weather Sensor
+- Interface ID: 1036
+- Sensors: WirelessWeatherSensor, WirelessGPSSensor, WirelessLightSensor, WirelessCompass
+- Measurements: Temperature, RelativeHumidity, Latitude, UVIndex, WindDirection, etc.
 
 ---
-## Initializing Device Sensors
-Another key part of `pasco_ble_device.py` is how it represents the device internally. Recall that a pasco device consists of three layers:
-1. The interface
-2. Sensors available through the interface
-3. Measurements provided by the sensors
 
-When a pasco device connects it tells the computer its interface id, which is then looked up in `datasheets.py` This datasheet tells the computer what communication channels are available on the device, including sensors, outputs (like speakers), and plugin locations (such as the ports on the control node). This initializing is handled by `initialize_device()`. 
+## BLE Communication
 
-`initialize_device()` uses `datasheets.py` to first get data about the interface channels, then pass this to `initialize_device_sensors()`. This calls `_initialize_sensor()` on each sensor in turn to get data on the sensor and the measurements it provides. Finally the sensor and measurement lists are saved in several instance attributes.
+### PASCO UUID Structure
 
-### Plugin Sensors
-Working with the control node's plugin sensors requires some special handling provided by several functions with `controlnode_plugins` in the name. 
+PASCO devices use custom BLE UUIDs with this format:
+```
+4a5c000{serviceId}-000{charId}-0000-0000-5c1e741f1c00
+```
 
-The most important is `update_controlnode_plugin_sensor()`. When a sensor is plugged in or unplugged from the control node it sends a callback with the sensor IDs plugged into ports A, B, and Sensor. This callback is handled by `_notify_callback()`, which calls `process_measurement_response()`, which calls `update_controlnode_plugin_sensor()`. This unpacks the data about the sensors plugged in and passes the new sensor list to `initialize_device_sensors`, updating the internal sensor list. This process is initiated by `scan_controlnode_plugins()` during the control node's connect sequence, and repeated whenever a sensor is plugged in or unplugged from the control node.
+- **Service ID (0-9)**: Identifies the sensor channel
+  - Service 0: Main device commands
+  - Services 1+: Individual sensor channels
+- **Characteristic ID (2, 3, 5)**:
+  - Char 2 (`SEND_CMD_CHAR_ID`): Send commands to device
+  - Char 3 (`RECV_CMD_CHAR_ID`): Receive responses/notifications
+  - Char 5 (`SEND_ACK_CHAR_ID`): Send acknowledgments
+
+### Communication Flow
+
+```
+┌──────────┐                           ┌──────────────┐
+│ Computer │                           │ PASCO Device │
+└────┬─────┘                           └──────┬───────┘
+     │                                        │
+     │  1. Write command to Char 2            │
+     │ ─────────────────────────────────────> │
+     │                                        │
+     │  2. Device sends notification on Char 3│
+     │ <───────────────────────────────────── │
+     │                                        │
+     │  3. Send ACK on Char 5 (if needed)     │
+     │ ─────────────────────────────────────> │
+     │                                        │
+```
+
+### Command Protocol
+
+**Request Format:**
+```typescript
+[COMMAND_ID, ...parameters]
+```
+
+**Response Format:**
+```typescript
+[0xC0, status, originalCommand, ...data]  // Generic response
+[packetNum, ...data]                       // Measurement data (packetNum <= 0x1F)
+```
+
+### Key Commands
+
+| Command | ID | Purpose |
+|---------|-----|---------|
+| `GCMD_READ_ONE_SAMPLE` | 0x05 | Read single measurement |
+| `GCMD_CUSTOM_CMD` | 0x37 | Custom/device-specific command |
+| `GCMD_XFER_BURST_RAM` | 0x0E | Burst RAM transfer |
+
+### Synchronization with writeAwaitCallback
+
+BLE communication is asynchronous. The `writeAwaitCallback()` method ensures proper synchronization:
+
+```typescript
+async writeAwaitCallback(serviceId: number, command: number[]): Promise<void> {
+  // 1. Set up promise to wait for callback
+  const callbackPromise = new Promise((resolve, reject) => {
+    this._callbackResolve = resolve;
+    this._callbackReject = reject;
+  });
+
+  // 2. Write command to device
+  await this.write(serviceId, command);
+
+  // 3. Wait for notification callback
+  await callbackPromise;
+}
+```
+
+When a notification arrives, `_notifyCallback()` resolves the promise, allowing execution to continue.
 
 ---
-# `control_node_device.py`
-This file handles functionality specific to the control node. It inherits from `PASCOBLEDevice` and extends it to provide controls for the steppers, servos, power output board and speakers on the control node. 
 
-### Reading Data
-An important feature of the control node is the ability to plug in sensors, such as a range finder and two high speed steppers on the pasco bot. Unfortunately the internal representation of sensors and measurements in `pasco_ble_device.py` does not support a distinction between two of the same sensors plugged into two different ports. Because this is a control node specific issue we put the solution in `control_node_device.py`. 
+## Device Initialization
 
-In `ControlNodeDevice.read_data()` there is an optional parameter of port, allowing you to designate which port you want to read data from.  Consider `read_data(measurement='Angle', port='A')` sent to a pasco bot. The `Angle` measurement is available from the steppers in both ports `A` and `B`, so `read_data` uses the `port` parameter to designate which stepper from which to read the angle. Then when the callback comes for the `Angle` reading, we extract the measurement from the `_sensor_data` instance variable.
+### Connection Sequence
 
-To read data from servos we also use the `port` parameter, but the data is unpacked and result calculated manually. 
+```typescript
+// 1. Create device and scan
+const device = new PASCOBLEDevice();
+const found = await device.scan();
 
-### Steppers
-There are three different types of commands sent to steppers:
+// 2. Connect to device
+await device.connect(found[0]);
 
-1. Rotate stepper(s) continuously
-2. Rotate stepper(s) through
-3. Stop stepper(s)
+// Internally:
+// - Establish GATT connection
+// - Discover services and characteristics
+// - Start notifications on all channels
+// - Parse device name to extract interface ID
+// - Load interface definition from datasheets
+// - Initialize sensors and measurements
+```
 
-`Rotate steppers` and `stop steppers` are a single command sent to the control node. `Rotate steppers through` is a little more complicated becase it has an optional argument `wait_for_completion`. If you set `wait_for_completion` to true it continuously checks the steps remaining, blocking further execution until it finishes the given rotation.
+### Device Name Parsing
 
-### Servos
-Servos come in two flavors: continuous and standard. The standard servo rotates to a degree angle in [-90, 90], while the continuous servo rotates at a percent power in [-100, 100].
-`set_servos()` takes arguments of servo types in servo ports 1 and 2 and values for those servos. Note that there is no `wait_for_completion` for servos, so you may have to add `time.sleep()` to allow them to finish.
+PASCO device names follow this format:
+```
+{DeviceType} {SerialId}-{InterfaceId}
+```
 
-Servos also can sense resistance. A call to `read_data('ServoCurrentOrd', 1)` reads the percent resistance experienced by the servo in port 1. This is useful for detecting when the grabber arms have grabbed something. See `grabberbot.py` for example uses.
+Example: `Temperature 055-808-1025`
+- Device Type: Temperature
+- Serial ID: 055-808
+- Interface ID: 1025
 
+### Datasheet Lookup
 
-### Power Board
-The power board has two channels and can be plugged into port A or B. 
-The two channels are independently controlled and can either output a PWM signal (for DC motors) or a 0V/5V signal (for USB devices). You control the power boards using `set_power_out`. 
+The `datasheets.ts` file contains definitions for all PASCO interfaces and sensors:
 
-Cool trick: plug an LED strip into the USB output, then call `set_power_out` on that channel with `output_type=terminal`. This will run PWM through the USB output, allowing you to dim the LED strip. This is fine for LED's but not for other devices.
+```typescript
+interface ParsedInterface {
+  ID: number;
+  channels: InterfaceChannel[];
+}
 
-### Plugin Sensors
-Additional sensors (such as line follower, rangefinder, and greenhouse) can be plugged into the Sensor port. They work just like any other sensor, accessible by `read_data('measurement name')`. To find what measurements are available, call `<instance>.get_measurement_list()`
+interface ParsedSensor {
+  ID: number;
+  Tag: string;
+  measurements: Measurement[];
+}
+```
+
+During initialization:
+1. Look up interface by ID
+2. For each channel, look up sensor definition
+3. Build measurement lookup tables
+
+---
+
+## Data Decoding Pipeline
+
+When sensor data is received, it goes through a multi-stage decoding process:
+
+```
+Raw BLE Bytes
+      │
+      ▼
+┌─────────────────┐
+│ Build byte value│  Little-endian assembly
+│ from data stack │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Apply base type │  RawDigital, Direct, Constant
+│ conversion      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Apply derived   │  LinearConv, FactoryCal, Derivative,
+│ calculations    │  ThreeInputVector, RotaryPos, etc.
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Apply equation  │  table(), usound(), dewpoint(),
+│ (if present)    │  windchill(), heatindex(), custom
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Apply precision │  Round to specified decimal places
+│ and limits      │
+└────────┬────────┘
+         │
+         ▼
+   Final Value
+```
+
+### Measurement Types
+
+| Type | Description |
+|------|-------------|
+| `RawDigital` | Raw sensor value, optionally two's complement |
+| `Direct` | Direct conversion with binary fraction |
+| `Constant` | Fixed predefined value |
+| `LinearConv` | Linear transformation: `y = m*x + b` |
+| `FactoryCal` | 4-parameter factory calibration |
+| `UserCal` | 4-parameter user calibration |
+| `ThreeInputVector` | Vector magnitude: `√(x² + y² + z²)` |
+| `Derivative` | Rate of change from previous value |
+| `RotaryPos` | Accumulated rotary position |
+| `Select` | Pass-through from input measurement |
+
+### Equation Evaluation
+
+The library uses the `expr-eval` library for safe equation evaluation (avoiding `eval()`):
+
+```typescript
+// Example equation from datasheet
+"table((880*[1])+336.9,7122,45,14100,20,17245,15,51725,0)"
+
+// Parsed and evaluated:
+// 1. Replace [1] with measurement ID 1's value
+// 2. Evaluate inner expression
+// 3. Look up result in interpolation table
+```
+
+Supported functions: `sqrt`, `log`, `sin`, `cos`, `tan`, `abs`, `pow`, `exp`, `floor`, `ceil`, `round`, plus custom functions like `dewpoint()`, `windchill()`, `heatindex()`, `usound()`.
+
+---
+
+## Platform Adapters
+
+### BLE Adapter Interface
+
+```typescript
+abstract class BLEAdapterBase {
+  abstract scan(nameFilters?: string[], timeout?: number): Promise<BLEDevice[]>;
+  abstract stopScan(): Promise<void>;
+  abstract createClient(device: BLEDevice): BLEClientBase;
+  abstract isAvailable(): boolean;
+}
+
+abstract class BLEClientBase {
+  abstract connect(): Promise<void>;
+  abstract disconnect(): Promise<void>;
+  abstract writeGattChar(uuid: string, data: Uint8Array): Promise<void>;
+  abstract readGattChar(uuid: string): Promise<Uint8Array>;
+  abstract startNotify(uuid: string, callback: NotifyCallback): Promise<void>;
+  abstract stopNotify(uuid: string): Promise<void>;
+  abstract discoverServicesAndCharacteristics(): Promise<void>;
+}
+```
+
+### Web Bluetooth Adapter (Browser)
+
+- Uses `navigator.bluetooth.requestDevice()` for scanning
+- Shows browser device picker dialog
+- Requires HTTPS context
+- Requires user gesture to initiate scan/connect
+- Limited to Chrome and Edge browsers
+
+### Noble Adapter (Node.js)
+
+- Uses `@abandonware/noble` package
+- Passive scanning with name filters
+- Works on Windows, macOS, and Linux
+- Requires platform-specific Bluetooth setup
+
+### Platform Detection
+
+```typescript
+function createBLEAdapter(): BLEAdapterBase {
+  if (Platform.isBrowser() && Platform.hasWebBluetooth()) {
+    return new WebBluetoothAdapter();
+  } else if (Platform.isNode()) {
+    return new NobleAdapter();
+  }
+  throw new Error('No BLE adapter available');
+}
+```
+
+---
+
+## Control Node Specifics
+
+### Port-Based Measurement Reading
+
+The Control Node supports multiple sensors on different ports (A, B, Sensor). The `readData()` method is overridden to handle port-specific readings:
+
+```typescript
+// Read angle from stepper on port A
+const angleA = await controlNode.readData('Angle', 'A');
+
+// Read angle from stepper on port B
+const angleB = await controlNode.readData('Angle', 'B');
+```
+
+### Plugin Sensor Detection
+
+When sensors are plugged into the Control Node, it sends a callback with updated sensor information:
+
+```typescript
+// Callback format: [0x82, sensorIdA_lo, sensorIdA_hi, sensorIdB_lo, sensorIdB_hi, ...]
+```
+
+The `update_controlnode_plugin_sensor()` method processes this and reinitializes the sensor list.
+
+### Stepper Motor Commands
+
+Stepper commands use this format:
+```typescript
+[0x37, 0x04, channel,
+ speedA_lo, speedA_hi, accelA_lo, accelA_hi, distA_0, distA_1, distA_2, distA_3,
+ speedB_lo, speedB_hi, accelB_lo, accelB_hi, distB_0, distB_1, distB_2, distB_3]
+```
+
+- Speed: deci-steps per second (960 steps = 360 degrees)
+- Acceleration: deci-steps per second squared
+- Distance: deci-steps (0 = continuous rotation)
+
+### Servo PWM Calculation
+
+```typescript
+// Standard servo: angle (-90 to 90) → PWM on-time
+onTime = angle + 150;  // microseconds
+
+// Continuous servo: speed (-100 to 100) → PWM on-time
+onTime = 0.2 * speed + 150;  // microseconds
+```
+
+---
+
+## Utility Functions
+
+### Binary Utilities (`utils/binary.ts`)
+
+| Function | Purpose |
+|----------|---------|
+| `decode64(char)` | PASCO-specific Base-64 decoding |
+| `twosComplement(value, byteLen)` | Two's complement conversion |
+| `binaryFraction(value)` | Fixed-point fraction conversion |
+| `binaryFloat(value, byteLen)` | IEEE 754 float conversion |
+| `unpackFloat32LE(data)` | Little-endian float unpacking |
+| `packInt16LE(value)` | Little-endian int packing |
+
+### Math Utilities (`utils/math.ts`)
+
+| Function | Purpose |
+|----------|---------|
+| `linearInterpolate(x, points)` | Linear interpolation |
+| `calc4Params(raw, x1, y1, x2, y2)` | 4-parameter calibration |
+| `calcLinearParams(raw, m, b)` | Linear conversion |
+| `calcRotaryPos(count, x, r)` | Rotary position |
+| `threeInputVector(x, y, z)` | 3D vector magnitude |
+| `dewpoint(temp, humidity)` | Dew point calculation |
+| `windchill(temp, wind)` | Wind chill calculation |
+| `heatindex(temp, humidity)` | Heat index calculation |
+
+---
+
+## Error Handling
+
+The library defines specific error classes for different failure modes:
+
+| Error | Cause |
+|-------|-------|
+| `BLEScanFailed` | Bluetooth scan failed |
+| `BLEConnectionError` | Connection to device failed |
+| `BLEAlreadyConnectedError` | Attempted to connect when already connected |
+| `DeviceNotConnected` | Operation attempted without connection |
+| `MeasurementNotFound` | Requested measurement doesn't exist |
+| `InvalidParameter` | Invalid parameter passed to method |
+| `SensorNotFound` | Requested sensor doesn't exist |
+| `InvalidEquation` | Equation evaluation failed |
+| `CouldNotDecodeData` | Data decoding failed |
+| `CommunicationError` | BLE communication failed |
+| `SensorSetupError` | Sensor initialization failed |
