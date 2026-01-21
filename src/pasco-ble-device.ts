@@ -4,15 +4,21 @@
  * Main class for connecting to and communicating with PASCO BLE sensors.
  */
 
-import type { BLEDevice, BLECharacteristic } from './types/ble.js';
-import type { Measurement, SensorChannel } from './types/index.js';
-import { COMPATIBLE_DEVICES } from './types/device.js';
-import { BLEAdapterBase, BLEClientBase, createPascoUuid } from './ble/ble-adapter.js';
+import { type BLEAdapterBase, type BLEClientBase, createPascoUuid } from './ble/ble-adapter.js';
 import { createBLEAdapter } from './ble/index.js';
-import { decode64, twosComplement, binaryFraction } from './utils/binary.js';
-import { calcLinearParams, calc4Params, calcRotaryPos, limit, threeInputVector } from './utils/math.js';
-import { evaluateEquation } from './utils/equation-parser.js';
 import { getInterface, getSensor } from './datasheets.js';
+import type { BLECharacteristic, BLEDevice } from './types/ble.js';
+import { COMPATIBLE_DEVICES } from './types/device.js';
+import type { Measurement, SensorChannel } from './types/index.js';
+import { binaryFraction, decode64, twosComplement } from './utils/binary.js';
+import { evaluateEquation } from './utils/equation-parser.js';
+import {
+  calc4Params,
+  calcLinearParams,
+  calcRotaryPos,
+  limit,
+  threeInputVector,
+} from './utils/math.js';
 
 /**
  * Error classes for PASCO BLE operations
@@ -227,7 +233,10 @@ export class PASCOBLEDevice {
 
     // Special handling for Rotary Motion sensor
     if (this._devType === 'Rotary Motion') {
-      await this.writeAwaitCallback(PASCOBLEDevice.SENSOR_SERVICE_ID, PASCOBLEDevice.WIRELESS_RMS_START);
+      await this.writeAwaitCallback(
+        PASCOBLEDevice.SENSOR_SERVICE_ID,
+        PASCOBLEDevice.WIRELESS_RMS_START,
+      );
     }
 
     await this.initializeDevice();
@@ -283,7 +292,7 @@ export class PASCOBLEDevice {
     for (const service of this._client.services) {
       for (const char of service.characteristics) {
         const match = char.uuid.match(/4a5c000(\d)/);
-        if (match && match[1]) {
+        if (match?.[1]) {
           this._handleService.set(char.handle, parseInt(match[1], 10));
         }
       }
@@ -649,7 +658,9 @@ export class PASCOBLEDevice {
       // Web Bluetooth: handle contains the service ID directly
       serviceId = char.handle;
     }
-    console.log(`_notifyCallback: char.handle=${char.handle}, serviceId=${serviceId}, data[0]=0x${data[0]?.toString(16)}`);
+    console.log(
+      `_notifyCallback: char.handle=${char.handle}, serviceId=${serviceId}, data[0]=0x${data[0]?.toString(16)}`,
+    );
 
     if (serviceId !== undefined && serviceId > 0) {
       // Sensor measurement response
@@ -694,7 +705,9 @@ export class PASCOBLEDevice {
 
   protected _processDeviceResponse(data: number[]): void {
     this._responseData = new Uint8Array(data);
-    console.log(`_processDeviceResponse called, data[0]=0x${data[0]?.toString(16)}, data[1]=0x${data[1]?.toString(16)}, data[2]=0x${data[2]?.toString(16)}, _notifySensorId=${this._notifySensorId}`);
+    console.log(
+      `_processDeviceResponse called, data[0]=0x${data[0]?.toString(16)}, data[1]=0x${data[1]?.toString(16)}, data[2]=0x${data[2]?.toString(16)}, _notifySensorId=${this._notifySensorId}`,
+    );
 
     if (data[0] === PASCOBLEDevice.GRSP_RESULT) {
       if (data[1] === 0x00) {
@@ -703,7 +716,10 @@ export class PASCOBLEDevice {
           this._dataPacket = data.slice(3);
           // Store in per-sensor data stack using tracked sensor ID
           if (this._notifySensorId !== null) {
-            console.log(`Routing response to sensor ${this._notifySensorId}, data:`, this._dataPacket);
+            console.log(
+              `Routing response to sensor ${this._notifySensorId}, data:`,
+              this._dataPacket,
+            );
             this._dataStack.set(this._notifySensorId, [...this._dataPacket]);
           }
         } else if (data[2] === PASCOBLEDevice.GCMD_CONTROL_NODE_CMD) {
@@ -805,18 +821,18 @@ export class PASCOBLEDevice {
           let byteValue = 0;
           for (let d = 0; d < m.DataSize && stack.length > 0; d++) {
             const stackValue = stack.shift() ?? 0;
-            byteValue += stackValue * Math.pow(2, 8 * d);
+            byteValue += stackValue * 2 ** (8 * d);
           }
           resultValue = byteValue;
 
-          if (m.DataSize === 4 || (m.TwosComp && parseInt(m.TwosComp) === 1)) {
+          if (m.DataSize === 4 || (m.TwosComp && parseInt(m.TwosComp, 10) === 1)) {
             resultValue = twosComplement(resultValue, m.DataSize);
           }
         } else if (m.Type === 'Direct' && m.DataSize) {
           let byteValue = 0;
           for (let d = 0; d < m.DataSize && stack.length > 0; d++) {
             const stackValue = stack.shift() ?? 0;
-            byteValue += stackValue * Math.pow(2, 8 * d);
+            byteValue += stackValue * 2 ** (8 * d);
           }
 
           if (m.DataSize === 4) {
@@ -827,13 +843,14 @@ export class PASCOBLEDevice {
           }
 
           if (m.Precision !== undefined) {
-            resultValue = Math.round(resultValue * Math.pow(10, m.Precision)) / Math.pow(10, m.Precision);
+            resultValue = Math.round(resultValue * 10 ** m.Precision) / 10 ** m.Precision;
           }
         } else if (m.Type === 'Constant') {
-          resultValue = typeof m.Value === 'number' ? m.Value : parseFloat(m.Value?.toString() ?? '0');
+          resultValue =
+            typeof m.Value === 'number' ? m.Value : parseFloat(m.Value?.toString() ?? '0');
 
           if (m.Precision !== undefined) {
-            resultValue = Math.round(resultValue * Math.pow(10, m.Precision)) / Math.pow(10, m.Precision);
+            resultValue = Math.round(resultValue * 10 ** m.Precision) / 10 ** m.Precision;
           }
         }
 
@@ -847,11 +864,11 @@ export class PASCOBLEDevice {
           let resultValue = this._getMeasurementValue(sensorId, mId);
 
           if (m.Precision !== undefined && resultValue !== null) {
-            resultValue = Math.round(resultValue * Math.pow(10, m.Precision)) / Math.pow(10, m.Precision);
+            resultValue = Math.round(resultValue * 10 ** m.Precision) / 10 ** m.Precision;
           }
 
           if (m.Limits && resultValue !== null) {
-            const limits = m.Limits.split(',').map((l) => parseInt(l));
+            const limits = m.Limits.split(',').map((l) => parseInt(l, 10));
             if (limits.length === 2 && limits[0] !== undefined && limits[1] !== undefined) {
               resultValue = limit(resultValue, limits[0], limits[1]);
             }
@@ -898,13 +915,20 @@ export class PASCOBLEDevice {
     const inputStr = m.Inputs?.toString() ?? '';
 
     if (m.Type === 'ThreeInputVector') {
-      const inputs = inputStr.split(',').map((i) => parseInt(i));
+      const inputs = inputStr.split(',').map((i) => parseInt(i, 10));
       if (inputs.length === 3) {
         const ax = this._sensorData.get(sensorId)?.get(inputs[0]!);
         const ay = this._sensorData.get(sensorId)?.get(inputs[1]!);
         const az = this._sensorData.get(sensorId)?.get(inputs[2]!);
 
-        if (ax !== null && ax !== undefined && ay !== null && ay !== undefined && az !== null && az !== undefined) {
+        if (
+          ax !== null &&
+          ax !== undefined &&
+          ay !== null &&
+          ay !== undefined &&
+          az !== null &&
+          az !== undefined
+        ) {
           return threeInputVector(ax, ay, az);
         }
       }
@@ -912,7 +936,7 @@ export class PASCOBLEDevice {
     }
 
     if (m.Type === 'Select') {
-      const inputs = inputStr.split(',').map((i) => parseInt(i));
+      const inputs = inputStr.split(',').map((i) => parseInt(i, 10));
       const needInput = inputs[0];
       if (needInput !== undefined) {
         const value = this._sensorData.get(sensorId)?.get(needInput);
@@ -925,7 +949,7 @@ export class PASCOBLEDevice {
     }
 
     // Single input
-    const needInput = parseInt(inputStr);
+    const needInput = parseInt(inputStr, 10);
     let inputValue: number | null = null;
 
     const storedValue = this._sensorData.get(sensorId)?.get(needInput);
@@ -954,12 +978,13 @@ export class PASCOBLEDevice {
         }
         break;
 
-      case 'Derivative':
+      case 'Derivative': {
         const prevValue = this._sensorDataPrev.get(sensorId)?.get(needInput);
         if (prevValue !== null && prevValue !== undefined) {
           return (inputValue - prevValue) / 2;
         }
         break;
+      }
 
       case 'RotaryPos':
         if (params.length >= 2) {
@@ -983,7 +1008,7 @@ export class PASCOBLEDevice {
 
     for (const match of varMatches) {
       const varKey = match.slice(1, -1);
-      const varId = parseInt(varKey);
+      const varId = parseInt(varKey, 10);
 
       let value = this._sensorData.get(sensorId)?.get(varId);
       if (value === null || value === undefined) {

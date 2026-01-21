@@ -4,13 +4,26 @@
  * Provides platform-agnostic BLE adapter factory and utilities.
  */
 
-import { BLEAdapterBase } from './ble-adapter.js';
+import type { BLEAdapterBase } from './ble-adapter.js';
 import { WebBluetoothAdapter } from './web-bluetooth-adapter.js';
 
-export { BLEAdapterBase, BLEClientBase, createPascoUuid, getServiceIdFromUuid, getCharacteristicIdFromUuid, isPascoUuid } from './ble-adapter.js';
-export { WebBluetoothAdapter, WebBluetoothClient } from './web-bluetooth-adapter.js';
+export type {
+  BLEAdapter,
+  BLECharacteristic,
+  BLEClient,
+  BLEDevice,
+  NotifyCallback,
+} from '../types/ble.js';
+export {
+  BLEAdapterBase,
+  BLEClientBase,
+  createPascoUuid,
+  getCharacteristicIdFromUuid,
+  getServiceIdFromUuid,
+  isPascoUuid,
+} from './ble-adapter.js';
 export { NobleAdapter, NobleClient } from './noble-adapter.js';
-export type { BLEDevice, BLEClient, BLEAdapter, BLECharacteristic, NotifyCallback } from '../types/ble.js';
+export { WebBluetoothAdapter, WebBluetoothClient } from './web-bluetooth-adapter.js';
 
 /**
  * Detect the current platform and return an appropriate BLE adapter

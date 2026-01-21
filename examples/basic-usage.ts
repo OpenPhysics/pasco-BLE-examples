@@ -52,7 +52,7 @@ async function main() {
         const value = await sensor.readData(measurement);
         const unit = sensor.getMeasurementUnit(measurement);
         console.log(`  ${measurement}: ${value} ${unit ?? ''}`);
-      } catch (error) {
+      } catch (_error) {
         console.log(`  ${measurement}: Error reading`);
       }
     }

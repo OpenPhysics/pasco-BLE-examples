@@ -4,91 +4,94 @@
  * A TypeScript library for connecting to and communicating with PASCO BLE sensors.
  */
 
-// Main device classes
-export {
-  PASCOBLEDevice,
-  BLEScanFailed,
-  BLEConnectionError,
-  BLEAlreadyConnectedError,
-  DeviceNotConnected,
-  MeasurementNotFound,
-  InvalidParameter,
-  SensorNotFound,
-  InvalidEquation,
-  CouldNotDecodeData,
-  CommunicationError,
-  SensorSetupError,
-} from './pasco-ble-device.js';
-
-export { CodeNodeDevice, Icons } from './code-node-device.js';
-export { ControlNodeDevice, type ServoType, type OutputType, type PortId } from './control-node-device.js';
-export { PascoBot } from './pasco-bot.js';
-
-// Character library for LED display
-export {
-  alphabet,
-  Icons as LEDIcons,
-  getIcon,
-  getWord,
-  type CharacterMatrix,
-  type LEDCoordinate,
-} from './character-library.js';
-
 // BLE adapters
 export {
   BLEAdapterBase,
   BLEClientBase,
   createPascoUuid,
-  getServiceIdFromUuid,
   getCharacteristicIdFromUuid,
+  getServiceIdFromUuid,
   isPascoUuid,
 } from './ble/ble-adapter.js';
-export { WebBluetoothAdapter, WebBluetoothClient } from './ble/web-bluetooth-adapter.js';
-export { NobleAdapter, NobleClient } from './ble/noble-adapter.js';
 export { createBLEAdapter, Platform } from './ble/index.js';
+export { NobleAdapter, NobleClient } from './ble/noble-adapter.js';
+export { WebBluetoothAdapter, WebBluetoothClient } from './ble/web-bluetooth-adapter.js';
 
-// Types
-export * from './types/index.js';
-
-// Utility functions
+// Character library for LED display
 export {
-  decode64,
-  twosComplement,
-  binaryFraction,
-  binaryFloat,
-  unpackFloat32LE,
-  unpackInt16LE,
-  unpackInt32LE,
-  packInt16LE,
-  packInt32LE,
-  bytesToHex,
-  buildByteValue,
-} from './utils/binary.js';
-
+  alphabet,
+  type CharacterMatrix,
+  getIcon,
+  getWord,
+  Icons as LEDIcons,
+  type LEDCoordinate,
+} from './character-library.js';
+export { CodeNodeDevice, Icons } from './code-node-device.js';
 export {
-  linearInterpolate,
-  calcLinearParams,
-  calc4Params,
-  calcRotaryPos,
-  limit,
-  threeInputVector,
-  dewpoint,
-  windchill,
-  heatindex,
-  usound,
-} from './utils/math.js';
-
-export { evaluateEquation, evaluateTableEquation, parentheticContents } from './utils/equation-parser.js';
-
+  ControlNodeDevice,
+  type OutputType,
+  type PortId,
+  type ServoType,
+} from './control-node-device.js';
 // Datasheet functions
 export {
-  WIRELESS_INTERFACES,
-  SENSORS,
+  createDatasheets,
   getInterface,
   getSensor,
   hasInterface,
   hasSensor,
-  createDatasheets,
-  type ParsedSensor,
   type ParsedInterface,
+  type ParsedSensor,
+  SENSORS,
+  WIRELESS_INTERFACES,
 } from './datasheets.js';
+// Main device classes
+export {
+  BLEAlreadyConnectedError,
+  BLEConnectionError,
+  BLEScanFailed,
+  CommunicationError,
+  CouldNotDecodeData,
+  DeviceNotConnected,
+  InvalidEquation,
+  InvalidParameter,
+  MeasurementNotFound,
+  PASCOBLEDevice,
+  SensorNotFound,
+  SensorSetupError,
+} from './pasco-ble-device.js';
+export { PascoBot } from './pasco-bot.js';
+// Types
+export * from './types/index.js';
+// Utility functions
+export {
+  binaryFloat,
+  binaryFraction,
+  buildByteValue,
+  bytesToHex,
+  decode64,
+  packInt16LE,
+  packInt32LE,
+  twosComplement,
+  unpackFloat32LE,
+  unpackInt16LE,
+  unpackInt32LE,
+} from './utils/binary.js';
+
+export {
+  evaluateEquation,
+  evaluateTableEquation,
+  parentheticContents,
+} from './utils/equation-parser.js';
+export {
+  calc4Params,
+  calcLinearParams,
+  calcRotaryPos,
+  dewpoint,
+  heatindex,
+  limit,
+  linearInterpolate,
+  threeInputVector,
+  usound,
+  windchill,
+} from './utils/math.js';

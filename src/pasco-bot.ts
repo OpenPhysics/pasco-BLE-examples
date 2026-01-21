@@ -53,7 +53,7 @@ export class PascoBot extends ControlNodeDevice {
       sign * scaledVelocity,
       sign * 360,
       scaledAngle,
-      true // await completion
+      true, // await completion
     );
   }
 

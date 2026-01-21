@@ -28,182 +28,182 @@ export const alphabet: Record<string, CharacterMatrix> = {
     3: new Set(),
     4: new Set(),
   },
-  'A': {
+  A: {
     0: new Set([1, 2, 3, 4]),
     1: new Set([0, 2]),
     2: new Set([0, 2]),
     3: new Set([1, 2, 3, 4]),
     4: new Set(),
   },
-  'B': {
+  B: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([0, 2, 4]),
     2: new Set([0, 2, 4]),
     3: new Set([1, 3]),
     4: new Set(),
   },
-  'C': {
+  C: {
     0: new Set([1, 2, 3]),
     1: new Set([0, 4]),
     2: new Set([0, 4]),
     3: new Set([0, 4]),
     4: new Set(),
   },
-  'D': {
+  D: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([0, 4]),
     2: new Set([0, 4]),
     3: new Set([1, 2, 3]),
     4: new Set(),
   },
-  'E': {
+  E: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([0, 2, 4]),
     2: new Set([0, 4]),
     3: new Set(),
     4: new Set(),
   },
-  'F': {
+  F: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([0, 2, 4]),
     2: new Set([0]),
     3: new Set(),
     4: new Set(),
   },
-  'G': {
+  G: {
     0: new Set([1, 2, 3]),
     1: new Set([0, 4]),
     2: new Set([0, 2, 4]),
     3: new Set([0, 2, 3]),
     4: new Set(),
   },
-  'H': {
+  H: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([2]),
     2: new Set([2]),
     3: new Set([0, 1, 2, 3, 4]),
     4: new Set(),
   },
-  'I': {
+  I: {
     0: new Set([0, 4]),
     1: new Set([0, 1, 2, 3, 4]),
     2: new Set([0, 4]),
     3: new Set(),
     4: new Set(),
   },
-  'J': {
+  J: {
     0: new Set([3]),
     1: new Set([0, 4]),
     2: new Set([0, 1, 2, 3]),
     3: new Set([0]),
     4: new Set(),
   },
-  'K': {
+  K: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([3]),
     2: new Set([1, 3]),
     3: new Set([0, 4]),
     4: new Set(),
   },
-  'L': {
+  L: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([4]),
     2: new Set([4]),
     3: new Set(),
     4: new Set(),
   },
-  'M': {
+  M: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([1]),
     2: new Set([2]),
     3: new Set([1]),
     4: new Set([0, 1, 2, 3, 4]),
   },
-  'N': {
+  N: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([1]),
     2: new Set([2]),
     3: new Set([3]),
     4: new Set([0, 1, 2, 3, 4]),
   },
-  'O': {
+  O: {
     0: new Set([1, 2, 3]),
     1: new Set([0, 4]),
     2: new Set([0, 4]),
     3: new Set([1, 2, 3]),
     4: new Set(),
   },
-  'P': {
+  P: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([0, 2]),
     2: new Set([0, 2]),
     3: new Set([1]),
     4: new Set(),
   },
-  'Q': {
+  Q: {
     0: new Set([1, 2, 3]),
     1: new Set([0, 4]),
     2: new Set([0, 4]),
     3: new Set([1, 2, 3, 4]),
     4: new Set([4]),
   },
-  'R': {
+  R: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([0, 2]),
     2: new Set([0, 2]),
     3: new Set([1, 3, 4]),
     4: new Set(),
   },
-  'S': {
+  S: {
     0: new Set([1, 4]),
     1: new Set([0, 2, 4]),
     2: new Set([0, 2, 4]),
     3: new Set([0, 3]),
     4: new Set(),
   },
-  'T': {
+  T: {
     0: new Set([0]),
     1: new Set([0]),
     2: new Set([0, 1, 2, 3, 4]),
     3: new Set([0]),
     4: new Set([0]),
   },
-  'U': {
+  U: {
     0: new Set([0, 1, 2, 3]),
     1: new Set([4]),
     2: new Set([4]),
     3: new Set([0, 1, 2, 3]),
     4: new Set(),
   },
-  'V': {
+  V: {
     0: new Set([0, 1, 2]),
     1: new Set([3]),
     2: new Set([4]),
     3: new Set([3]),
     4: new Set([0, 1, 2]),
   },
-  'W': {
+  W: {
     0: new Set([0, 1, 2, 3, 4]),
     1: new Set([3]),
     2: new Set([2]),
     3: new Set([3]),
     4: new Set([0, 1, 2, 3, 4]),
   },
-  'X': {
+  X: {
     0: new Set([0, 4]),
     1: new Set([1, 3]),
     2: new Set([2]),
     3: new Set([1, 3]),
     4: new Set([0, 4]),
   },
-  'Y': {
+  Y: {
     0: new Set([0, 1]),
     1: new Set([2, 3, 4]),
     2: new Set([0, 1]),
     3: new Set(),
     4: new Set(),
   },
-  'Z': {
+  Z: {
     0: new Set([0, 3, 4]),
     1: new Set([0, 2, 4]),
     2: new Set([0, 1, 4]),

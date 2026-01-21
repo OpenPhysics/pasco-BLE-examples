@@ -5,8 +5,14 @@
  * specific to the PASCO //code.Node device.
  */
 
-import { PASCOBLEDevice, DeviceNotConnected, InvalidParameter } from './pasco-ble-device.js';
-import { getIcon, getWord, Icons, type CharacterMatrix, type LEDCoordinate } from './character-library.js';
+import {
+  type CharacterMatrix,
+  getIcon,
+  getWord,
+  Icons,
+  type LEDCoordinate,
+} from './character-library.js';
+import { DeviceNotConnected, InvalidParameter, PASCOBLEDevice } from './pasco-ble-device.js';
 import { limit } from './utils/math.js';
 
 /**
@@ -94,7 +100,7 @@ export class CodeNodeDevice extends PASCOBLEDevice {
 
       // Converts xy position to LED index
       const ledIndex = 20 - y * 5 + x;
-      ledActivate += Math.pow(2, ledIndex);
+      ledActivate += 2 ** ledIndex;
     }
 
     const ledIntensity = Math.round(limit(intensity, 0, 255));

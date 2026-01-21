@@ -4,14 +4,7 @@
  */
 
 import { Parser } from 'expr-eval';
-import {
-  linearInterpolate,
-  dewpoint,
-  windchill,
-  heatindex,
-  usound,
-  limit,
-} from './math.js';
+import { dewpoint, heatindex, limit, linearInterpolate, usound, windchill } from './math.js';
 
 // Create parser instance with custom functions
 const parser = new Parser();
@@ -43,9 +36,7 @@ export interface EquationVariables {
  * Parse parenthetical contents from a string
  * Generates [level, contents] pairs
  */
-export function* parentheticContents(
-  str: string
-): Generator<[number, string], void, unknown> {
+export function* parentheticContents(str: string): Generator<[number, string], void, unknown> {
   const stack: number[] = [];
 
   for (let i = 0; i < str.length; i++) {
@@ -107,10 +98,7 @@ export function evaluateLimitExpression(expression: string): number {
  * @param rawEquation The equation string from the datasheet
  * @param variables Object mapping variable IDs to their values
  */
-export function evaluateEquation(
-  rawEquation: string,
-  variables: EquationVariables
-): number | null {
+export function evaluateEquation(rawEquation: string, variables: EquationVariables): number | null {
   // Replace variable references [n] with actual values
   let equation = rawEquation;
 
@@ -152,7 +140,7 @@ export function evaluateEquation(
     if (match) {
       const tempC = parseFloat(match[1]!);
       const relativeHumidity = parseFloat(match[2]!);
-      if (isNaN(tempC) || isNaN(relativeHumidity)) {
+      if (Number.isNaN(tempC) || Number.isNaN(relativeHumidity)) {
         return null;
       }
       return dewpoint(tempC, relativeHumidity);
@@ -165,7 +153,7 @@ export function evaluateEquation(
     if (match) {
       const tempC = parseFloat(match[1]!);
       const windMs = parseFloat(match[2]!);
-      if (isNaN(tempC) || isNaN(windMs)) {
+      if (Number.isNaN(tempC) || Number.isNaN(windMs)) {
         return null;
       }
       return windchill(tempC, windMs);

@@ -5,9 +5,9 @@
  * Works on Windows, macOS, and Linux.
  */
 
-import { BLEAdapterBase, BLEClientBase, isPascoUuid, getServiceIdFromUuid } from './ble-adapter.js';
-import type { BLEDevice, BLECharacteristic, NotifyCallback } from '../types/ble.js';
+import type { BLECharacteristic, BLEDevice, NotifyCallback } from '../types/ble.js';
 import { COMPATIBLE_DEVICES } from '../types/device.js';
+import { BLEAdapterBase, BLEClientBase, getServiceIdFromUuid, isPascoUuid } from './ble-adapter.js';
 
 // Noble types - these will be provided by the actual noble package
 interface NoblePeripheral {
@@ -26,7 +26,11 @@ interface NoblePeripheral {
   connect(callback?: (error?: Error) => void): void;
   disconnect(callback?: (error?: Error) => void): void;
   discoverAllServicesAndCharacteristics(
-    callback?: (error?: Error, services?: NobleService[], characteristics?: NobleCharacteristic[]) => void
+    callback?: (
+      error?: Error,
+      services?: NobleService[],
+      characteristics?: NobleCharacteristic[],
+    ) => void,
   ): void;
   on(event: string, listener: (...args: unknown[]) => void): void;
   removeListener(event: string, listener: (...args: unknown[]) => void): void;
@@ -58,7 +62,11 @@ interface Noble {
   removeListener(event: 'discover', listener: (peripheral: NoblePeripheral) => void): void;
   removeListener(event: 'stateChange', listener: (state: string) => void): void;
   removeListener(event: string, listener: (...args: unknown[]) => void): void;
-  startScanning(serviceUuids?: string[], allowDuplicates?: boolean, callback?: (error?: Error) => void): void;
+  startScanning(
+    serviceUuids?: string[],
+    allowDuplicates?: boolean,
+    callback?: (error?: Error) => void,
+  ): void;
   stopScanning(callback?: () => void): void;
 }
 
@@ -75,7 +83,7 @@ async function loadNoble(): Promise<Noble> {
     return nobleInstance;
   } catch {
     throw new Error(
-      'Noble BLE library not found. Please install @abandonware/noble: npm install @abandonware/noble'
+      'Noble BLE library not found. Please install @abandonware/noble: npm install @abandonware/noble',
     );
   }
 }
@@ -167,7 +175,8 @@ export class NobleAdapter extends BLEAdapterBase {
   }
 
   createClient(device: BLEDevice): NobleClient {
-    const peripheral = this._peripherals.get(device.address) || this._peripherals.get(device.name ?? '');
+    const peripheral =
+      this._peripherals.get(device.address) || this._peripherals.get(device.name ?? '');
     if (!peripheral) {
       throw new Error(`Peripheral not found for device: ${device.address}`);
     }
@@ -229,39 +238,41 @@ export class NobleClient extends BLEClientBase {
 
   async discoverServicesAndCharacteristics(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this._peripheral.discoverAllServicesAndCharacteristics((error, services, _characteristics) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        this._services = [];
-        this._characteristics.clear();
-
-        if (services) {
-          for (const service of services) {
-            const charList: BLECharacteristic[] = [];
-
-            for (const char of service.characteristics) {
-              charList.push({
-                uuid: char.uuid,
-                handle: isPascoUuid(char.uuid) ? getServiceIdFromUuid(char.uuid) : 0,
-                properties: char.properties,
-              });
-
-              // Cache characteristic for later use
-              this._characteristics.set(char.uuid.toLowerCase(), char);
-            }
-
-            this._services.push({
-              uuid: service.uuid,
-              characteristics: charList,
-            });
+      this._peripheral.discoverAllServicesAndCharacteristics(
+        (error, services, _characteristics) => {
+          if (error) {
+            reject(error);
+            return;
           }
-        }
 
-        resolve();
-      });
+          this._services = [];
+          this._characteristics.clear();
+
+          if (services) {
+            for (const service of services) {
+              const charList: BLECharacteristic[] = [];
+
+              for (const char of service.characteristics) {
+                charList.push({
+                  uuid: char.uuid,
+                  handle: isPascoUuid(char.uuid) ? getServiceIdFromUuid(char.uuid) : 0,
+                  properties: char.properties,
+                });
+
+                // Cache characteristic for later use
+                this._characteristics.set(char.uuid.toLowerCase(), char);
+              }
+
+              this._services.push({
+                uuid: service.uuid,
+                characteristics: charList,
+              });
+            }
+          }
+
+          resolve();
+        },
+      );
     });
   }
 

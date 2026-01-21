@@ -5,9 +5,14 @@
  * specific to the PASCO //control.Node device.
  */
 
-import { PASCOBLEDevice, DeviceNotConnected, InvalidParameter, MeasurementNotFound } from './pasco-ble-device.js';
-import { limit } from './utils/math.js';
+import {
+  DeviceNotConnected,
+  InvalidParameter,
+  MeasurementNotFound,
+  PASCOBLEDevice,
+} from './pasco-ble-device.js';
 import { unpackInt16LE } from './utils/binary.js';
+import { limit } from './utils/math.js';
 
 export type ServoType = 'standard' | 'continuous' | 0;
 export type OutputType = 'USB' | 'terminal';
@@ -110,7 +115,7 @@ export class ControlNodeDevice extends PASCOBLEDevice {
 
       // Convert from radians to degrees for angular measurements
       if (value !== null && (measurement === 'Angle' || measurement === 'AngularVelocity')) {
-        value = Math.round((value * 180) / Math.PI * 10) / 10;
+        value = Math.round(((value * 180) / Math.PI) * 10) / 10;
       }
 
       return value;
@@ -146,7 +151,11 @@ export class ControlNodeDevice extends PASCOBLEDevice {
   protected async _getStepperRemaining(): Promise<[number, number, number, number]> {
     const service = 0;
     const size = 2;
-    const command = [PASCOBLEDevice.GCMD_CONTROL_NODE_CMD, PASCOBLEDevice.CTRLNODE_CMD_DETECT_DEVICES, size];
+    const command = [
+      PASCOBLEDevice.GCMD_CONTROL_NODE_CMD,
+      PASCOBLEDevice.CTRLNODE_CMD_DETECT_DEVICES,
+      size,
+    ];
 
     await this.writeAwaitCallback(service, command);
 
@@ -186,7 +195,7 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     distanceA: number | 'continuous' | null,
     speedB: number | null,
     accelerationB: number | null,
-    distanceB: number | 'continuous' | null
+    distanceB: number | 'continuous' | null,
   ): Promise<void> {
     // Determine which steppers to control
     let stepperChannel = ControlNodeDevice.BOTH_STEPPER_CHANNEL;
@@ -232,8 +241,12 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     let speedBVal = effSpeedB * mulB * deciStepsPerDeg;
     let accelAVal = effAccelA * mulA * deciStepsPerDeg;
     let accelBVal = effAccelB * mulB * deciStepsPerDeg;
-    let distAVal = continuous1 ? 0 : Math.abs(typeof effDistA === 'number' ? effDistA : 0) * mulA * stepsPerDeg;
-    let distBVal = continuous2 ? 0 : Math.abs(typeof effDistB === 'number' ? effDistB : 0) * mulB * stepsPerDeg;
+    let distAVal = continuous1
+      ? 0
+      : Math.abs(typeof effDistA === 'number' ? effDistA : 0) * mulA * stepsPerDeg;
+    let distBVal = continuous2
+      ? 0
+      : Math.abs(typeof effDistB === 'number' ? effDistB : 0) * mulB * stepsPerDeg;
 
     // Apply limits
     speedAVal = Math.round(limit(speedAVal, -19200, 19200));
@@ -276,13 +289,20 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     speedA: number | null,
     accelerationA: number | null,
     speedB: number | null,
-    accelerationB: number | null
+    accelerationB: number | null,
   ): Promise<void> {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
 
-    await this._sendStepperCommand(speedA, accelerationA, 'continuous', speedB, accelerationB, 'continuous');
+    await this._sendStepperCommand(
+      speedA,
+      accelerationA,
+      'continuous',
+      speedB,
+      accelerationB,
+      'continuous',
+    );
   }
 
   /**
@@ -291,7 +311,11 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param speed Target velocity (deg/s)
    * @param acceleration Acceleration (deg/s/s)
    */
-  async rotateStepperContinuously(port: PortId, speed: number, acceleration: number): Promise<void> {
+  async rotateStepperContinuously(
+    port: PortId,
+    speed: number,
+    acceleration: number,
+  ): Promise<void> {
     if (port.toUpperCase() === 'A') {
       await this.rotateSteppersContinuously(speed, acceleration, null, null);
     } else if (port.toUpperCase() === 'B') {
@@ -342,13 +366,20 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     speedB: number | null,
     accelerationB: number | null,
     distanceB: number | null,
-    awaitCompletion: boolean = false
+    awaitCompletion: boolean = false,
   ): Promise<void> {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
 
-    await this._sendStepperCommand(speedA, accelerationA, distanceA, speedB, accelerationB, distanceB);
+    await this._sendStepperCommand(
+      speedA,
+      accelerationA,
+      distanceA,
+      speedB,
+      accelerationB,
+      distanceB,
+    );
 
     if (awaitCompletion) {
       let degreesRemaining = await this._getStepperRemaining();
@@ -372,12 +403,28 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     speed: number,
     acceleration: number,
     distance: number,
-    awaitCompletion: boolean = false
+    awaitCompletion: boolean = false,
   ): Promise<void> {
     if (port.toUpperCase() === 'A') {
-      await this.rotateSteppersThrough(speed, acceleration, distance, null, null, null, awaitCompletion);
+      await this.rotateSteppersThrough(
+        speed,
+        acceleration,
+        distance,
+        null,
+        null,
+        null,
+        awaitCompletion,
+      );
     } else if (port.toUpperCase() === 'B') {
-      await this.rotateSteppersThrough(null, null, null, speed, acceleration, distance, awaitCompletion);
+      await this.rotateSteppersThrough(
+        null,
+        null,
+        null,
+        speed,
+        acceleration,
+        distance,
+        awaitCompletion,
+      );
     } else {
       throw new InvalidParameter('Port must be A or B');
     }
@@ -405,7 +452,12 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param ch2Type Servo 2 type ('standard', 'continuous', or 0 for off)
    * @param ch2Value Servo 2 value (degrees or percent speed)
    */
-  async setServos(ch1Type: ServoType, ch1Value: number, ch2Type: ServoType, ch2Value: number): Promise<void> {
+  async setServos(
+    ch1Type: ServoType,
+    ch1Value: number,
+    ch2Type: ServoType,
+    ch2Value: number,
+  ): Promise<void> {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
@@ -461,7 +513,12 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param outputType 'USB' or 'terminal'
    * @param value ON/OFF for USB (0 or 1) or percent power for terminal (-100 to 100)
    */
-  async setPowerOut(port: PortId, channel: 1 | 2, outputType: OutputType, value: number): Promise<void> {
+  async setPowerOut(
+    port: PortId,
+    channel: 1 | 2,
+    outputType: OutputType,
+    value: number,
+  ): Promise<void> {
     const encodeWhichPins: Record<string, number> = {
       'A,1': 3,
       'A,2': 12,
@@ -484,8 +541,10 @@ export class ControlNodeDevice extends PASCOBLEDevice {
       throw new InvalidParameter('Invalid port/channel combination');
     }
 
-    const lsbPwmPeriod = outputType.toLowerCase() === 'terminal' ? ControlNodeDevice.LSB_PWM_PERIOD : 0x00;
-    const msbPwmPeriod = outputType.toLowerCase() === 'terminal' ? ControlNodeDevice.MSB_PWM_PERIOD : 0x00;
+    const lsbPwmPeriod =
+      outputType.toLowerCase() === 'terminal' ? ControlNodeDevice.LSB_PWM_PERIOD : 0x00;
+    const msbPwmPeriod =
+      outputType.toLowerCase() === 'terminal' ? ControlNodeDevice.MSB_PWM_PERIOD : 0x00;
 
     const values = [0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -583,7 +642,10 @@ export class ControlNodeDevice extends PASCOBLEDevice {
       throw new DeviceNotConnected();
     }
 
-    const cmd = [PASCOBLEDevice.GCMD_CONTROL_NODE_CMD, ControlNodeDevice.CTRLNODE_CMD_STOP_ACCESSORIES];
+    const cmd = [
+      PASCOBLEDevice.GCMD_CONTROL_NODE_CMD,
+      ControlNodeDevice.CTRLNODE_CMD_STOP_ACCESSORIES,
+    ];
     await this.writeAwaitCallback(PASCOBLEDevice.SENSOR_SERVICE_ID, cmd);
   }
 

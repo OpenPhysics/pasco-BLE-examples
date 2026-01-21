@@ -5,7 +5,7 @@
  * The XML is parsed at runtime to extract sensor and measurement information.
  */
 
-import type { Measurement, Datasheets, InterfaceChannel } from './types/index.js';
+import type { Datasheets, InterfaceChannel, Measurement } from './types/index.js';
 
 // Import the raw XML datasheet - this will be loaded from file in the build
 // For now, we'll use dynamic import or embed key interfaces only
@@ -175,7 +175,7 @@ export const WIRELESS_INTERFACES: Record<number, ParsedInterface> = {
  */
 export const SENSORS: Record<number, ParsedSensor> = {
   // Wireless Temperature Sensor
-  0x2020: {
+  8224: {
     id: 0x2020,
     tag: 'WirelessTemperature',
     measurements: new Map([
@@ -206,7 +206,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Pressure Sensor
-  0x2022: {
+  8226: {
     id: 0x2022,
     tag: 'WirelessPressure',
     measurements: new Map([
@@ -237,7 +237,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Force Sensor
-  0x2023: {
+  8227: {
     id: 0x2023,
     tag: 'WirelessForceSensor',
     measurements: new Map([
@@ -281,7 +281,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Acceleration Sensor
-  0x2024: {
+  8228: {
     id: 0x2024,
     tag: 'WirelessAccelerationSensor',
     measurements: new Map([
@@ -375,7 +375,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Gyro Sensor
-  0x2028: {
+  8232: {
     id: 0x2028,
     tag: 'WirelessGyroSensor',
     measurements: new Map([
@@ -457,7 +457,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Code.Node Light Sensor
-  0x2057: {
+  8279: {
     id: 0x2057,
     tag: 'CodeNodeLight',
     measurements: new Map([
@@ -489,7 +489,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Code.Node Accelerometer
-  0x2058: {
+  8280: {
     id: 0x2058,
     tag: 'CodeNodeAccelerometer',
     measurements: new Map([
@@ -583,7 +583,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Code.Node Sound Sensor
-  0x2059: {
+  8281: {
     id: 0x2059,
     tag: 'CodeNodeSound',
     measurements: new Map([
@@ -615,7 +615,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Control.Node Stepper Motor
-  0x2060: {
+  8288: {
     id: 0x2060,
     tag: 'ControlNodeStepper',
     measurements: new Map([
@@ -647,7 +647,7 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Control.Node Acceleration Sensor (built-in)
-  0x2061: {
+  8289: {
     id: 0x2061,
     tag: 'ControlNodeAcceleration',
     measurements: new Map([

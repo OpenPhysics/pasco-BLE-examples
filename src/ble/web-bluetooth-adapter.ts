@@ -5,9 +5,9 @@
  * Requires HTTPS context and user gesture to initiate scan/connect.
  */
 
-import { BLEAdapterBase, BLEClientBase, isPascoUuid, getServiceIdFromUuid } from './ble-adapter.js';
-import type { BLEDevice, BLECharacteristic, NotifyCallback } from '../types/ble.js';
+import type { BLECharacteristic, BLEDevice, NotifyCallback } from '../types/ble.js';
 import { COMPATIBLE_DEVICES } from '../types/device.js';
+import { BLEAdapterBase, BLEClientBase, getServiceIdFromUuid, isPascoUuid } from './ble-adapter.js';
 
 /**
  * Extended BLEDevice that includes the native Web Bluetooth device reference
@@ -118,7 +118,7 @@ export class WebBluetoothClient extends BLEClientBase {
       }
 
       // Connect to GATT server
-      this._server = await this._device.gatt?.connect() ?? null;
+      this._server = (await this._device.gatt?.connect()) ?? null;
       if (!this._server) {
         throw new Error('Failed to connect to GATT server');
       }
@@ -195,14 +195,16 @@ export class WebBluetoothClient extends BLEClientBase {
         }
 
         // Success - exit retry loop
-        console.log(`Service discovery complete: found ${this._characteristics.size} characteristics`);
+        console.log(
+          `Service discovery complete: found ${this._characteristics.size} characteristics`,
+        );
         console.log('Discovered characteristics:', Array.from(this._characteristics.keys()));
         return;
       } catch (error) {
         console.warn(`Service discovery attempt ${attempt}/${maxRetries} failed:`, error);
         if (attempt < maxRetries) {
           // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
     }
@@ -254,7 +256,9 @@ export class WebBluetoothClient extends BLEClientBase {
       if (value) {
         const data = new Uint8Array(value.buffer);
         const serviceId = isPascoUuid(target.uuid) ? getServiceIdFromUuid(target.uuid) : 0;
-        console.log(`Notification from UUID ${target.uuid}, serviceId=${serviceId}, data length=${data.length}`);
+        console.log(
+          `Notification from UUID ${target.uuid}, serviceId=${serviceId}, data length=${data.length}`,
+        );
         const charInfo: BLECharacteristic = {
           uuid: target.uuid,
           handle: serviceId,

@@ -36,7 +36,7 @@ export function decode64(charVal: string): number {
  */
 export function twosComplement(value: number, byteLen: number): number {
   const bitLen = byteLen * 8;
-  if (value && value > (1 << (bitLen - 1))) {
+  if (value && value > 1 << (bitLen - 1)) {
     return value - (1 << bitLen);
   }
   return value;
@@ -46,7 +46,7 @@ export function twosComplement(value: number, byteLen: number): number {
  * Convert a 32-bit value to a fixed-point fraction
  */
 export function binaryFraction(value: number): number {
-  return (value >> 16) + ((value & 0xffff) / Math.pow(2, 16));
+  return (value >> 16) + (value & 0xffff) / 2 ** 16;
 }
 
 /**
@@ -58,10 +58,9 @@ export function binaryFloat(value: number, byteLen: number): number {
   const bitLen = byteLen * 8;
   const sign = value >> 31 === 0 ? 1 : -1;
   const exp = (value >> (bitLen - 9)) & 0xff;
-  const mantissa =
-    exp !== 0 ? (value & 0xffffff) | 0x800000 : value & 0x7fffffff;
+  const mantissa = exp !== 0 ? (value & 0xffffff) | 0x800000 : value & 0x7fffffff;
 
-  return sign * mantissa * Math.pow(2, exp - 150);
+  return sign * mantissa * 2 ** (exp - 150);
 }
 
 /**
@@ -78,7 +77,7 @@ export function unpackFloat32LE(data: Uint8Array, offset: number = 0): number {
 export function unpackInt16LE(
   data: Uint8Array,
   offset: number = 0,
-  signed: boolean = false
+  signed: boolean = false,
 ): number {
   const view = new DataView(data.buffer, data.byteOffset + offset, 2);
   return signed ? view.getInt16(0, true) : view.getUint16(0, true);
@@ -90,7 +89,7 @@ export function unpackInt16LE(
 export function unpackInt32LE(
   data: Uint8Array,
   offset: number = 0,
-  signed: boolean = false
+  signed: boolean = false,
 ): number {
   const view = new DataView(data.buffer, data.byteOffset + offset, 4);
   return signed ? view.getInt32(0, true) : view.getUint32(0, true);
@@ -132,7 +131,7 @@ export function buildByteValue(stack: number[], dataSize: number): number {
   let byteValue = 0;
   for (let d = 0; d < dataSize && stack.length > 0; d++) {
     const stackValue = stack.shift()!;
-    byteValue += stackValue * Math.pow(2, 8 * d);
+    byteValue += stackValue * 2 ** (8 * d);
   }
   return byteValue;
 }

@@ -7,10 +7,7 @@
  * @param x Input value
  * @param points Array of [x, y] coordinate pairs
  */
-export function linearInterpolate(
-  x: number,
-  points: [number, number][]
-): number {
+export function linearInterpolate(x: number, points: [number, number][]): number {
   if (points.length < 2) {
     throw new Error('At least 2 points required for interpolation');
   }
@@ -66,13 +63,7 @@ export function calcLinearParams(raw: number, m: number, b: number): number {
 /**
  * Calculate 4-parameter calibration (slope offset according to factory calibration)
  */
-export function calc4Params(
-  raw: number,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number
-): number {
+export function calc4Params(raw: number, x1: number, y1: number, x2: number, y2: number): number {
   const b = (x1 * y2 - x2 * y1) / (x1 - x2);
   let m: number;
   if (x1 !== 0) {
@@ -113,12 +104,11 @@ export function threeInputVector(ax: number, ay: number, az: number): number {
  * @param relativeHumidity Relative humidity percentage
  */
 export function dewpoint(tempC: number, relativeHumidity: number): number {
-  const vaporPressureSat = 6.11 * Math.pow(10, (7.5 * tempC) / (237.7 + tempC));
+  const vaporPressureSat = 6.11 * 10 ** ((7.5 * tempC) / (237.7 + tempC));
   const vaporPressureActual = (relativeHumidity * vaporPressureSat) / 100;
 
   return (
-    (-443.22 + 237.7 * Math.log(vaporPressureActual)) /
-    (-Math.log(vaporPressureActual) + 19.08)
+    (-443.22 + 237.7 * Math.log(vaporPressureActual)) / (-Math.log(vaporPressureActual) + 19.08)
   );
 }
 
@@ -136,10 +126,7 @@ export function windchill(tempC: number, windMs: number): number {
     windChillF = tempF;
   } else {
     windChillF =
-      35.74 +
-      0.6215 * tempF -
-      35.75 * Math.pow(windMph, 0.16) +
-      0.4275 * tempF * Math.pow(windMph, 0.16);
+      35.74 + 0.6215 * tempF - 35.75 * windMph ** 0.16 + 0.4275 * tempF * windMph ** 0.16;
   }
 
   return (5 * (windChillF - 32)) / 9;
@@ -151,7 +138,7 @@ export function windchill(tempC: number, windMs: number): number {
  * @param relativeHumidity Relative humidity percentage
  */
 export function heatindex(tempC: number, relativeHumidity: number): number {
-  const vaporPressureSat = 6.11 * Math.pow(10, (7.5 * tempC) / (237.7 + tempC));
+  const vaporPressureSat = 6.11 * 10 ** ((7.5 * tempC) / (237.7 + tempC));
   const vaporPressureActual = (relativeHumidity * vaporPressureSat) / 100;
 
   return tempC + 0.55555 * (vaporPressureActual - 10.0);

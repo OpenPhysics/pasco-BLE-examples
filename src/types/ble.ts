@@ -30,7 +30,7 @@ export interface BLEClient {
   readGattChar(uuid: string): Promise<Uint8Array>;
   startNotify(
     uuid: string,
-    callback: (characteristic: BLECharacteristic, data: Uint8Array) => void
+    callback: (characteristic: BLECharacteristic, data: Uint8Array) => void,
   ): Promise<void>;
   stopNotify(uuid: string): Promise<void>;
 }
@@ -57,5 +57,5 @@ export interface BLEAdapter {
 
 export type NotifyCallback = (
   characteristic: BLECharacteristic,
-  data: Uint8Array
+  data: Uint8Array,
 ) => void | Promise<void>;

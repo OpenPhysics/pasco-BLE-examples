@@ -5,7 +5,7 @@
  * Implementations are provided for Node.js (Noble) and Browser (Web Bluetooth).
  */
 
-import type { BLEDevice, BLEClient, BLECharacteristic, NotifyCallback } from '../types/ble.js';
+import type { BLECharacteristic, BLEClient, BLEDevice, NotifyCallback } from '../types/ble.js';
 
 /**
  * Abstract BLE adapter interface
@@ -116,7 +116,7 @@ export function createPascoUuid(serviceId: number, characteristicId: number): st
  */
 export function getServiceIdFromUuid(uuid: string): number {
   const match = uuid.match(/4a5c000(\d)/);
-  if (match && match[1]) {
+  if (match?.[1]) {
     return parseInt(match[1], 10);
   }
   return -1;
@@ -127,7 +127,7 @@ export function getServiceIdFromUuid(uuid: string): number {
  */
 export function getCharacteristicIdFromUuid(uuid: string): number {
   const match = uuid.match(/4a5c000\d-000(\d)/);
-  if (match && match[1]) {
+  if (match?.[1]) {
     return parseInt(match[1], 10);
   }
   return -1;
