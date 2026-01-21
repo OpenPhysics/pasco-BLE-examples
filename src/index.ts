@@ -14,7 +14,6 @@ export {
   isPascoUuid,
 } from './ble/ble-adapter.js';
 export { createBLEAdapter, Platform } from './ble/index.js';
-export { NobleAdapter, NobleClient } from './ble/noble-adapter.js';
 export { WebBluetoothAdapter, WebBluetoothClient } from './ble/web-bluetooth-adapter.js';
 
 // Character library for LED display
