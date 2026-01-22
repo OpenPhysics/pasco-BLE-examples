@@ -12,7 +12,8 @@ export type MeasurementType =
   | 'ThreeInputVector'
   | 'Select'
   | 'RotaryPos'
-  | 'Derivative';
+  | 'Derivative'
+  | 'Equation';
 
 export interface MeasurementLimits {
   min: number;

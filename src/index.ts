@@ -62,6 +62,16 @@ export {
 export { PascoBot } from './pasco-bot.js';
 // Types
 export * from './types/index.js';
+export type { UnitDefinition, UnitGroup } from './units.js';
+// Unit conversions
+export {
+  convertUnit,
+  getDefaultUnit,
+  getUnitGroup,
+  getUnitsInGroup,
+  UNIT_GROUPS,
+  UNIT_TAG_TO_GROUP,
+} from './units.js';
 // Utility functions
 export {
   binaryFloat,
@@ -76,7 +86,6 @@ export {
   unpackInt16LE,
   unpackInt32LE,
 } from './utils/binary.js';
-
 export {
   evaluateEquation,
   evaluateTableEquation,
