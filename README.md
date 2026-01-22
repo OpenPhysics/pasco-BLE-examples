@@ -1,5 +1,4 @@
 [![TypeScript](https://img.shields.io/badge/typescript-5.3+-blue)](https://www.npmjs.com/package/pasco-ble)
-[![Node.js](https://img.shields.io/badge/node.js-18+-green)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-node.js%20%7C%20browser-lightgrey)](https://www.npmjs.com/package/pasco-ble)
 
 # PASCO BLE Library
@@ -26,18 +25,6 @@ The official TypeScript/JavaScript library for connecting to PASCO Wireless sens
 ```bash
 npm install pasco-ble
 ```
-
-### Node.js Setup
-
-For Node.js, you'll also need the Noble BLE library:
-
-```bash
-npm install @abandonware/noble
-```
-
-> **Note:** Noble has platform-specific requirements. See the [Noble documentation](https://github.com/abandonware/noble#readme) for setup instructions on your OS.
-
-### Browser Setup
 
 No additional setup required. The library uses the Web Bluetooth API built into Chrome and Edge browsers. **HTTPS is required for Web Bluetooth.**
 
