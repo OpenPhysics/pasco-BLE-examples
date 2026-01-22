@@ -3,7 +3,7 @@
 
 # PASCO BLE Library
 
-The official TypeScript/JavaScript library for connecting to PASCO Wireless sensors. Create your own data collection applications, integrate sensors with other hardware, or build unique solutions for science education!
+A TypeScript/JavaScript library for connecting to PASCO Wireless sensors. Create your own data collection applications, integrate sensors with other hardware, or build unique solutions for science education!
 
 ## Contents
 
