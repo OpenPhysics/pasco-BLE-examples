@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PASCO Code.Node Example</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h3 {
+            color: #555;
+            margin-top: 0;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .status.connecting {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+            width: 100%;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #1565c0;
+        }
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+            width: 100%;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #c62828;
+        }
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #616161;
+        }
+        .btn-icon {
+            background: #4caf50;
+            color: white;
+        }
+        .btn-icon:hover:not(:disabled) {
+            background: #43a047;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .button-row button {
+            flex: 1;
+            min-width: 100px;
+        }
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .color-picker input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .slider-group input[type="range"] {
+            flex: 1;
+        }
+        .slider-value {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .text-input {
+            display: flex;
+            gap: 10px;
+        }
+        .text-input input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .log {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Code.Node Controller</h1>
+
+    <div class="card">
+        <div id="status" class="status disconnected">Disconnected</div>
+        <button id="connectBtn" class="btn-primary">Connect to Code.Node</button>
+        <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
+    </div>
+
+    <div class="card" id="controlsCard" style="display: none;">
+        <div class="control-group">
+            <label>LED Matrix Icons</label>
+            <div class="button-grid">
+                <button class="btn-icon" data-icon="smile">Smile</button>
+                <button class="btn-icon" data-icon="heart">Heart</button>
+                <button class="btn-icon" data-icon="happy">Happy</button>
+                <button class="btn-icon" data-icon="sad">Sad</button>
+                <button class="btn-icon" data-icon="check">Check</button>
+                <button class="btn-icon" data-icon="cross">Cross</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Scroll Text</label>
+            <div class="text-input">
+                <input type="text" id="scrollText" placeholder="Enter text to scroll" value="PASCO">
+                <button id="scrollBtn" class="btn-secondary">Scroll</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>RGB LED Color</label>
+            <div class="color-picker">
+                <input type="color" id="colorPicker" value="#ff0000">
+                <button id="setColorBtn" class="btn-secondary">Set Color</button>
+                <button id="offColorBtn" class="btn-secondary">LED Off</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Speaker Frequency</label>
+            <div class="slider-group">
+                <input type="range" id="frequencySlider" min="0" max="2000" value="440">
+                <span class="slider-value" id="frequencyValue">440 Hz</span>
+            </div>
+            <div class="button-row" style="margin-top: 10px;">
+                <button id="playToneBtn" class="btn-secondary">Play Tone</button>
+                <button id="stopToneBtn" class="btn-secondary">Stop</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Quick Actions</label>
+            <div class="button-row">
+                <button id="demoBtn" class="btn-secondary">Run Demo</button>
+                <button id="resetBtn" class="btn-danger">Reset All</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Console Log</h3>
+        <div class="log" id="log"></div>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <strong>About this example:</strong><br>
+            Demonstrates Code.Node features:<br>
+            - 5x5 LED matrix display with icons and scrolling text<br>
+            - RGB LED color control<br>
+            - Speaker/buzzer frequency control<br><br>
+            <strong>Requirements:</strong><br>
+            - Chrome or Edge browser (Web Bluetooth)<br>
+            - PASCO Code.Node device
+        </div>
+    </div>
+
+    <div id="errorDiv"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "expr-eval": "https://esm.sh/expr-eval@2.0.2"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { CodeNodeDevice, Icons, WebBluetoothAdapter } from '../dist/index.js';
+
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const statusDiv = document.getElementById('status');
+        const controlsCard = document.getElementById('controlsCard');
+        const errorDiv = document.getElementById('errorDiv');
+        const logDiv = document.getElementById('log');
+        const colorPicker = document.getElementById('colorPicker');
+        const frequencySlider = document.getElementById('frequencySlider');
+        const frequencyValue = document.getElementById('frequencyValue');
+        const scrollText = document.getElementById('scrollText');
+
+        const adapter = new WebBluetoothAdapter();
+        let codeNode = null;
+
+        function log(message) {
+            const entry = document.createElement('div');
+            entry.textContent = `> ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function setStatus(status, text) {
+            statusDiv.className = 'status ' + status;
+            statusDiv.textContent = text;
+        }
+
+        function showError(message) {
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => errorDiv.innerHTML = '', 5000);
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        async function connect() {
+            try {
+                log('Scanning for Code.Node devices...');
+                setStatus('connecting', 'Select your Code.Node...');
+                connectBtn.disabled = true;
+                errorDiv.innerHTML = '';
+
+                codeNode = new CodeNodeDevice(adapter);
+
+                const devices = await codeNode.scan('//code.Node');
+
+                if (devices.length === 0) {
+                    throw new Error('No device selected');
+                }
+
+                log(`Found: ${devices[0].name}`);
+                setStatus('connecting', 'Connecting...');
+                await codeNode.connect(devices[0]);
+
+                log('Connected!');
+                setStatus('connected', `Connected: ${devices[0].name}`);
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                controlsCard.style.display = 'block';
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                log(`Error: ${error.message}`);
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                showError(`Connection failed: ${error.message}`);
+            }
+        }
+
+        async function disconnect() {
+            try {
+                log('Disconnecting...');
+                if (codeNode) {
+                    await codeNode.disconnect();
+                    codeNode = null;
+                }
+                log('Disconnected');
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                controlsCard.style.display = 'none';
+            } catch (error) {
+                log(`Disconnect error: ${error.message}`);
+                showError(`Disconnect error: ${error.message}`);
+            }
+        }
+
+        async function showIcon(iconName) {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                log(`Showing ${iconName} icon...`);
+                await codeNode.showImageInArray(Icons[iconName]);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function scrollTextOnDisplay() {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                const text = scrollText.value || 'PASCO';
+                log(`Scrolling text: "${text}"...`);
+                await codeNode.scrollTextInArray(text, 150);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function setColor() {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                const rgb = hexToRgb(colorPicker.value);
+                log(`Setting RGB LED to (${rgb.r}, ${rgb.g}, ${rgb.b})...`);
+                await codeNode.setRgbLed(rgb.r, rgb.g, rgb.b);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function turnOffLed() {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                log('Turning off RGB LED...');
+                await codeNode.setRgbLed(0, 0, 0);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function playTone() {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                const freq = parseInt(frequencySlider.value);
+                log(`Playing tone at ${freq} Hz...`);
+                await codeNode.setSoundFrequency(freq);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function stopTone() {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                log('Stopping tone...');
+                await codeNode.setSoundFrequency(0);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function runDemo() {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                log('Running demo sequence...');
+
+                // Show icons
+                log('Showing smile icon...');
+                await codeNode.showImageInArray(Icons.smile);
+                await delay(1000);
+
+                log('Showing heart icon...');
+                await codeNode.showImageInArray(Icons.heart);
+                await delay(1000);
+
+                // Scroll text
+                log('Scrolling "PASCO"...');
+                await codeNode.scrollTextInArray('PASCO', 150);
+                await delay(500);
+
+                // Cycle RGB colors
+                log('Cycling RGB LED colors...');
+                await codeNode.setRgbLed(255, 0, 0);
+                await delay(500);
+                await codeNode.setRgbLed(0, 255, 0);
+                await delay(500);
+                await codeNode.setRgbLed(0, 0, 255);
+                await delay(500);
+
+                // Play tones
+                log('Playing tones...');
+                await codeNode.setSoundFrequency(440);
+                await delay(300);
+                await codeNode.setSoundFrequency(523);
+                await delay(300);
+                await codeNode.setSoundFrequency(659);
+                await delay(300);
+
+                // Reset
+                log('Demo complete, resetting...');
+                await codeNode.reset();
+                log('Done!');
+
+            } catch (error) {
+                log(`Demo error: ${error.message}`);
+            }
+        }
+
+        async function resetAll() {
+            if (!codeNode || !codeNode.isConnected()) return;
+            try {
+                log('Resetting all outputs...');
+                await codeNode.reset();
+                log('Reset complete');
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+
+        // Icon buttons
+        document.querySelectorAll('[data-icon]').forEach(btn => {
+            btn.addEventListener('click', () => showIcon(btn.dataset.icon));
+        });
+
+        document.getElementById('scrollBtn').addEventListener('click', scrollTextOnDisplay);
+        document.getElementById('setColorBtn').addEventListener('click', setColor);
+        document.getElementById('offColorBtn').addEventListener('click', turnOffLed);
+        document.getElementById('playToneBtn').addEventListener('click', playTone);
+        document.getElementById('stopToneBtn').addEventListener('click', stopTone);
+        document.getElementById('demoBtn').addEventListener('click', runDemo);
+        document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+        frequencySlider.addEventListener('input', () => {
+            frequencyValue.textContent = `${frequencySlider.value} Hz`;
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (codeNode && codeNode.isConnected()) {
+                codeNode.disconnect();
+            }
+        });
+
+        log('Ready. Click "Connect" to connect to a Code.Node.');
+    </script>
+</body>
+</html>
