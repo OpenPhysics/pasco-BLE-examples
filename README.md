@@ -1,4 +1,5 @@
 [![TypeScript](https://img.shields.io/badge/typescript-5.9+-blue)](https://www.npmjs.com/package/pasco-ble)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-browser%20only-lightgrey)](https://www.npmjs.com/package/pasco-ble)
 [![Web Bluetooth](https://img.shields.io/badge/Web%20Bluetooth-required-blue)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API)
 [![License](https://img.shields.io/badge/license-Custom-orange)](LICENSE)
