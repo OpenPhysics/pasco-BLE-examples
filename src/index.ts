@@ -47,14 +47,23 @@ export {
 // Main device classes
 // Advanced: Internal device modules (for extension)
 export {
+  type ConnectionState,
+  ConnectionStateMachine,
+  createLogger,
+  DEFAULT_DEVICE_OPTIONS,
   type DecoderState,
+  type DeviceLogger,
+  type DeviceOptions,
   type InitializerState,
+  type LogLevel,
   MeasurementDecoder,
   type NotificationHandler,
   PASCOBLEDevice,
   PROTOCOL,
   ProtocolHandler,
   SensorInitializer,
+  type StateChangeCallback,
+  type StateTransition,
 } from './device/index.js';
 // Error classes
 export {
@@ -102,6 +111,13 @@ export {
   evaluateTableEquation,
   parentheticContents,
 } from './utils/equation-parser.js';
+// Event emitter
+export {
+  type DeviceEventName,
+  type DeviceEvents,
+  type EventListener,
+  TypedEventEmitter,
+} from './utils/event-emitter.js';
 export {
   calc4Params,
   calcLinearParams,
@@ -114,3 +130,11 @@ export {
   usound,
   windchill,
 } from './utils/math.js';
+// Retry utilities
+export {
+  calculateBackoffDelay,
+  delay,
+  type RetryOptions,
+  retryable,
+  withRetry,
+} from './utils/retry.js';

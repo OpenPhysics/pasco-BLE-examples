@@ -20,6 +20,14 @@ import type { BLEDevice } from '../types/ble.js';
 import { COMPATIBLE_DEVICES } from '../types/device.js';
 import type { Measurement, SensorChannel } from '../types/index.js';
 import { decode64 } from '../utils/binary.js';
+import { type DeviceEvents, TypedEventEmitter } from '../utils/event-emitter.js';
+import { type ConnectionState, ConnectionStateMachine } from './connection-state.js';
+import {
+  createLogger,
+  DEFAULT_DEVICE_OPTIONS,
+  type DeviceLogger,
+  type DeviceOptions,
+} from './device-options.js';
 import { type DecoderState, MeasurementDecoder } from './measurement-decoder.js';
 import { PROTOCOL, ProtocolHandler } from './protocol-handler.js';
 import { type InitializerState, SensorInitializer } from './sensor-initializer.js';
@@ -28,8 +36,31 @@ import { type InitializerState, SensorInitializer } from './sensor-initializer.j
  * PASCO BLE Device class
  *
  * Provides functionality for connecting to and reading data from PASCO BLE sensors.
+ * Extends TypedEventEmitter to provide event-based notifications.
+ *
+ * @example
+ * ```typescript
+ * // Basic usage
+ * const device = new PASCOBLEDevice();
+ *
+ * // With configuration options
+ * const device = new PASCOBLEDevice({
+ *   connectionTimeout: 15000,
+ *   retry: { maxRetries: 3 },
+ *   logLevel: 'debug',
+ * });
+ *
+ * // Listen for events
+ * device.on('connected', ({ name }) => console.log(`Connected to ${name}`));
+ * device.on('data', ({ measurement, value }) => console.log(`${measurement}: ${value}`));
+ * device.on('error', ({ error }) => console.error(error));
+ *
+ * // Connect and read data
+ * const devices = await device.scan();
+ * await device.connect(devices[0]);
+ * ```
  */
-export class PASCOBLEDevice {
+export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
   // Static constants for backward compatibility with subclasses
   protected static readonly SENSOR_SERVICE_ID = PROTOCOL.SENSOR_SERVICE_ID;
   protected static readonly SEND_CMD_CHAR_ID = PROTOCOL.SEND_CMD_CHAR_ID;
@@ -44,6 +75,15 @@ export class PASCOBLEDevice {
   protected static readonly CNTRLNODE_PLUGINS_CALLBACK = PROTOCOL.CNTRLNODE_PLUGINS_CALLBACK;
   protected static readonly CTRLNODE_CMD_DETECT_DEVICES = PROTOCOL.CTRLNODE_CMD_DETECT_DEVICES;
   protected static readonly WIRELESS_RMS_START = PROTOCOL.WIRELESS_RMS_START;
+
+  // Configuration options
+  protected _options: Required<Omit<DeviceOptions, 'logger'>>;
+  protected _logger: DeviceLogger;
+
+  // Connection state machine
+  protected _stateMachine: ConnectionStateMachine;
+  protected _reconnectAttempts = 0;
+  protected _lastConnectedDevice: BLEDevice | null = null;
 
   // BLE adapter and client
   protected _adapter: BLEAdapterBase;
@@ -80,10 +120,53 @@ export class PASCOBLEDevice {
   protected _decoder: MeasurementDecoder;
   protected _initializer: SensorInitializer;
 
-  constructor(adapter?: BLEAdapterBase) {
+  /**
+   * Create a new PASCOBLEDevice instance.
+   *
+   * @param options - Configuration options or a BLE adapter for backward compatibility
+   */
+  constructor(options?: DeviceOptions | BLEAdapterBase) {
+    super();
+
+    // Handle backward compatibility: if an adapter is passed directly
+    let adapter: BLEAdapterBase | undefined;
+    let deviceOptions: DeviceOptions = {};
+
+    if (options && typeof options === 'object' && 'scan' in options) {
+      // It's a BLE adapter (has scan method)
+      adapter = options as BLEAdapterBase;
+    } else if (options) {
+      // It's configuration options
+      deviceOptions = options as DeviceOptions;
+    }
+
+    // Merge options with defaults
+    this._options = { ...DEFAULT_DEVICE_OPTIONS, ...deviceOptions };
+    this._logger = createLogger(this._options.logLevel, deviceOptions.logger);
+
+    // Initialize state machine
+    this._stateMachine = new ConnectionStateMachine();
+    this._stateMachine.onStateChange((transition) => {
+      this._logger.debug(
+        `State changed: ${transition.from} -> ${transition.to}`,
+        transition.reason ?? '',
+      );
+      this.emit('stateChange', {
+        previousState: transition.from,
+        newState: transition.to,
+      });
+    });
+
     this._adapter = adapter ?? createBLEAdapter();
     this._protocol = new ProtocolHandler();
     this._protocol.setNotificationHandler(this._handleNotification.bind(this));
+
+    // Apply retry options to protocol handler
+    if (this._options.retry) {
+      this._protocol.setRetryOptions(this._options.retry);
+    }
+
+    this._logger.debug('PASCOBLEDevice initialized with options:', this._options);
 
     // Create shared state for decoder
     const decoderState: DecoderState = {
@@ -135,6 +218,20 @@ export class PASCOBLEDevice {
     return this._sensorNames;
   }
 
+  /**
+   * Get current configuration options
+   */
+  get options(): Readonly<Required<Omit<DeviceOptions, 'logger'>>> {
+    return this._options;
+  }
+
+  /**
+   * Get current connection state
+   */
+  get connectionState(): ConnectionState {
+    return this._stateMachine.state;
+  }
+
   // ==================== Connection ====================
 
   /**
@@ -160,17 +257,38 @@ export class PASCOBLEDevice {
       throw new InvalidParameter();
     }
 
-    if (this._client !== null) {
-      throw new BLEAlreadyConnectedError();
+    // Check state machine - can only connect from disconnected state
+    if (!this._stateMachine.canConnect) {
+      if (this._stateMachine.isConnected) {
+        throw new BLEAlreadyConnectedError();
+      }
+      throw new BLEConnectionError(); // Already connecting or other invalid state
     }
 
+    // Transition to connecting state
+    this._stateMachine.transitionTo('connecting', 'connect() called');
+    this._lastConnectedDevice = bleDevice;
+
+    this._logger.info('Connecting to device:', bleDevice.name);
     this._client = this._adapter.createClient(bleDevice);
 
     try {
-      await this._client.connect();
-    } catch {
+      // Create connection with timeout
+      const connectPromise = this._client.connect();
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new BLEConnectionError());
+        }, this._options.connectionTimeout);
+      });
+
+      await Promise.race([connectPromise, timeoutPromise]);
+    } catch (e) {
       this._client = null;
-      throw new BLEConnectionError();
+      this._stateMachine.transitionTo('disconnected', 'connection failed');
+      const error = e instanceof BLEConnectionError ? e : new BLEConnectionError();
+      this._logger.error('Connection failed:', error.message);
+      this.emit('error', { error, context: 'connect' });
+      throw error;
     }
 
     this._setDeviceParams(bleDevice);
@@ -186,6 +304,14 @@ export class PASCOBLEDevice {
     }
 
     await this._initializeDevice();
+
+    // Transition to connected state
+    this._stateMachine.transitionTo('connected', 'initialization complete');
+    this._reconnectAttempts = 0;
+
+    this._logger.info('Connected to device:', this._name);
+    // Emit connected event
+    this.emit('connected', { name: this._name, address: this._address });
   }
 
   /**
@@ -217,18 +343,81 @@ export class PASCOBLEDevice {
    * Check if the device is connected
    */
   isConnected(): boolean {
-    return this._client?.isConnected ?? false;
+    return this._stateMachine.isConnected;
   }
 
   /**
    * Disconnect from the device
    */
   async disconnect(): Promise<void> {
+    if (!this._stateMachine.canDisconnect) {
+      return; // Already disconnected or disconnecting
+    }
+
+    this._stateMachine.transitionTo('disconnecting', 'disconnect() called');
+
     if (this._client) {
       await this._client.disconnect();
     }
     this._client = null;
     this._protocol.setClient(null);
+
+    this._stateMachine.transitionTo('disconnected', 'disconnection complete');
+    this.emit('disconnected', { reason: 'user' });
+  }
+
+  /**
+   * Attempt to reconnect to the last connected device
+   * @returns true if reconnection was successful
+   */
+  async reconnect(): Promise<boolean> {
+    if (!this._lastConnectedDevice) {
+      this._logger.warn('No previous device to reconnect to');
+      return false;
+    }
+
+    if (!this._stateMachine.canConnect) {
+      this._logger.warn('Cannot reconnect: invalid state', this._stateMachine.state);
+      return false;
+    }
+
+    this._stateMachine.transitionTo('connecting', 'reconnect() called');
+    this._reconnectAttempts++;
+
+    try {
+      // Reset state before reconnecting
+      this._stateMachine.reset();
+      await this.connect(this._lastConnectedDevice);
+      return true;
+    } catch (error) {
+      this._logger.error('Reconnection failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle unexpected disconnection with auto-reconnect support
+   */
+  protected async _handleUnexpectedDisconnect(): Promise<void> {
+    const wasConnected = this._stateMachine.isConnected;
+
+    if (wasConnected) {
+      this._stateMachine.tryTransitionTo('disconnected', 'unexpected disconnection');
+      this.emit('disconnected', { reason: 'unexpected' });
+
+      // Attempt auto-reconnect if enabled
+      if (
+        this._options.autoReconnect &&
+        this._reconnectAttempts < this._options.maxReconnectAttempts
+      ) {
+        this._logger.info(
+          `Attempting auto-reconnect (${this._reconnectAttempts + 1}/${this._options.maxReconnectAttempts})`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, this._options.reconnectDelay));
+        await this.reconnect();
+      }
+    }
   }
 
   // ==================== Public API ====================
@@ -340,8 +529,17 @@ export class PASCOBLEDevice {
       throw new MeasurementNotFound();
     }
 
+    this._logger.debug('Reading measurement:', measurement);
     await this._getSensorMeasurements(sensorId);
-    return this._dataResults.get(measurement) ?? null;
+    const value = this._dataResults.get(measurement) ?? null;
+
+    // Emit data event if enabled
+    if (this._options.emitDataEvents) {
+      const unit = this.getMeasurementUnit(measurement);
+      this.emit('data', { measurement, value, unit });
+    }
+
+    return value;
   }
 
   /**
@@ -378,10 +576,17 @@ export class PASCOBLEDevice {
       await this._getSensorMeasurements(sensorId);
     }
 
-    // Build result
+    // Build result and emit events
     const result: Record<string, number | null> = {};
     for (const measurement of measurements) {
-      result[measurement] = this._dataResults.get(measurement) ?? null;
+      const value = this._dataResults.get(measurement) ?? null;
+      result[measurement] = value;
+
+      // Emit data event for each measurement if enabled
+      if (this._options.emitDataEvents) {
+        const unit = this.getMeasurementUnit(measurement);
+        this.emit('data', { measurement, value, unit });
+      }
     }
     return result;
   }
@@ -450,12 +655,21 @@ export class PASCOBLEDevice {
     } else {
       this._initializer.initializeSensors();
     }
+
+    // Emit sensors ready event
+    const sensors = Array.from(this._sensorNames.keys());
+    this.emit('sensorsReady', { sensors });
   }
 
   /**
    * Handle incoming BLE notifications
    */
   protected _handleNotification(serviceId: number, data: number[]): void {
+    // Emit notification event for debugging/advanced usage if enabled
+    if (this._options.emitNotificationEvents) {
+      this.emit('notification', { serviceId, data });
+    }
+
     if (serviceId > 0) {
       // Sensor measurement response
       this._processMeasurementResponse(serviceId - 1, data);

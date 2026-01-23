@@ -8,6 +8,7 @@ import type { BLEClientBase } from '../ble/ble-adapter.js';
 import { createPascoUuid } from '../ble/ble-adapter.js';
 import { CommunicationError } from '../errors.js';
 import type { BLECharacteristic } from '../types/ble.js';
+import { type RetryOptions, withRetry } from '../utils/retry.js';
 
 /**
  * Protocol constants for PASCO BLE communication
@@ -41,6 +42,12 @@ export class ProtocolHandler {
   private _handleService: Map<number, number> = new Map();
   private _callbackResolve: ((value: boolean) => void) | null = null;
   private _onNotification: NotificationHandler | null = null;
+  private _retryOptions: RetryOptions = {
+    maxRetries: 0, // Disabled by default for backward compatibility
+    initialDelayMs: 500,
+    maxDelayMs: 5000,
+    backoffMultiplier: 2,
+  };
 
   /**
    * Set the BLE client for communication
@@ -50,6 +57,21 @@ export class ProtocolHandler {
     if (!client) {
       this._handleService.clear();
     }
+  }
+
+  /**
+   * Configure retry options for BLE operations
+   * @param options Retry configuration
+   */
+  setRetryOptions(options: RetryOptions): void {
+    this._retryOptions = { ...this._retryOptions, ...options };
+  }
+
+  /**
+   * Get current retry options
+   */
+  getRetryOptions(): RetryOptions {
+    return { ...this._retryOptions };
   }
 
   /**
@@ -117,9 +139,9 @@ export class ProtocolHandler {
   }
 
   /**
-   * Write a command to the device
+   * Write a command to the device (internal, without retry)
    */
-  async write(serviceId: number, command: number[]): Promise<void> {
+  private async _writeInternal(serviceId: number, command: number[]): Promise<void> {
     const uuid = createPascoUuid(serviceId, PROTOCOL.SEND_CMD_CHAR_ID);
     try {
       await this._client?.writeGattChar(uuid, new Uint8Array(command));
@@ -129,9 +151,22 @@ export class ProtocolHandler {
   }
 
   /**
-   * Send an acknowledgement to the device
+   * Write a command to the device with optional retry
    */
-  async sendAck(serviceId: number, command: number[]): Promise<void> {
+  async write(serviceId: number, command: number[]): Promise<void> {
+    if (this._retryOptions.maxRetries && this._retryOptions.maxRetries > 0) {
+      return withRetry(() => this._writeInternal(serviceId, command), {
+        ...this._retryOptions,
+        isRetryable: (error) => error instanceof CommunicationError,
+      });
+    }
+    return this._writeInternal(serviceId, command);
+  }
+
+  /**
+   * Send an acknowledgement to the device (internal, without retry)
+   */
+  private async _sendAckInternal(serviceId: number, command: number[]): Promise<void> {
     const uuid = createPascoUuid(serviceId, PROTOCOL.SEND_ACK_CHAR_ID);
     try {
       await this._client?.writeGattChar(uuid, new Uint8Array(command));
@@ -141,9 +176,26 @@ export class ProtocolHandler {
   }
 
   /**
-   * Write a command and wait for callback response
+   * Send an acknowledgement to the device with optional retry
    */
-  async writeAwaitCallback(serviceId: number, command: number[], timeoutMs = 5000): Promise<void> {
+  async sendAck(serviceId: number, command: number[]): Promise<void> {
+    if (this._retryOptions.maxRetries && this._retryOptions.maxRetries > 0) {
+      return withRetry(() => this._sendAckInternal(serviceId, command), {
+        ...this._retryOptions,
+        isRetryable: (error) => error instanceof CommunicationError,
+      });
+    }
+    return this._sendAckInternal(serviceId, command);
+  }
+
+  /**
+   * Write a command and wait for callback response (internal, without retry)
+   */
+  private _writeAwaitCallbackInternal(
+    serviceId: number,
+    command: number[],
+    timeoutMs: number,
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this._callbackResolve = null;
@@ -155,11 +207,24 @@ export class ProtocolHandler {
         resolve();
       };
 
-      this.write(serviceId, command).catch((err) => {
+      this._writeInternal(serviceId, command).catch((err) => {
         clearTimeout(timeout);
         this._callbackResolve = null;
         reject(err);
       });
     });
+  }
+
+  /**
+   * Write a command and wait for callback response with optional retry
+   */
+  async writeAwaitCallback(serviceId: number, command: number[], timeoutMs = 5000): Promise<void> {
+    if (this._retryOptions.maxRetries && this._retryOptions.maxRetries > 0) {
+      return withRetry(() => this._writeAwaitCallbackInternal(serviceId, command, timeoutMs), {
+        ...this._retryOptions,
+        isRetryable: (error) => error instanceof CommunicationError,
+      });
+    }
+    return this._writeAwaitCallbackInternal(serviceId, command, timeoutMs);
   }
 }
