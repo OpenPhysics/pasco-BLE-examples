@@ -75,6 +75,7 @@ export {
   CommunicationError,
   CouldNotDecodeData,
   DeviceNotConnected,
+  type ErrorOptions,
   InvalidEquation,
   InvalidParameter,
   MeasurementNotFound,
