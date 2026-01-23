@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PASCO BLE Basic Usage</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .status.connecting {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        button {
+            width: 100%;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #connectBtn {
+            background: #1976d2;
+            color: white;
+        }
+        #connectBtn:hover:not(:disabled) {
+            background: #1565c0;
+        }
+        #disconnectBtn {
+            background: #d32f2f;
+            color: white;
+        }
+        #disconnectBtn:hover:not(:disabled) {
+            background: #c62828;
+        }
+        .measurements {
+            margin-top: 20px;
+        }
+        .measurement-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .measurement-row:last-child {
+            border-bottom: none;
+        }
+        .measurement-name {
+            color: #666;
+        }
+        .measurement-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .log {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>PASCO BLE Basic Usage</h1>
+
+    <div class="card">
+        <div id="status" class="status disconnected">Disconnected</div>
+        <button id="connectBtn">Connect to PASCO Device</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+    </div>
+
+    <div class="card measurements" id="measurementsCard" style="display: none;">
+        <h3>Available Measurements</h3>
+        <div id="measurementsList"></div>
+    </div>
+
+    <div class="card">
+        <h3>Console Log</h3>
+        <div class="log" id="log"></div>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <strong>About this example:</strong><br>
+            Demonstrates basic PASCO BLE device usage:<br>
+            - Scanning for devices<br>
+            - Connecting to a device<br>
+            - Reading all available measurements<br>
+            - Disconnecting<br><br>
+            <strong>Requirements:</strong><br>
+            - Chrome or Edge browser (Web Bluetooth)<br>
+            - Any PASCO BLE sensor device
+        </div>
+    </div>
+
+    <div id="errorDiv"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "expr-eval": "https://esm.sh/expr-eval@2.0.2"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { PASCOBLEDevice, WebBluetoothAdapter } from '../dist/index.js';
+
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const statusDiv = document.getElementById('status');
+        const measurementsCard = document.getElementById('measurementsCard');
+        const measurementsList = document.getElementById('measurementsList');
+        const errorDiv = document.getElementById('errorDiv');
+        const logDiv = document.getElementById('log');
+
+        const adapter = new WebBluetoothAdapter();
+        let device = null;
+        let readingInterval = null;
+
+        function log(message) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `> ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function setStatus(status, text) {
+            statusDiv.className = 'status ' + status;
+            statusDiv.textContent = text;
+        }
+
+        function showError(message) {
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => errorDiv.innerHTML = '', 5000);
+        }
+
+        async function connect() {
+            try {
+                log('Scanning for PASCO devices...');
+                setStatus('connecting', 'Select your sensor...');
+                connectBtn.disabled = true;
+                errorDiv.innerHTML = '';
+
+                device = new PASCOBLEDevice(adapter);
+
+                // Scan for any PASCO device
+                const devices = await device.scan();
+
+                if (devices.length === 0) {
+                    throw new Error('No device selected');
+                }
+
+                log(`Found device: ${devices[0].name}`);
+                setStatus('connecting', 'Connecting...');
+                log(`Connecting to ${devices[0].name}...`);
+                await device.connect(devices[0]);
+
+                log('Connected!');
+                setStatus('connected', `Connected: ${devices[0].name}`);
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+
+                // Get available measurements
+                const measurements = device.getMeasurementList();
+                log(`Available measurements: ${measurements.join(', ')}`);
+
+                // Show measurements card
+                measurementsCard.style.display = 'block';
+
+                // Start reading data
+                startReading();
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                log(`Error: ${error.message}`);
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+
+                if (error.message.includes('User cancelled')) {
+                    showError('Connection cancelled by user');
+                } else if (error.message.includes('No device selected')) {
+                    showError('No device selected');
+                } else {
+                    showError(`Connection failed: ${error.message}`);
+                }
+            }
+        }
+
+        async function disconnect() {
+            try {
+                stopReading();
+                log('Disconnecting...');
+
+                if (device) {
+                    await device.disconnect();
+                    device = null;
+                }
+
+                log('Disconnected');
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                measurementsCard.style.display = 'none';
+                measurementsList.innerHTML = '';
+
+            } catch (error) {
+                console.error('Disconnect error:', error);
+                log(`Disconnect error: ${error.message}`);
+                showError(`Disconnect error: ${error.message}`);
+            }
+        }
+
+        function startReading() {
+            readingInterval = setInterval(async () => {
+                if (!device || !device.isConnected()) {
+                    stopReading();
+                    return;
+                }
+
+                try {
+                    const measurements = device.getMeasurementList();
+                    const data = await device.readDataList(measurements);
+
+                    let html = '';
+                    for (const name of measurements) {
+                        const value = data[name];
+                        const unit = device.getMeasurementUnit(name) || '';
+                        const displayValue = value !== null && value !== undefined
+                            ? (typeof value === 'number' ? value.toFixed(3) : value)
+                            : '--';
+                        html += `
+                            <div class="measurement-row">
+                                <span class="measurement-name">${name}</span>
+                                <span class="measurement-value">${displayValue} ${unit}</span>
+                            </div>
+                        `;
+                    }
+                    measurementsList.innerHTML = html;
+
+                } catch (error) {
+                    console.error('Read error:', error);
+                }
+            }, 100);
+        }
+
+        function stopReading() {
+            if (readingInterval) {
+                clearInterval(readingInterval);
+                readingInterval = null;
+            }
+        }
+
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+
+        window.addEventListener('beforeunload', () => {
+            if (device && device.isConnected()) {
+                device.disconnect();
+            }
+        });
+
+        log('Ready. Click "Connect" to scan for devices.');
+    </script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PASCO Control.Node Example</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h3 {
+            color: #555;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .status.connecting {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #1565c0;
+        }
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #c62828;
+        }
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #616161;
+        }
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+        .btn-success:hover:not(:disabled) {
+            background: #43a047;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .slider-group input[type="range"] {
+            flex: 1;
+        }
+        .slider-value {
+            min-width: 80px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .input-group input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .input-group select {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .measurements {
+            margin-top: 20px;
+        }
+        .measurement-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .measurement-row:last-child {
+            border-bottom: none;
+        }
+        .measurement-name {
+            color: #666;
+        }
+        .measurement-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .log {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 600px) {
+            .section-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Control.Node Controller</h1>
+
+    <div class="card">
+        <div id="status" class="status disconnected">Disconnected</div>
+        <button id="connectBtn" class="btn-primary">Connect to Control.Node</button>
+        <button id="disconnectBtn" class="btn-danger" disabled style="width: 100%; margin-top: 10px;">Disconnect</button>
+    </div>
+
+    <div id="controlsCard" style="display: none;">
+        <div class="section-grid">
+            <div class="card">
+                <h3>Stepper Motors</h3>
+                <div class="control-group">
+                    <label>Continuous Rotation</label>
+                    <div class="slider-group">
+                        <span>Speed A:</span>
+                        <input type="range" id="stepperASpeed" min="-360" max="360" value="180">
+                        <span class="slider-value" id="stepperASpeedVal">180 deg/s</span>
+                    </div>
+                    <div class="slider-group">
+                        <span>Speed B:</span>
+                        <input type="range" id="stepperBSpeed" min="-360" max="360" value="180">
+                        <span class="slider-value" id="stepperBSpeedVal">180 deg/s</span>
+                    </div>
+                    <div class="button-row">
+                        <button id="startSteppersBtn" class="btn-success">Start</button>
+                        <button id="stopSteppersBtn" class="btn-danger">Stop</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotate Through Angle</label>
+                    <div class="input-group">
+                        <select id="stepperSelect">
+                            <option value="A">Stepper A</option>
+                            <option value="B">Stepper B</option>
+                        </select>
+                        <input type="number" id="rotateAngle" value="360" placeholder="Degrees">
+                        <button id="rotateBtn" class="btn-secondary">Rotate</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Servo Motors</h3>
+                <div class="control-group">
+                    <label>Servo 1 Position</label>
+                    <div class="slider-group">
+                        <input type="range" id="servo1Pos" min="-90" max="90" value="0">
+                        <span class="slider-value" id="servo1PosVal">0 deg</span>
+                    </div>
+                    <button id="setServo1Btn" class="btn-secondary">Set Position</button>
+                </div>
+                <div class="control-group">
+                    <label>Servo 2 Position</label>
+                    <div class="slider-group">
+                        <input type="range" id="servo2Pos" min="-90" max="90" value="0">
+                        <span class="slider-value" id="servo2PosVal">0 deg</span>
+                    </div>
+                    <button id="setServo2Btn" class="btn-secondary">Set Position</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-grid">
+            <div class="card">
+                <h3>Speaker</h3>
+                <div class="control-group">
+                    <div class="slider-group">
+                        <span>Frequency:</span>
+                        <input type="range" id="speakerFreq" min="0" max="2000" value="440">
+                        <span class="slider-value" id="speakerFreqVal">440 Hz</span>
+                    </div>
+                    <div class="button-row">
+                        <button id="playFreqBtn" class="btn-success">Play</button>
+                        <button id="stopFreqBtn" class="btn-danger">Stop</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Sensor Readings</h3>
+                <div class="measurements" id="measurementsList">
+                    <div class="measurement-row">
+                        <span class="measurement-name">No data</span>
+                        <span class="measurement-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="button-row">
+                <button id="resetBtn" class="btn-danger">Reset All Outputs</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Console Log</h3>
+        <div class="log" id="log"></div>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <strong>About this example:</strong><br>
+            Demonstrates Control.Node features:<br>
+            - Stepper motor control (continuous & angle-based)<br>
+            - Servo motor positioning<br>
+            - Speaker frequency control<br>
+            - Reading sensor data from plugin ports<br><br>
+            <strong>Requirements:</strong><br>
+            - Chrome or Edge browser (Web Bluetooth)<br>
+            - PASCO Control.Node device
+        </div>
+    </div>
+
+    <div id="errorDiv"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "expr-eval": "https://esm.sh/expr-eval@2.0.2"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { ControlNodeDevice, WebBluetoothAdapter } from '../dist/index.js';
+
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const statusDiv = document.getElementById('status');
+        const controlsCard = document.getElementById('controlsCard');
+        const errorDiv = document.getElementById('errorDiv');
+        const logDiv = document.getElementById('log');
+        const measurementsList = document.getElementById('measurementsList');
+
+        const stepperASpeed = document.getElementById('stepperASpeed');
+        const stepperBSpeed = document.getElementById('stepperBSpeed');
+        const stepperASpeedVal = document.getElementById('stepperASpeedVal');
+        const stepperBSpeedVal = document.getElementById('stepperBSpeedVal');
+        const servo1Pos = document.getElementById('servo1Pos');
+        const servo2Pos = document.getElementById('servo2Pos');
+        const servo1PosVal = document.getElementById('servo1PosVal');
+        const servo2PosVal = document.getElementById('servo2PosVal');
+        const speakerFreq = document.getElementById('speakerFreq');
+        const speakerFreqVal = document.getElementById('speakerFreqVal');
+
+        const adapter = new WebBluetoothAdapter();
+        let controlNode = null;
+        let readingInterval = null;
+
+        function log(message) {
+            const entry = document.createElement('div');
+            entry.textContent = `> ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function setStatus(status, text) {
+            statusDiv.className = 'status ' + status;
+            statusDiv.textContent = text;
+        }
+
+        function showError(message) {
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => errorDiv.innerHTML = '', 5000);
+        }
+
+        async function connect() {
+            try {
+                log('Scanning for Control.Node devices...');
+                setStatus('connecting', 'Select your Control.Node...');
+                connectBtn.disabled = true;
+
+                controlNode = new ControlNodeDevice(adapter);
+                const devices = await controlNode.scan('//control.Node');
+
+                if (devices.length === 0) {
+                    throw new Error('No device selected');
+                }
+
+                log(`Found: ${devices[0].name}`);
+                setStatus('connecting', 'Connecting...');
+                await controlNode.connect(devices[0]);
+
+                log('Connected!');
+                setStatus('connected', `Connected: ${devices[0].name}`);
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                controlsCard.style.display = 'block';
+
+                const measurements = controlNode.getMeasurementList();
+                log(`Available measurements: ${measurements.join(', ')}`);
+
+                startReading();
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                log(`Error: ${error.message}`);
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                showError(`Connection failed: ${error.message}`);
+            }
+        }
+
+        async function disconnect() {
+            try {
+                stopReading();
+                log('Disconnecting...');
+                if (controlNode) {
+                    await controlNode.disconnect();
+                    controlNode = null;
+                }
+                log('Disconnected');
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                controlsCard.style.display = 'none';
+            } catch (error) {
+                log(`Disconnect error: ${error.message}`);
+            }
+        }
+
+        function startReading() {
+            readingInterval = setInterval(async () => {
+                if (!controlNode || !controlNode.isConnected()) {
+                    stopReading();
+                    return;
+                }
+                try {
+                    const measurements = controlNode.getMeasurementList();
+                    const data = await controlNode.readDataList(measurements);
+
+                    let html = '';
+                    for (const name of measurements) {
+                        const value = data[name];
+                        const unit = controlNode.getMeasurementUnit(name) || '';
+                        const displayValue = value !== null && value !== undefined
+                            ? (typeof value === 'number' ? value.toFixed(3) : value)
+                            : '--';
+                        html += `
+                            <div class="measurement-row">
+                                <span class="measurement-name">${name}</span>
+                                <span class="measurement-value">${displayValue} ${unit}</span>
+                            </div>
+                        `;
+                    }
+                    measurementsList.innerHTML = html || '<div class="measurement-row"><span>No sensors</span><span>--</span></div>';
+                } catch (error) {
+                    console.error('Read error:', error);
+                }
+            }, 200);
+        }
+
+        function stopReading() {
+            if (readingInterval) {
+                clearInterval(readingInterval);
+                readingInterval = null;
+            }
+        }
+
+        // Stepper controls
+        document.getElementById('startSteppersBtn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                const speedA = parseInt(stepperASpeed.value);
+                const speedB = parseInt(stepperBSpeed.value);
+                log(`Starting steppers: A=${speedA} deg/s, B=${speedB} deg/s`);
+                await controlNode.rotateSteppersContinuously(speedA, 360, speedB, 360);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        document.getElementById('stopSteppersBtn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                log('Stopping steppers...');
+                await controlNode.stopSteppers(360, 360);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        document.getElementById('rotateBtn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                const motor = document.getElementById('stepperSelect').value;
+                const angle = parseInt(document.getElementById('rotateAngle').value);
+                log(`Rotating stepper ${motor} through ${angle} degrees...`);
+                await controlNode.rotateStepperThrough(motor, angle, 360, 360, true);
+                log('Rotation complete');
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        // Servo controls
+        document.getElementById('setServo1Btn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                const pos = parseInt(servo1Pos.value);
+                log(`Setting servo 1 to ${pos} degrees...`);
+                await controlNode.setServo(1, 'standard', pos);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        document.getElementById('setServo2Btn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                const pos = parseInt(servo2Pos.value);
+                log(`Setting servo 2 to ${pos} degrees...`);
+                await controlNode.setServo(2, 'standard', pos);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        // Speaker controls
+        document.getElementById('playFreqBtn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                const freq = parseInt(speakerFreq.value);
+                log(`Playing ${freq} Hz...`);
+                await controlNode.setSoundFrequency(freq);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        document.getElementById('stopFreqBtn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                log('Stopping sound...');
+                await controlNode.setSoundFrequency(0);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        // Reset
+        document.getElementById('resetBtn').addEventListener('click', async () => {
+            if (!controlNode || !controlNode.isConnected()) return;
+            try {
+                log('Resetting all outputs...');
+                await controlNode.reset();
+                log('Reset complete');
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        // Slider value displays
+        stepperASpeed.addEventListener('input', () => {
+            stepperASpeedVal.textContent = `${stepperASpeed.value} deg/s`;
+        });
+        stepperBSpeed.addEventListener('input', () => {
+            stepperBSpeedVal.textContent = `${stepperBSpeed.value} deg/s`;
+        });
+        servo1Pos.addEventListener('input', () => {
+            servo1PosVal.textContent = `${servo1Pos.value} deg`;
+        });
+        servo2Pos.addEventListener('input', () => {
+            servo2PosVal.textContent = `${servo2Pos.value} deg`;
+        });
+        speakerFreq.addEventListener('input', () => {
+            speakerFreqVal.textContent = `${speakerFreq.value} Hz`;
+        });
+
+        // Connection buttons
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+
+        window.addEventListener('beforeunload', () => {
+            if (controlNode && controlNode.isConnected()) {
+                controlNode.disconnect();
+            }
+        });
+
+        log('Ready. Click "Connect" to connect to a Control.Node.');
+    </script>
+</body>
+</html>
