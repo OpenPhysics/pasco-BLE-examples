@@ -45,6 +45,18 @@ export {
   WIRELESS_INTERFACES,
 } from './datasheets.js';
 // Main device classes
+// Advanced: Internal device modules (for extension)
+export {
+  type DecoderState,
+  type InitializerState,
+  MeasurementDecoder,
+  type NotificationHandler,
+  PASCOBLEDevice,
+  PROTOCOL,
+  ProtocolHandler,
+  SensorInitializer,
+} from './device/index.js';
+// Error classes
 export {
   BLEAlreadyConnectedError,
   BLEConnectionError,
@@ -55,10 +67,9 @@ export {
   InvalidEquation,
   InvalidParameter,
   MeasurementNotFound,
-  PASCOBLEDevice,
   SensorNotFound,
   SensorSetupError,
-} from './pasco-ble-device.js';
+} from './errors.js';
 export { PascoBot } from './pasco-bot.js';
 // Types
 export * from './types/index.js';
