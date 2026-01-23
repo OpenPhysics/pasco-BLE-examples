@@ -1,9 +1,12 @@
-[![TypeScript](https://img.shields.io/badge/typescript-5.3+-blue)](https://www.npmjs.com/package/pasco-ble)
+[![TypeScript](https://img.shields.io/badge/typescript-5.9+-blue)](https://www.npmjs.com/package/pasco-ble)
 [![Platform](https://img.shields.io/badge/platform-node.js%20%7C%20browser-lightgrey)](https://www.npmjs.com/package/pasco-ble)
+[![License](https://img.shields.io/badge/license-Custom-orange)](LICENSE)
 
 # PASCO BLE Library
 
 A TypeScript/JavaScript library for connecting to PASCO Wireless sensors. Create your own data collection applications, integrate sensors with other hardware, or build unique solutions for science education!
+
+> **Note:** This is an independent TypeScript implementation inspired by [PASCO Scientific's official Python library](https://github.com/PASCOscientific/pasco_python). While functionally equivalent, this library is not officially endorsed or maintained by PASCO Scientific.
 
 ## Contents
 
@@ -11,12 +14,14 @@ A TypeScript/JavaScript library for connecting to PASCO Wireless sensors. Create
 - [Compatible Sensors](#compatible-sensors)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
+- [Python to TypeScript](#python-to-typescript)
 - [//code.Node](#codenode)
 - [//control.Node](#controlnode)
 - [PascoBot](#pascobot)
 - [Browser Usage](#browser-usage)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
+- [License](#license)
 
 ## Getting Started
 
@@ -158,6 +163,62 @@ device.getMeasurementUnitList(measurements);  // Get units for multiple measurem
 await device.readData(measurement);           // Read single measurement
 await device.readDataList(measurements);      // Read multiple measurements
 ```
+
+## Python to TypeScript
+
+This library provides a functionally equivalent API to PASCO's official Python library, with TypeScript conventions:
+
+| Python API | TypeScript API | Notes |
+|------------|----------------|-------|
+| `device = PASCOBLEDevice()` | `const device = new PASCOBLEDevice()` | Constructor |
+| `device.scan(sensor_name_filter)` | `await device.scan(sensorNameFilter?)` | Returns Promise |
+| `device.connect(ble_device)` | `await device.connect(bleDevice)` | Async operation |
+| `device.connect_by_id(id)` | `await device.connectById(id)` | camelCase naming |
+| `device.disconnect()` | `await device.disconnect()` | Returns Promise |
+| `device.is_connected()` | `device.isConnected()` | Synchronous |
+| `device.get_sensor_list()` | `device.getSensorList()` | camelCase naming |
+| `device.get_measurement_list(sensor)` | `device.getMeasurementList(sensor?)` | Optional parameter |
+| `device.read_data(measurement)` | `await device.readData(measurement)` | Returns Promise |
+| `device.read_data_list(measurements)` | `await device.readDataList(measurements)` | Returns Promise |
+| `device.get_measurement_unit(m)` | `device.getMeasurementUnit(m)` | camelCase naming |
+| `device.get_measurement_unit_list(m)` | `device.getMeasurementUnitList(m)` | camelCase naming |
+
+### Key Differences
+
+1. **Naming Convention**: Python uses `snake_case`, TypeScript uses `camelCase`
+2. **Async Operations**: All I/O operations return Promises in TypeScript
+3. **Type Safety**: Full TypeScript type definitions for IDE support and compile-time checking
+4. **Event System**: TypeScript version includes event emitters for connection/data events
+
+### Example Comparison
+
+**Python:**
+```python
+from pasco_ble import PASCOBLEDevice
+
+device = PASCOBLEDevice()
+devices = device.scan()
+device.connect(devices[0])
+sensors = device.get_sensor_list()
+value = device.read_data("Force")
+device.disconnect()
+```
+
+**TypeScript:**
+```typescript
+import { PASCOBLEDevice } from 'pasco-ble';
+
+const device = new PASCOBLEDevice();
+const devices = await device.scan();
+await device.connect(devices[0]);
+const sensors = device.getSensorList();
+const value = await device.readData("Force");
+await device.disconnect();
+```
+
+For more information about the official Python implementation, visit:
+- [PASCO Python Library](https://github.com/PASCOscientific/pasco_python)
+- [PASCO Python Examples](https://github.com/PASCOscientific/pasco_python_examples)
 
 ## //code.Node
 
@@ -404,4 +465,22 @@ See [Noble documentation](https://github.com/abandonware/noble#prerequisites) fo
 
 ## License
 
-See LICENSE file for details.
+This TypeScript library is licensed for personal, non-commercial, and educational use only.
+
+**Copyright (c) 2024 Martin Veillette**
+
+This is an independent TypeScript implementation inspired by PASCO Scientific's original Python library. While this implementation references PASCO's protocol specifications and sensor datasheets, it is a separate codebase with its own architecture.
+
+### Key License Points
+
+- ✅ **Permitted**: Personal projects, educational use, research, open-source contributions
+- ❌ **Not Permitted**: Commercial use without written permission
+- 🏷️ **Trademarks**: PASCO® is a registered trademark of PASCO Scientific
+
+### Acknowledgments
+
+- Original protocol and specifications: [PASCO Scientific](https://www.pasco.com)
+- Python implementation reference: [pasco_python](https://github.com/PASCOscientific/pasco_python)
+- This project is not officially endorsed by PASCO Scientific
+
+See the [LICENSE](LICENSE) file for complete terms and conditions.

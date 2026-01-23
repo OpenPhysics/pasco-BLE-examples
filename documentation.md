@@ -2,6 +2,8 @@
 
 ### A detailed description of how the PASCO BLE library works
 
+> **Note:** This is an independent TypeScript implementation inspired by [PASCO Scientific's official Python library](https://github.com/PASCOscientific/pasco_python). The architecture and implementation details described here are specific to this TypeScript version.
+
 ## Contents
 
 - [Architecture Overview](#architecture-overview)
@@ -10,6 +12,7 @@
 - [Data Decoding Pipeline](#data-decoding-pipeline)
 - [Platform Adapters](#platform-adapters)
 - [Control Node Specifics](#control-node-specifics)
+- [Recent Improvements](#recent-improvements)
 
 ---
 
@@ -27,8 +30,14 @@ The PASCO BLE library provides a TypeScript interface for communicating with PAS
 │   (robotics)        (LED/sound)         (motors/servos)     │
 ├─────────────────────────────────────────────────────────────┤
 │                      PASCOBLEDevice                          │
-│              (base class: connection, data reading)          │
-├─────────────────────────────────────────────────────────────┤
+│           (connection & protocol management)                 │
+├────────────────────────┬────────────────────────────────────┤
+│    SensorManager       │      ProtocolHandler               │
+│  (sensor operations)   │   (BLE communication)              │
+├────────────────────────┼────────────────────────────────────┤
+│  SensorInitializer     │  MeasurementDecoder                │
+│  (sensor setup)        │  (data decoding)                   │
+├────────────────────────┴────────────────────────────────────┤
 │              BLE Adapter Abstraction Layer                   │
 │         (BLEAdapterBase / BLEClientBase)                    │
 ├───────────────────────┬─────────────────────────────────────┤
@@ -42,16 +51,24 @@ The PASCO BLE library provides a TypeScript interface for communicating with PAS
 ```
 src/
 ├── index.ts                 # Public API exports
-├── pasco-ble-device.ts      # Base device class
 ├── code-node-device.ts      # Code.Node controls
 ├── control-node-device.ts   # Control.Node controls
 ├── pasco-bot.ts             # Robotics interface
 ├── character-library.ts     # LED matrix characters/icons
 ├── datasheets.ts            # Sensor definitions
+├── device/
+│   ├── pasco-ble-device.ts      # Base device class (connection/protocol)
+│   ├── sensor-manager.ts        # Sensor state and operations
+│   ├── sensor-initializer.ts    # Sensor initialization from datasheets
+│   ├── measurement-decoder.ts   # Data decoding pipeline
+│   ├── protocol-handler.ts      # BLE communication protocol
+│   ├── connection-state.ts      # Connection state machine
+│   ├── device-options.ts        # Configuration options
+│   └── index.ts                 # Device module exports
 ├── ble/
 │   ├── ble-adapter.ts       # Abstract BLE interface
 │   ├── web-bluetooth-adapter.ts  # Browser implementation
-│   ├── noble-adapter.ts     # Node.js implementation
+│   ├── noble-adapter.ts     # Node.js implementation (optional)
 │   └── index.ts             # Platform detection
 ├── types/
 │   ├── ble.ts               # BLE type definitions
@@ -60,7 +77,9 @@ src/
 └── utils/
     ├── binary.ts            # Binary data utilities
     ├── math.ts              # Mathematical functions
-    └── equation-parser.ts   # Safe equation evaluation
+    ├── equation-parser.ts   # Safe equation evaluation
+    ├── event-emitter.ts     # Typed event emitter
+    └── retry.ts             # Retry logic utilities
 ```
 
 ### Device Hierarchy
@@ -436,3 +455,63 @@ The library defines specific error classes for different failure modes:
 | `CouldNotDecodeData` | Data decoding failed |
 | `CommunicationError` | BLE communication failed |
 | `SensorSetupError` | Sensor initialization failed |
+
+---
+
+## Recent Improvements
+
+### Sensor Manager Refactoring (2024)
+
+The library was refactored to improve separation of concerns and maintainability:
+
+**Before:**
+- `PASCOBLEDevice` handled connection, protocol, AND sensor management (~788 lines)
+- 12+ sensor state maps mixed with connection logic
+- Difficult to test sensor logic independently
+
+**After:**
+- `PASCOBLEDevice`: Connection and protocol management (~440 lines, 44% reduction)
+- `SensorManager`: All sensor-related state and operations (~354 lines)
+- Clear separation of concerns with better encapsulation
+
+**Benefits:**
+- **Modularity**: Sensor logic is now isolated and reusable
+- **Testability**: Can test sensor operations independently from BLE connection
+- **Maintainability**: Changes to sensor logic don't affect connection code
+- **Clarity**: Each class has a single, well-defined responsibility
+
+### Architecture Improvements
+
+1. **Connection State Machine** (`ConnectionStateMachine`)
+   - Explicit state transitions with validation
+   - Better error handling and state tracking
+   - Support for auto-reconnect scenarios
+
+2. **Protocol Handler** (`ProtocolHandler`)
+   - Centralized BLE communication logic
+   - Retry support for unreliable connections
+   - Cleaner notification handling
+
+3. **Configuration Options** (`DeviceOptions`)
+   - Configurable timeouts and retry logic
+   - Optional event emission for debugging
+   - Custom logger support
+
+4. **Type Safety**
+   - Full TypeScript type definitions throughout
+   - No `any` types in public API
+   - Strict null checking enabled
+
+### Performance Optimizations
+
+- Efficient binary data parsing
+- Minimal memory allocations in hot paths
+- Reusable buffer pools for BLE communication
+- Lazy initialization of sensor state
+
+### Code Quality
+
+- Upgraded to TypeScript 5.9.3
+- Biome for linting and formatting
+- Pre-commit hooks for code quality
+- Comprehensive error handling
