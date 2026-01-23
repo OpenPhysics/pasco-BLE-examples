@@ -1,7 +1,7 @@
 {
   "name": "pasco-ble",
   "version": "0.3.65",
-  "description": "TypeScript library for PASCO wireless BLE sensors",
+  "description": "Browser library for PASCO wireless BLE sensors using Web Bluetooth",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -31,9 +31,11 @@
     "pasco",
     "ble",
     "bluetooth",
+    "web-bluetooth",
     "sensor",
     "science",
-    "education"
+    "education",
+    "browser"
   ],
   "author": "Martin Veillette",
   "license": "SEE LICENSE IN LICENSE",

@@ -1,10 +1,13 @@
 [![TypeScript](https://img.shields.io/badge/typescript-5.9+-blue)](https://www.npmjs.com/package/pasco-ble)
-[![Platform](https://img.shields.io/badge/platform-node.js%20%7C%20browser-lightgrey)](https://www.npmjs.com/package/pasco-ble)
+[![Platform](https://img.shields.io/badge/platform-browser%20only-lightgrey)](https://www.npmjs.com/package/pasco-ble)
+[![Web Bluetooth](https://img.shields.io/badge/Web%20Bluetooth-required-blue)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API)
 [![License](https://img.shields.io/badge/license-Custom-orange)](LICENSE)
 
 # PASCO BLE Library
 
-A TypeScript/JavaScript library for connecting to PASCO Wireless sensors. Create your own data collection applications, integrate sensors with other hardware, or build unique solutions for science education!
+A TypeScript/JavaScript library for connecting to PASCO Wireless sensors **in web browsers** using Web Bluetooth. Create your own data collection applications, build interactive science experiments, or integrate sensors with web-based educational tools!
+
+> **Platform:** This library uses the **Web Bluetooth API** and works in Chrome, Edge, and other Chromium-based browsers. HTTPS is required.
 
 > **Note:** This is an independent TypeScript implementation inspired by [PASCO Scientific's official Python library](https://github.com/PASCOscientific/pasco_python). While functionally equivalent, this library is not officially endorsed or maintained by PASCO Scientific.
 
@@ -31,7 +34,12 @@ A TypeScript/JavaScript library for connecting to PASCO Wireless sensors. Create
 npm install pasco-ble
 ```
 
-No additional setup required. The library uses the Web Bluetooth API built into Chrome and Edge browsers. **HTTPS is required for Web Bluetooth.**
+**Requirements:**
+- Web browser with Web Bluetooth support (Chrome, Edge, Opera)
+- HTTPS connection (or localhost for development)
+- User gesture to initiate Bluetooth operations
+
+No additional setup or native dependencies required!
 
 ## Compatible Sensors
 
@@ -62,62 +70,83 @@ No additional setup required. The library uses the Web Bluetooth API built into 
 
 ### Basic Sensor Reading
 
-```typescript
-import { PASCOBLEDevice } from 'pasco-ble';
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <button id="connect">Connect to Sensor</button>
+  <div id="output"></div>
 
-async function main() {
-  const sensor = new PASCOBLEDevice();
+  <script type="module">
+    import { PASCOBLEDevice } from 'https://unpkg.com/pasco-ble/dist/index.js';
 
-  // Connect by device ID (printed on sensor)
-  await sensor.connectById('055-808');
+    document.getElementById('connect').onclick = async () => {
+      const sensor = new PASCOBLEDevice();
 
-  // Read temperature
-  const temp = await sensor.readData('Temperature');
-  const units = sensor.getMeasurementUnit('Temperature');
-  console.log(`${temp} ${units}`);
+      // Scan opens browser's device picker
+      const devices = await sensor.scan();
 
-  await sensor.disconnect();
-}
+      if (devices.length > 0) {
+        await sensor.connect(devices[0]);
 
-main();
+        // Read temperature
+        const temp = await sensor.readData('Temperature');
+        const units = sensor.getMeasurementUnit('Temperature');
+
+        document.getElementById('output').textContent = `${temp} ${units}`;
+
+        await sensor.disconnect();
+      }
+    };
+  </script>
+</body>
+</html>
 ```
 
-### Scan and Select Device
+### Continuous Data Reading
 
-```typescript
-import { PASCOBLEDevice } from 'pasco-ble';
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <button id="connect">Connect and Start Reading</button>
+  <button id="stop">Stop</button>
+  <div id="output"></div>
 
-async function main() {
-  const sensor = new PASCOBLEDevice();
+  <script type="module">
+    import { PASCOBLEDevice } from 'https://unpkg.com/pasco-ble/dist/index.js';
 
-  // Scan for devices
-  const devices = await sensor.scan();
+    let reading = false;
+    const sensor = new PASCOBLEDevice();
 
-  if (devices.length === 0) {
-    console.log('No devices found');
-    return;
-  }
+    document.getElementById('connect').onclick = async () => {
+      const devices = await sensor.scan();
 
-  console.log('Devices found:');
-  devices.forEach((d, i) => console.log(`${i}: ${d.name}`));
+      if (devices.length > 0) {
+        await sensor.connect(devices[0]);
 
-  // Connect to first device
-  await sensor.connect(devices[0]);
+        // Get available measurements
+        const measurements = sensor.getMeasurementList();
+        console.log('Available:', measurements);
 
-  // Get available measurements
-  const measurements = sensor.getMeasurementList();
-  console.log('Available measurements:', measurements);
+        // Read continuously
+        reading = true;
+        while (reading) {
+          const temp = await sensor.readData('Temperature');
+          document.getElementById('output').textContent =
+            `Temperature: ${temp} ${sensor.getMeasurementUnit('Temperature')}`;
+          await new Promise(r => setTimeout(r, 100));
+        }
+      }
+    };
 
-  // Read data continuously
-  for (let i = 0; i < 10; i++) {
-    const temp = await sensor.readData('Temperature');
-    console.log(`Temperature: ${temp}`);
-  }
-
-  await sensor.disconnect();
-}
-
-main();
+    document.getElementById('stop').onclick = async () => {
+      reading = false;
+      await sensor.disconnect();
+    };
+  </script>
+</body>
+</html>
 ```
 
 ## API Reference
@@ -412,56 +441,57 @@ The library works in browsers using the Web Bluetooth API:
 
 ## Examples
 
-See the `examples/` directory for complete examples:
+See the `examples/` directory for complete browser examples:
 
-- `basic-usage.ts` - Basic sensor reading with Node.js
-- `code-node-example.ts` - Code.Node LED and sound control
-- `control-node-example.ts` - Control.Node motor and servo control
-- `pasco-bot-example.ts` - PascoBot robotics interface
-- `force-sensor.html` - Browser-based force sensor demo
+- `force-sensor.html` - Force sensor with real-time graphing
+- `motion-sensor.html` - Motion sensor with position/velocity display
+- `multi-sensor-graph.html` - Multiple sensors on one graph
+- Browser demos for Code.Node, Control.Node, and PascoBot features
 
-For more project examples, see our [pasco_python_examples repository](https://github.com/PASCOscientific/pasco_python_examples).
+All examples are standalone HTML files that can be opened directly in Chrome/Edge.
+
+For Python examples using PASCO's official library, see [pasco_python_examples repository](https://github.com/PASCOscientific/pasco_python_examples).
 
 ## Troubleshooting
 
-### 1. Node.js: Noble installation issues
+### 1. Web Bluetooth not working
 
-Noble requires native compilation. On Windows, you may need:
-```bash
-npm install --global windows-build-tools
-```
+- **Browser Support**: Use Chrome, Edge, or Opera (Web Bluetooth required)
+- **HTTPS Required**: Page must be served over HTTPS (localhost works for development)
+- **Bluetooth Enabled**: Check that Bluetooth is enabled on your computer
+- **User Gesture**: Scan must be initiated by a user action (button click, not on page load)
+- **Permissions**: Browser may prompt for Bluetooth permissions
 
-On Linux, you may need:
-```bash
-sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
-```
+### 2. Device not found during scan
 
-See [Noble documentation](https://github.com/abandonware/noble#prerequisites) for full details.
+- **Red Light Blinking**: Device should have a red blinking light (ready to connect)
+- **Green Light**: If solid green, device is already connected to another application
+- **Reset Device**: Hold power button to turn off, then press to turn on again
+- **Range**: Ensure you're within Bluetooth range (typically 10-30 feet)
 
-### 2. Browser: Web Bluetooth not working
+### 3. Connection drops or times out
 
-- Ensure you're using Chrome or Edge
-- Ensure the page is served over HTTPS (or localhost)
-- Check that Bluetooth is enabled on your device
-- The scan must be initiated by a user gesture (button click)
+- **Distance**: Move closer to the device
+- **Other Connections**: Ensure no other application is connected to the device
+- **Reset**: Try resetting the device (power off/on)
+- **Browser Tab**: Keep the browser tab active (some browsers throttle background tabs)
 
-### 3. Device not found during scan
-
-- Check if the device's red light is blinking (ready to connect)
-- If the light is green, the device is already connected elsewhere
-- Hold the power button to turn off, then press to turn on again
-
-### 4. Connection drops or times out
-
-- Move closer to the device
-- Ensure no other application is connected to the device
-- Try resetting the device (power off/on)
-
-### 5. Cannot read measurement
+### 4. Cannot read measurement
 
 - Use `getMeasurementList()` to see available measurements
 - Measurement names are case-sensitive
 - Some measurements require specific sensors to be connected
+
+### 5. Browser compatibility
+
+**Supported Browsers:**
+- ✅ Chrome 56+ (Windows, macOS, Linux, Android)
+- ✅ Edge 79+ (Windows, macOS)
+- ✅ Opera 43+
+- ❌ Firefox (Web Bluetooth not supported)
+- ❌ Safari (Web Bluetooth not supported)
+
+Check browser support: [caniuse.com/web-bluetooth](https://caniuse.com/web-bluetooth)
 
 ## License
 

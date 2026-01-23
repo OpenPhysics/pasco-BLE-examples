@@ -18,7 +18,7 @@
 
 ## Architecture Overview
 
-The PASCO BLE library provides a TypeScript interface for communicating with PASCO wireless sensors over Bluetooth Low Energy (BLE). The library is designed to work in both Node.js and browser environments through a platform abstraction layer.
+The PASCO BLE library provides a TypeScript interface for communicating with PASCO wireless sensors over Bluetooth Low Energy (BLE). The library is designed to work in web browsers using the Web Bluetooth API.
 
 ### Library Layers
 
@@ -40,10 +40,10 @@ The PASCO BLE library provides a TypeScript interface for communicating with PAS
 ├────────────────────────┴────────────────────────────────────┤
 │              BLE Adapter Abstraction Layer                   │
 │         (BLEAdapterBase / BLEClientBase)                    │
-├───────────────────────┬─────────────────────────────────────┤
-│   WebBluetoothAdapter │         NobleAdapter                │
-│   (Browser)           │         (Node.js)                   │
-└───────────────────────┴─────────────────────────────────────┘
+├─────────────────────────────────────────────────────────────┤
+│               WebBluetoothAdapter                            │
+│            (Web Bluetooth API - Browser)                     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Module Structure
@@ -67,9 +67,8 @@ src/
 │   └── index.ts                 # Device module exports
 ├── ble/
 │   ├── ble-adapter.ts       # Abstract BLE interface
-│   ├── web-bluetooth-adapter.ts  # Browser implementation
-│   ├── noble-adapter.ts     # Node.js implementation (optional)
-│   └── index.ts             # Platform detection
+│   ├── web-bluetooth-adapter.ts  # Web Bluetooth implementation
+│   └── index.ts             # BLE adapter factory
 ├── types/
 │   ├── ble.ts               # BLE type definitions
 │   ├── measurement.ts       # Measurement types
@@ -308,7 +307,7 @@ Supported functions: `sqrt`, `log`, `sin`, `cos`, `tan`, `abs`, `pow`, `exp`, `f
 
 ---
 
-## Platform Adapters
+## Web Bluetooth Adapter
 
 ### BLE Adapter Interface
 
@@ -331,33 +330,43 @@ abstract class BLEClientBase {
 }
 ```
 
-### Web Bluetooth Adapter (Browser)
+### Web Bluetooth Implementation
 
-- Uses `navigator.bluetooth.requestDevice()` for scanning
-- Shows browser device picker dialog
-- Requires HTTPS context
-- Requires user gesture to initiate scan/connect
-- Limited to Chrome and Edge browsers
+The library uses the **Web Bluetooth API** available in modern browsers:
 
-### Noble Adapter (Node.js)
+**Features:**
+- Uses `navigator.bluetooth.requestDevice()` for device selection
+- Shows native browser device picker dialog
+- Requires HTTPS context (or localhost for development)
+- Requires user gesture to initiate scan/connect operations
+- Zero native dependencies - pure JavaScript/TypeScript
 
-- Uses `@abandonware/noble` package
-- Passive scanning with name filters
-- Works on Windows, macOS, and Linux
-- Requires platform-specific Bluetooth setup
+**Browser Support:**
+- ✅ Chrome 56+ (Windows, macOS, Linux, Android)
+- ✅ Edge 79+ (Windows, macOS)
+- ✅ Opera 43+
+- ❌ Firefox (Web Bluetooth not supported)
+- ❌ Safari (Web Bluetooth not supported)
 
-### Platform Detection
+**Adapter Factory:**
 
 ```typescript
 function createBLEAdapter(): BLEAdapterBase {
-  if (Platform.isBrowser() && Platform.hasWebBluetooth()) {
+  if (typeof navigator !== 'undefined' && navigator.bluetooth !== undefined) {
     return new WebBluetoothAdapter();
-  } else if (Platform.isNode()) {
-    return new NobleAdapter();
   }
-  throw new Error('No BLE adapter available');
+  throw new Error('Web Bluetooth API is not available in this environment');
 }
 ```
+
+### Security Requirements
+
+Web Bluetooth has strict security requirements:
+
+1. **HTTPS Only**: Must be served over HTTPS (localhost exempted)
+2. **User Gesture**: Bluetooth operations must be initiated by user action
+3. **Permission Prompt**: Browser shows permission dialog before accessing Bluetooth
+4. **Secure Context**: Page must be in a secure context (not in iframe without proper permissions)
 
 ---
 
