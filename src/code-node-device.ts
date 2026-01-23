@@ -12,7 +12,8 @@ import {
   Icons,
   type LEDCoordinate,
 } from './character-library.js';
-import { DeviceNotConnected, InvalidParameter, PASCOBLEDevice } from './pasco-ble-device.js';
+import { PASCOBLEDevice } from './device/index.js';
+import { DeviceNotConnected, InvalidParameter } from './errors.js';
 import { limit } from './utils/math.js';
 
 /**

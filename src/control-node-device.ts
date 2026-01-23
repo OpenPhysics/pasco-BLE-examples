@@ -5,12 +5,8 @@
  * specific to the PASCO //control.Node device.
  */
 
-import {
-  DeviceNotConnected,
-  InvalidParameter,
-  MeasurementNotFound,
-  PASCOBLEDevice,
-} from './pasco-ble-device.js';
+import { PASCOBLEDevice } from './device/index.js';
+import { DeviceNotConnected, InvalidParameter, MeasurementNotFound } from './errors.js';
 import { unpackInt16LE } from './utils/binary.js';
 import { limit } from './utils/math.js';
 
