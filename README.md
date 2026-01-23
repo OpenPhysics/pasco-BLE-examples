@@ -197,20 +197,20 @@ await device.readDataList(measurements);      // Read multiple measurements
 
 This library provides a functionally equivalent API to PASCO's official Python library, with TypeScript conventions:
 
-| Python API | TypeScript API | Notes |
-|------------|----------------|-------|
-| `device = PASCOBLEDevice()` | `const device = new PASCOBLEDevice()` | Constructor |
-| `device.scan(sensor_name_filter)` | `await device.scan(sensorNameFilter?)` | Returns Promise |
-| `device.connect(ble_device)` | `await device.connect(bleDevice)` | Async operation |
-| `device.connect_by_id(id)` | `await device.connectById(id)` | camelCase naming |
-| `device.disconnect()` | `await device.disconnect()` | Returns Promise |
-| `device.is_connected()` | `device.isConnected()` | Synchronous |
-| `device.get_sensor_list()` | `device.getSensorList()` | camelCase naming |
-| `device.get_measurement_list(sensor)` | `device.getMeasurementList(sensor?)` | Optional parameter |
-| `device.read_data(measurement)` | `await device.readData(measurement)` | Returns Promise |
-| `device.read_data_list(measurements)` | `await device.readDataList(measurements)` | Returns Promise |
-| `device.get_measurement_unit(m)` | `device.getMeasurementUnit(m)` | camelCase naming |
-| `device.get_measurement_unit_list(m)` | `device.getMeasurementUnitList(m)` | camelCase naming |
+| Python API | TypeScript API | 
+|------------|----------------|
+| `device = PASCOBLEDevice()` | `const device = new PASCOBLEDevice()` | 
+| `device.scan(sensor_name_filter)` | `await device.scan(sensorNameFilter?)` | 
+| `device.connect(ble_device)` | `await device.connect(bleDevice)` | 
+| `device.connect_by_id(id)` | `await device.connectById(id)` | 
+| `device.disconnect()` | `await device.disconnect()` | 
+| `device.is_connected()` | `device.isConnected()` |
+| `device.get_sensor_list()` | `device.getSensorList()` |
+| `device.get_measurement_list(sensor)` | `device.getMeasurementList(sensor?)` |
+| `device.read_data(measurement)` | `await device.readData(measurement)` |
+| `device.read_data_list(measurements)` | `await device.readDataList(measurements)` |
+| `device.get_measurement_unit(m)` | `device.getMeasurementUnit(m)` |
+| `device.get_measurement_unit_list(m)` | `device.getMeasurementUnitList(m)` | 
 
 ### Key Differences
 
