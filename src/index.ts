@@ -2,29 +2,48 @@
  * PASCO BLE Library for TypeScript
  *
  * A TypeScript library for connecting to and communicating with PASCO BLE sensors.
+ *
+ * @example
+ * ```typescript
+ * import { PASCOBLEDevice, checkBrowserSupport } from 'pasco-ble';
+ *
+ * // Check browser compatibility first
+ * const support = checkBrowserSupport();
+ * if (!support.supported) {
+ *   console.error(support.message);
+ * }
+ *
+ * // Connect to a sensor
+ * const device = new PASCOBLEDevice();
+ * const devices = await device.scan();
+ * await device.connect(devices[0]);
+ *
+ * // Read data
+ * const temperature = await device.readData('Temperature');
+ * console.log(`Temperature: ${temperature} ${device.getMeasurementUnit('Temperature')}`);
+ *
+ * await device.disconnect();
+ * ```
+ *
+ * @packageDocumentation
  */
 
-// BLE adapters
-export {
-  BLEAdapterBase,
-  BLEClientBase,
-  createPascoUuid,
-  getCharacteristicIdFromUuid,
-  getServiceIdFromUuid,
-  isPascoUuid,
-} from './ble/ble-adapter.js';
-export { createBLEAdapter, Platform } from './ble/index.js';
-export { WebBluetoothAdapter, WebBluetoothClient } from './ble/web-bluetooth-adapter.js';
+// ============================================================================
+// Browser Support Detection
+// ============================================================================
 
-// Character library for LED display
 export {
-  alphabet,
-  type CharacterMatrix,
-  getIcon,
-  getWord,
-  Icons as LEDIcons,
-  type LEDCoordinate,
-} from './character-library.js';
+  type BrowserSupport,
+  checkBrowserSupport,
+  isWebBluetoothSupported,
+  SUPPORTED_BROWSERS,
+  UNSUPPORTED_BROWSERS,
+} from './browser-support.js';
+
+// ============================================================================
+// Main Device Classes
+// ============================================================================
+
 export { CodeNodeDevice, Icons } from './code-node-device.js';
 export {
   ControlNodeDevice,
@@ -32,40 +51,23 @@ export {
   type PortId,
   type ServoType,
 } from './control-node-device.js';
-// Datasheet functions
+export { PASCOBLEDevice } from './device/index.js';
+export { PascoBot } from './pasco-bot.js';
+
+// ============================================================================
+// Device Configuration
+// ============================================================================
+
 export {
-  createDatasheets,
-  getInterface,
-  getSensor,
-  hasInterface,
-  hasSensor,
-  type ParsedInterface,
-  type ParsedSensor,
-  SENSORS,
-  WIRELESS_INTERFACES,
-} from './datasheets.js';
-// Main device classes
-// Advanced: Internal device modules (for extension)
-export {
-  type ConnectionState,
-  ConnectionStateMachine,
-  createLogger,
   DEFAULT_DEVICE_OPTIONS,
-  type DecoderState,
-  type DeviceLogger,
   type DeviceOptions,
-  type InitializerState,
   type LogLevel,
-  MeasurementDecoder,
-  type NotificationHandler,
-  PASCOBLEDevice,
-  PROTOCOL,
-  ProtocolHandler,
-  SensorInitializer,
-  type StateChangeCallback,
-  type StateTransition,
 } from './device/index.js';
-// Error classes
+
+// ============================================================================
+// Error Classes
+// ============================================================================
+
 export {
   BLEAlreadyConnectedError,
   BLEConnectionError,
@@ -79,62 +81,44 @@ export {
   SensorNotFound,
   SensorSetupError,
 } from './errors.js';
-export { PascoBot } from './pasco-bot.js';
+
+// ============================================================================
 // Types
+// ============================================================================
+
 export * from './types/index.js';
+
+// ============================================================================
+// Unit Conversions
+// ============================================================================
+
 export type { UnitDefinition, UnitGroup } from './units.js';
-// Unit conversions
 export {
   convertUnit,
   getDefaultUnit,
   getUnitGroup,
   getUnitsInGroup,
-  UNIT_GROUPS,
-  UNIT_TAG_TO_GROUP,
 } from './units.js';
-// Utility functions
-export {
-  binaryFloat,
-  binaryFraction,
-  buildByteValue,
-  bytesToHex,
-  decode64,
-  packInt16LE,
-  packInt32LE,
-  twosComplement,
-  unpackFloat32LE,
-  unpackInt16LE,
-  unpackInt32LE,
-} from './utils/binary.js';
-export {
-  evaluateEquation,
-  evaluateTableEquation,
-  parentheticContents,
-} from './utils/equation-parser.js';
-// Event emitter
+
+// ============================================================================
+// Event System
+// ============================================================================
+
 export {
   type DeviceEventName,
   type DeviceEvents,
   type EventListener,
   TypedEventEmitter,
 } from './utils/event-emitter.js';
+
+// ============================================================================
+// LED Icons (for CodeNodeDevice)
+// ============================================================================
+
 export {
-  calc4Params,
-  calcLinearParams,
-  calcRotaryPos,
-  dewpoint,
-  heatindex,
-  limit,
-  linearInterpolate,
-  threeInputVector,
-  usound,
-  windchill,
-} from './utils/math.js';
-// Retry utilities
-export {
-  calculateBackoffDelay,
-  delay,
-  type RetryOptions,
-  retryable,
-  withRetry,
-} from './utils/retry.js';
+  type CharacterMatrix,
+  getIcon,
+  getWord,
+  Icons as LEDIcons,
+  type LEDCoordinate,
+} from './character-library.js';
