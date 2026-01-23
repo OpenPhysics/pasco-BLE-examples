@@ -13,8 +13,6 @@ import {
   BLEScanFailed,
   DeviceNotConnected,
   InvalidParameter,
-  MeasurementNotFound,
-  SensorNotFound,
 } from '../errors.js';
 import type { BLEDevice } from '../types/ble.js';
 import { COMPATIBLE_DEVICES } from '../types/device.js';
@@ -28,9 +26,8 @@ import {
   type DeviceLogger,
   type DeviceOptions,
 } from './device-options.js';
-import { type DecoderState, MeasurementDecoder } from './measurement-decoder.js';
 import { PROTOCOL, ProtocolHandler } from './protocol-handler.js';
-import { type InitializerState, SensorInitializer } from './sensor-initializer.js';
+import { SensorManager } from './sensor-manager.js';
 
 /**
  * PASCO BLE Device class
@@ -99,26 +96,15 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
   protected _airlinkSensorId: number | null = null;
   protected _type = 'BLE';
 
-  // State maps (shared with decoder/initializer)
-  protected _sensorNames: Map<string, SensorChannel> = new Map();
-  protected _deviceMeasurements: Map<number, Map<number, Measurement>> = new Map();
-  protected _dataStack: Map<number, number[]> = new Map();
-  protected _sensorData: Map<number, Map<number, number | null>> = new Map();
-  protected _sensorDataPrev: Map<number, Map<number, number | null>> = new Map();
-  protected _dataResults: Map<string, number | null> = new Map();
-  protected _measurementSensorIds: Map<string, number> = new Map();
-  protected _deviceChannels: SensorChannel[] = [];
-  protected _dataAckCounter: Map<number, number> = new Map();
-  protected _notifySensorId: number | null = null;
+  // Device response data
   protected _dataPacket: number[] = [];
   protected _responseData: Uint8Array = new Uint8Array();
 
   // Compatible devices list
   protected _compatibleDevices: readonly string[] = COMPATIBLE_DEVICES;
 
-  // Specialized handlers
-  protected _decoder: MeasurementDecoder;
-  protected _initializer: SensorInitializer;
+  // Sensor manager
+  protected _sensorManager: SensorManager;
 
   /**
    * Create a new PASCOBLEDevice instance.
@@ -168,28 +154,11 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
 
     this._logger.debug('PASCOBLEDevice initialized with options:', this._options);
 
-    // Create shared state for decoder
-    const decoderState: DecoderState = {
-      sensorData: this._sensorData,
-      sensorDataPrev: this._sensorDataPrev,
-      deviceMeasurements: this._deviceMeasurements,
-      dataStack: this._dataStack,
-      dataResults: this._dataResults,
-    };
-    this._decoder = new MeasurementDecoder(decoderState);
-
-    // Create shared state for initializer
-    const initState: InitializerState = {
-      deviceChannels: this._deviceChannels,
-      deviceMeasurements: this._deviceMeasurements,
-      sensorNames: this._sensorNames,
-      measurementSensorIds: this._measurementSensorIds,
-      dataResults: this._dataResults,
-      dataAckCounter: this._dataAckCounter,
-      dataStack: this._dataStack,
-      sensorData: this._sensorData,
-    };
-    this._initializer = new SensorInitializer(initState);
+    // Create sensor manager
+    this._sensorManager = new SensorManager({
+      protocolHandler: this._protocol,
+      isConnected: () => this.isConnected(),
+    });
   }
 
   // ==================== Properties ====================
@@ -211,11 +180,11 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
   }
 
   get dataResults(): Map<string, number | null> {
-    return this._dataResults;
+    return this._sensorManager.dataResults;
   }
 
   get deviceSensors(): Map<string, SensorChannel> {
-    return this._sensorNames;
+    return this._sensorManager.deviceSensors;
   }
 
   /**
@@ -361,6 +330,7 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
     }
     this._client = null;
     this._protocol.setClient(null);
+    this._sensorManager.reset();
 
     this._stateMachine.transitionTo('disconnected', 'disconnection complete');
     this.emit('disconnected', { reason: 'user' });
@@ -426,10 +396,7 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
    * Get list of sensors on this device
    */
   getSensorList(): string[] {
-    if (!this.isConnected()) {
-      throw new DeviceNotConnected();
-    }
-    return Array.from(this._sensorNames.keys());
+    return this._sensorManager.getSensorList();
   }
 
   /**
@@ -437,28 +404,7 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
    * @param sensorName Optional sensor name to filter by
    */
   getMeasurementList(sensorName?: string): string[] {
-    if (!this.isConnected()) {
-      throw new DeviceNotConnected();
-    }
-
-    if (sensorName !== undefined && typeof sensorName !== 'string') {
-      throw new InvalidParameter();
-    }
-
-    if (!sensorName) {
-      const measurementList: string[] = [];
-      for (const sensor of this._deviceChannels) {
-        measurementList.push(...sensor.measurements);
-      }
-      return measurementList;
-    }
-
-    const sensor = this._sensorNames.get(sensorName);
-    if (!sensor) {
-      throw new SensorNotFound();
-    }
-
-    return sensor.measurements;
+    return this._sensorManager.getMeasurementList(sensorName);
   }
 
   /**
@@ -466,29 +412,7 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
    * @param measurement The measurement name
    */
   getMeasurementUnit(measurement: string): string | null {
-    if (!this.isConnected()) {
-      throw new DeviceNotConnected();
-    }
-
-    if (!measurement || typeof measurement !== 'string') {
-      throw new InvalidParameter();
-    }
-
-    const sensorId = this._measurementSensorIds.get(measurement);
-    if (sensorId === undefined) {
-      throw new InvalidParameter();
-    }
-
-    const measurements = this._deviceMeasurements.get(sensorId);
-    if (measurements) {
-      for (const [_, m] of measurements) {
-        if (m.NameTag === measurement) {
-          return m.UnitType ?? null;
-        }
-      }
-    }
-
-    return null;
+    return this._sensorManager.getMeasurementUnit(measurement);
   }
 
   /**
@@ -496,19 +420,7 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
    * @param measurements Array of measurement names
    */
   getMeasurementUnitList(measurements: string[]): Record<string, string | null> {
-    if (!this.isConnected()) {
-      throw new DeviceNotConnected();
-    }
-
-    if (!measurements || !Array.isArray(measurements)) {
-      throw new InvalidParameter();
-    }
-
-    const result: Record<string, string | null> = {};
-    for (const measurement of measurements) {
-      result[measurement] = this.getMeasurementUnit(measurement);
-    }
-    return result;
+    return this._sensorManager.getMeasurementUnitList(measurements);
   }
 
   /**
@@ -516,22 +428,8 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
    * @param measurement The measurement name to read
    */
   async readData(measurement: string): Promise<number | null> {
-    if (!this.isConnected()) {
-      throw new DeviceNotConnected();
-    }
-
-    if (!measurement || typeof measurement !== 'string') {
-      throw new InvalidParameter();
-    }
-
-    const sensorId = this._measurementSensorIds.get(measurement);
-    if (sensorId === undefined) {
-      throw new MeasurementNotFound();
-    }
-
     this._logger.debug('Reading measurement:', measurement);
-    await this._getSensorMeasurements(sensorId);
-    const value = this._dataResults.get(measurement) ?? null;
+    const value = await this._sensorManager.readData(measurement);
 
     // Emit data event if enabled
     if (this._options.emitDataEvents) {
@@ -547,47 +445,17 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
    * @param measurements Array of measurement names to read
    */
   async readDataList(measurements: string[]): Promise<Record<string, number | null>> {
-    if (!this.isConnected()) {
-      throw new DeviceNotConnected();
-    }
+    const result = await this._sensorManager.readDataList(measurements);
 
-    if (!measurements || !Array.isArray(measurements)) {
-      throw new InvalidParameter();
-    }
-
-    for (const m of measurements) {
-      if (typeof m !== 'string') {
-        throw new InvalidParameter();
-      }
-    }
-
-    // Get unique sensor IDs
-    const sensorIds = new Set<number>();
-    for (const m of measurements) {
-      const sensorId = this._measurementSensorIds.get(m);
-      if (sensorId === undefined) {
-        throw new MeasurementNotFound();
-      }
-      sensorIds.add(sensorId);
-    }
-
-    // Request data from each sensor
-    for (const sensorId of sensorIds) {
-      await this._getSensorMeasurements(sensorId);
-    }
-
-    // Build result and emit events
-    const result: Record<string, number | null> = {};
-    for (const measurement of measurements) {
-      const value = this._dataResults.get(measurement) ?? null;
-      result[measurement] = value;
-
-      // Emit data event for each measurement if enabled
-      if (this._options.emitDataEvents) {
+    // Emit data events if enabled
+    if (this._options.emitDataEvents) {
+      for (const measurement of measurements) {
+        const value = result[measurement] ?? null;
         const unit = this.getMeasurementUnit(measurement);
         this.emit('data', { measurement, value, unit });
       }
     }
+
     return result;
   }
 
@@ -620,6 +488,41 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
     return this._protocol.writeAwaitCallback(serviceId, command);
   }
 
+  /**
+   * Get sensor measurements (for subclass use)
+   */
+  protected async _getSensorMeasurements(sensorId: number): Promise<void> {
+    await this._sensorManager.requestSensorMeasurements(sensorId);
+  }
+
+  /**
+   * Request sensor data (for subclass use)
+   */
+  protected async _requestSensorData(sensorId: number): Promise<void> {
+    await this._sensorManager.requestSensorMeasurements(sensorId);
+  }
+
+  /**
+   * Get device measurements map (for subclass use)
+   */
+  protected get _deviceMeasurements(): Map<number, Map<number, Measurement>> {
+    return this._sensorManager.deviceMeasurements;
+  }
+
+  /**
+   * Get sensor data map (for subclass use)
+   */
+  protected get _sensorData(): Map<number, Map<number, number | null>> {
+    return this._sensorManager.sensorData;
+  }
+
+  /**
+   * Get device channels (for subclass use)
+   */
+  protected get _deviceChannels(): SensorChannel[] {
+    return this._sensorManager.deviceChannels;
+  }
+
   // ==================== Internal Methods ====================
 
   /**
@@ -644,20 +547,9 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
    * Initialize device by parsing datasheet
    */
   protected async _initializeDevice(): Promise<void> {
-    this._initializer.initializeFromInterface(this._interfaceId ?? 0);
-
-    // Sync the device channels reference
-    this._deviceChannels = this._initializer.state.deviceChannels;
-
-    // Check for pluggable sensors
-    if (this._initializer.hasPluggableSensors()) {
-      await this.scanControlnodePlugins();
-    } else {
-      this._initializer.initializeSensors();
-    }
+    const sensors = await this._sensorManager.initializeFromInterface(this._interfaceId ?? 0);
 
     // Emit sensors ready event
-    const sensors = Array.from(this._sensorNames.keys());
     this.emit('sensorsReady', { sensors });
   }
 
@@ -671,44 +563,11 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
     }
 
     if (serviceId > 0) {
-      // Sensor measurement response
-      this._processMeasurementResponse(serviceId - 1, data);
+      // Sensor measurement response - route to sensor manager
+      this._sensorManager.handleMeasurementResponse(serviceId - 1, data);
     } else {
       // Device response
       this._processDeviceResponse(data);
-    }
-  }
-
-  /**
-   * Process measurement response from sensor
-   */
-  protected _processMeasurementResponse(sensorId: number, data: number[]): void {
-    if (data[0] !== undefined && data[0] <= 0x1f) {
-      // Periodic data
-      const stack = this._dataStack.get(sensorId) ?? [];
-      stack.push(...data.slice(1));
-      this._dataStack.set(sensorId, stack);
-
-      const counter = (this._dataAckCounter.get(sensorId) ?? 0) + 1;
-      this._dataAckCounter.set(sensorId, counter);
-
-      this._decoder.decode(sensorId);
-
-      // Send acknowledgement every 8 packets
-      if (counter > 8) {
-        this._dataAckCounter.set(sensorId, 0);
-        const responseServiceId = sensorId + 1;
-        this._protocol.sendAck(responseServiceId, [data[0]!]).catch(() => {});
-      }
-    } else if (data[0] === PROTOCOL.CNTRLNODE_PLUGINS_CALLBACK) {
-      this._updateControlnodePluginSensor(data);
-    } else if (data[0] === PROTOCOL.GRSP_RESULT && data[1] === 0x00) {
-      if (data[2] === PROTOCOL.GCMD_READ_ONE_SAMPLE) {
-        // Store data for the sensor we requested from
-        if (this._notifySensorId !== null) {
-          this._dataStack.set(this._notifySensorId, data.slice(3));
-        }
-      }
     }
   }
 
@@ -721,68 +580,9 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
     if (data[0] === PROTOCOL.GRSP_RESULT && data[1] === 0x00) {
       if (data[2] === PROTOCOL.GCMD_READ_ONE_SAMPLE) {
         this._dataPacket = data.slice(3);
-        if (this._notifySensorId !== null) {
-          this._dataStack.set(this._notifySensorId, [...this._dataPacket]);
-        }
       } else if (data[2] === PROTOCOL.GCMD_CONTROL_NODE_CMD) {
         this._dataPacket = data.slice(3);
       }
     }
-  }
-
-  /**
-   * Update control node plugin sensors
-   */
-  protected _updateControlnodePluginSensor(data: number[]): void {
-    // Unpack sensor IDs (little-endian 16-bit integers)
-    const sensorIds: number[] = [];
-    for (let i = 1; i < data.length - 1; i += 2) {
-      const low = data[i] ?? 0;
-      const high = data[i + 1] ?? 0;
-      sensorIds.push(low | (high << 8));
-    }
-    this._initializer.initializeSensors(sensorIds);
-  }
-
-  /**
-   * Request sensor data (for subclass use)
-   */
-  protected async _requestSensorData(sensorId: number): Promise<void> {
-    this._notifySensorId = sensorId;
-
-    let packetSize = 0;
-    for (const sensor of this._deviceChannels) {
-      if (sensor.id === sensorId) {
-        packetSize = sensor.total_data_size;
-        break;
-      }
-    }
-
-    const serviceId = sensorId + 1;
-    await this._protocol.writeAwaitCallback(serviceId, [PROTOCOL.GCMD_READ_ONE_SAMPLE, packetSize]);
-  }
-
-  /**
-   * Request and decode sensor measurements
-   */
-  protected async _getSensorMeasurements(sensorId: number): Promise<void> {
-    // Track which sensor we're requesting data from
-    this._notifySensorId = sensorId;
-
-    // Find packet size for this sensor
-    let packetSize = 0;
-    for (const sensor of this._deviceChannels) {
-      if (sensor.id === sensorId) {
-        packetSize = sensor.total_data_size;
-        break;
-      }
-    }
-
-    // Request data
-    const serviceId = sensorId + 1;
-    await this._protocol.writeAwaitCallback(serviceId, [PROTOCOL.GCMD_READ_ONE_SAMPLE, packetSize]);
-
-    // Decode the received data
-    this._decoder.decode(sensorId);
   }
 }
