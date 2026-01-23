@@ -160,7 +160,6 @@ export class WebBluetoothClient extends BLEClientBase {
       try {
         // Check if still connected
         if (!this._server.connected) {
-          console.log('GATT server disconnected, reconnecting...');
           this._server = await this._device!.gatt!.connect();
         }
 
@@ -195,13 +194,8 @@ export class WebBluetoothClient extends BLEClientBase {
         }
 
         // Success - exit retry loop
-        console.log(
-          `Service discovery complete: found ${this._characteristics.size} characteristics`,
-        );
-        console.log('Discovered characteristics:', Array.from(this._characteristics.keys()));
         return;
-      } catch (error) {
-        console.warn(`Service discovery attempt ${attempt}/${maxRetries} failed:`, error);
+      } catch {
         if (attempt < maxRetries) {
           // Wait before retry
           await new Promise((resolve) => setTimeout(resolve, 500));
@@ -209,14 +203,13 @@ export class WebBluetoothClient extends BLEClientBase {
       }
     }
 
-    console.error('Service discovery failed after all retries');
+    // Service discovery failed after all retries
+    throw new Error('Service discovery failed after all retries');
   }
 
   async writeGattChar(uuid: string, data: Uint8Array): Promise<void> {
-    console.log('Attempting to write to characteristic:', uuid.toLowerCase());
     const char = this._characteristics.get(uuid.toLowerCase());
     if (!char) {
-      console.log('Available characteristics:', Array.from(this._characteristics.keys()));
       throw new Error(`Characteristic ${uuid} not found`);
     }
 
@@ -256,9 +249,6 @@ export class WebBluetoothClient extends BLEClientBase {
       if (value) {
         const data = new Uint8Array(value.buffer);
         const serviceId = isPascoUuid(target.uuid) ? getServiceIdFromUuid(target.uuid) : 0;
-        console.log(
-          `Notification from UUID ${target.uuid}, serviceId=${serviceId}, data length=${data.length}`,
-        );
         const charInfo: BLECharacteristic = {
           uuid: target.uuid,
           handle: serviceId,

@@ -477,7 +477,6 @@ export function getWord(word: string): LEDCoordinate[][] {
     const upperWord = word.toUpperCase();
     const letter = alphabet[upperWord];
     if (!letter) {
-      console.warn(`Letter ${word} not found`);
       return [];
     }
 
@@ -492,7 +491,6 @@ export function getWord(word: string): LEDCoordinate[][] {
   for (const char of paddedWord) {
     const letterDict = alphabet[char];
     if (!letterDict) {
-      console.warn(`Letter ${char} not found`);
       continue;
     }
 

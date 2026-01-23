@@ -116,9 +116,9 @@ export class TypedEventEmitter<TEvents extends { [K in keyof TEvents]: unknown }
       for (const listener of listeners) {
         try {
           listener(data);
-        } catch (e) {
+        } catch {
           // Prevent listener errors from breaking emission
-          console.error(`Error in event listener for "${String(event)}":`, e);
+          // Errors are silently swallowed to maintain event flow
         }
       }
     }
@@ -128,8 +128,9 @@ export class TypedEventEmitter<TEvents extends { [K in keyof TEvents]: unknown }
       for (const listener of onceListeners) {
         try {
           listener(data);
-        } catch (e) {
-          console.error(`Error in once listener for "${String(event)}":`, e);
+        } catch {
+          // Prevent listener errors from breaking emission
+          // Errors are silently swallowed to maintain event flow
         }
       }
       this._onceListeners.delete(event);
