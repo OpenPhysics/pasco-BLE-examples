@@ -3,30 +3,11 @@
  * This module provides a safe alternative to eval() for evaluating mathematical expressions
  */
 
-import { Parser } from 'expr-eval';
+import * as mathjs from 'mathjs';
 import { dewpoint, heatindex, limit, linearInterpolate, usound, windchill } from './math.js';
 
-// Create parser instance with custom functions
-const parser = new Parser();
-
-// Add mathematical functions that might be used in equations
-parser.functions.sqrt = Math.sqrt;
-parser.functions.log = Math.log10;
-parser.functions.ln = Math.log;
-parser.functions.log10 = Math.log10;
-parser.functions.sin = Math.sin;
-parser.functions.cos = Math.cos;
-parser.functions.tan = Math.tan;
-parser.functions.asin = Math.asin;
-parser.functions.acos = Math.acos;
-parser.functions.atan = Math.atan;
-parser.functions.atan2 = Math.atan2;
-parser.functions.abs = Math.abs;
-parser.functions.pow = Math.pow;
-parser.functions.exp = Math.exp;
-parser.functions.floor = Math.floor;
-parser.functions.ceil = Math.ceil;
-parser.functions.round = Math.round;
+// Use mathjs directly for evaluation
+const math = mathjs;
 
 export interface EquationVariables {
   [key: string]: number | null;
@@ -61,7 +42,7 @@ export function evaluateTableEquation(rawEquation: string): number {
 
   // Evaluate the x expression
   const xExpression = elements.shift()!;
-  const x = parser.evaluate(xExpression);
+  const x = math.evaluate(xExpression) as number;
 
   // Parse remaining values as points
   const values = elements.map((e) => parseFloat(e));
@@ -117,8 +98,7 @@ export function evaluateEquation(rawEquation: string, variables: EquationVariabl
     equation = equation.replace(match, value.toString());
   }
 
-  // Convert Python-style power operator to JavaScript
-  equation = equation.replace(/\^/g, '**');
+  // mathjs uses ^ for power operator (same as Python), no conversion needed
 
   // Handle special equation types
   if (equation.startsWith('table')) {
@@ -190,16 +170,11 @@ export function evaluateEquation(rawEquation: string, variables: EquationVariabl
     return null;
   }
 
-  // Replace math functions
-  equation = equation.replace(/sqrt/g, 'sqrt');
-  equation = equation.replace(/atan2/g, 'atan2');
+  // Replace math functions (mathjs has these built-in, but ensure log means log10)
   equation = equation.replace(/log(?!10)/g, 'log10');
 
-  // Convert ** back to ^ for expr-eval
-  equation = equation.replace(/\*\*/g, '^');
-
   try {
-    return parser.evaluate(equation);
+    return math.evaluate(equation) as number;
   } catch {
     throw new Error(`Invalid equation: ${rawEquation}`);
   }
