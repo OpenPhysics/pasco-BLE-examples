@@ -1,4 +1,5 @@
 [![TypeScript](https://img.shields.io/badge/typescript-5.9+-blue)](https://www.npmjs.com/package/pasco-ble)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-browser%20only-lightgrey)](https://www.npmjs.com/package/pasco-ble)
 [![Web Bluetooth](https://img.shields.io/badge/Web%20Bluetooth-required-blue)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API)
 [![License](https://img.shields.io/badge/license-Custom-orange)](LICENSE)
@@ -14,6 +15,7 @@ A TypeScript/JavaScript library for connecting to PASCO Wireless sensors **in we
 ## Contents
 
 - [Getting Started](#getting-started)
+- [Browser Compatibility](#browser-compatibility)
 - [Compatible Sensors](#compatible-sensors)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
@@ -22,6 +24,7 @@ A TypeScript/JavaScript library for connecting to PASCO Wireless sensors **in we
 - [//control.Node](#controlnode)
 - [PascoBot](#pascobot)
 - [Browser Usage](#browser-usage)
+- [Advanced Usage](#advanced-usage)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -40,6 +43,42 @@ npm install pasco-ble
 - User gesture to initiate Bluetooth operations
 
 No additional setup or native dependencies required!
+
+## Browser Compatibility
+
+This library uses the **Web Bluetooth API**, which has limited browser support:
+
+| Browser | Support | Minimum Version | Platforms |
+|---------|---------|-----------------|-----------|
+| Chrome | ✅ Supported | 56+ | Windows, macOS, Linux, Android |
+| Edge | ✅ Supported | 79+ | Windows, macOS |
+| Opera | ✅ Supported | 43+ | Windows, macOS, Linux |
+| Firefox | ❌ Not supported | - | - |
+| Safari | ❌ Not supported | - | - |
+
+**Additional Requirements:**
+- HTTPS connection required (localhost works for development)
+- User gesture required to initiate Bluetooth operations (e.g., button click)
+
+### Check Browser Support Programmatically
+
+```typescript
+import { checkBrowserSupport, isWebBluetoothSupported } from 'pasco-ble';
+
+// Simple check
+if (!isWebBluetoothSupported()) {
+  alert('Please use Chrome, Edge, or Opera to connect to sensors.');
+}
+
+// Detailed check with helpful messages
+const support = checkBrowserSupport();
+if (!support.supported) {
+  console.error(support.message);
+  // Example messages:
+  // - "Web Bluetooth requires a secure context (HTTPS)..."
+  // - "Web Bluetooth API is not available. Firefox does not support Web Bluetooth..."
+}
+```
 
 ## Compatible Sensors
 
@@ -438,6 +477,41 @@ The library works in browsers using the Web Bluetooth API:
 ```
 
 > **Note:** Web Bluetooth requires HTTPS and a user gesture (button click) to initiate scanning/connecting.
+
+## Advanced Usage
+
+### Internal APIs
+
+For advanced users building extensions or custom implementations, internal utilities are available via a separate import path:
+
+```typescript
+// Main API (stable, recommended)
+import { PASCOBLEDevice, checkBrowserSupport } from 'pasco-ble';
+
+// Internal APIs (may change between versions)
+import {
+  // BLE protocol internals
+  BLEAdapterBase,
+  ProtocolHandler,
+  PROTOCOL,
+
+  // Binary utilities
+  packInt16LE,
+  unpackFloat32LE,
+  twosComplement,
+
+  // Sensor data
+  SENSORS,
+  getSensor,
+
+  // Math functions
+  linearInterpolate,
+  heatindex,
+  dewpoint,
+} from 'pasco-ble/internal';
+```
+
+> **Warning:** Internal APIs are not covered by semantic versioning guarantees and may change in minor releases. Use them only when the main API doesn't meet your needs.
 
 ## Examples
 

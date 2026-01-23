@@ -9,6 +9,13 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/types/*": ["types/*"],
+      "@/utils/*": ["utils/*"],
+      "@/device/*": ["device/*"],
+      "@/ble/*": ["ble/*"]
+    },
 
     /* Emit */
     "declaration": true,

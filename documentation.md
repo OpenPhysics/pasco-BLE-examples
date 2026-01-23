@@ -7,6 +7,8 @@
 ## Contents
 
 - [Architecture Overview](#architecture-overview)
+- [Module Exports](#module-exports)
+- [Browser Support](#browser-support)
 - [BLE Communication](#ble-communication)
 - [Device Initialization](#device-initialization)
 - [Data Decoding Pipeline](#data-decoding-pipeline)
@@ -50,7 +52,9 @@ The PASCO BLE library provides a TypeScript interface for communicating with PAS
 
 ```
 src/
-├── index.ts                 # Public API exports
+├── index.ts                 # Public API exports (stable)
+├── internal.ts              # Internal/advanced API exports
+├── browser-support.ts       # Browser compatibility detection
 ├── code-node-device.ts      # Code.Node controls
 ├── control-node-device.ts   # Control.Node controls
 ├── pasco-bot.ts             # Robotics interface
@@ -93,6 +97,141 @@ PASCO devices have three conceptual layers:
 - Interface ID: 1036
 - Sensors: WirelessWeatherSensor, WirelessGPSSensor, WirelessLightSensor, WirelessCompass
 - Measurements: Temperature, RelativeHumidity, Latitude, UVIndex, WindDirection, etc.
+
+---
+
+## Module Exports
+
+The library uses a tiered export structure to separate stable public APIs from internal utilities:
+
+### Main API (`pasco-ble`)
+
+The main entry point exports stable, user-facing APIs:
+
+```typescript
+import {
+  // Device classes
+  PASCOBLEDevice,
+  CodeNodeDevice,
+  ControlNodeDevice,
+  PascoBot,
+
+  // Browser support
+  checkBrowserSupport,
+  isWebBluetoothSupported,
+
+  // Configuration
+  DeviceOptions,
+  DEFAULT_DEVICE_OPTIONS,
+
+  // Error classes
+  BLEConnectionError,
+  DeviceNotConnected,
+  MeasurementNotFound,
+  // ... other errors
+
+  // Unit conversions
+  convertUnit,
+  getDefaultUnit,
+
+  // Event system
+  TypedEventEmitter,
+
+  // LED icons
+  Icons,
+  LEDIcons,
+} from 'pasco-ble';
+```
+
+### Internal API (`pasco-ble/internal`)
+
+Advanced utilities for extension developers. These APIs may change between minor versions:
+
+```typescript
+import {
+  // BLE protocol internals
+  BLEAdapterBase,
+  BLEClientBase,
+  ProtocolHandler,
+  PROTOCOL,
+  createPascoUuid,
+
+  // Device internals
+  ConnectionStateMachine,
+  MeasurementDecoder,
+  SensorInitializer,
+
+  // Datasheet access
+  SENSORS,
+  WIRELESS_INTERFACES,
+  getSensor,
+  getInterface,
+
+  // Binary utilities
+  packInt16LE,
+  unpackFloat32LE,
+  twosComplement,
+  binaryFraction,
+
+  // Math utilities
+  linearInterpolate,
+  dewpoint,
+  windchill,
+  heatindex,
+
+  // Retry utilities
+  withRetry,
+  delay,
+} from 'pasco-ble/internal';
+```
+
+---
+
+## Browser Support
+
+### Runtime Detection
+
+The library provides utilities to check browser compatibility before attempting BLE operations:
+
+```typescript
+import { checkBrowserSupport, isWebBluetoothSupported } from 'pasco-ble';
+
+// Simple boolean check
+if (!isWebBluetoothSupported()) {
+  console.error('Web Bluetooth not available');
+}
+
+// Detailed check with diagnostic info
+const support = checkBrowserSupport();
+console.log(support);
+// {
+//   supported: false,
+//   secureContext: true,
+//   message: "Web Bluetooth API is not available. Firefox does not support Web Bluetooth...",
+//   browser: "Firefox"
+// }
+```
+
+### BrowserSupport Interface
+
+```typescript
+interface BrowserSupport {
+  supported: boolean;      // Whether Web Bluetooth is available
+  secureContext: boolean;  // Whether page is served over HTTPS
+  message: string;         // Human-readable status message
+  browser: string | undefined;  // Detected browser name
+}
+```
+
+### Supported Browsers
+
+| Browser | Minimum Version | Platforms |
+|---------|-----------------|-----------|
+| Chrome | 56+ | Windows, macOS, Linux, Android |
+| Edge | 79+ | Windows, macOS |
+| Opera | 43+ | Windows, macOS, Linux |
+
+**Not Supported:** Firefox, Safari, Internet Explorer
 
 ---
 
@@ -524,3 +663,28 @@ The library was refactored to improve separation of concerns and maintainability
 - Biome for linting and formatting
 - Pre-commit hooks for code quality
 - Comprehensive error handling
+
+### API Structure Improvements (2025)
+
+1. **Tiered Export Structure**
+   - Main API (`pasco-ble`): Stable, user-facing exports
+   - Internal API (`pasco-ble/internal`): Advanced utilities for extension developers
+   - Clear separation prevents users from depending on implementation details
+
+2. **Browser Support Utilities**
+   - `checkBrowserSupport()`: Detailed browser compatibility check
+   - `isWebBluetoothSupported()`: Simple boolean check
+   - Helpful error messages for unsupported browsers
+
+3. **TypeScript Path Aliases**
+   - `@/types/*`, `@/utils/*`, `@/device/*`, `@/ble/*`
+   - Cleaner imports for internal development
+
+4. **CI/CD Pipeline**
+   - GitHub Actions for automated builds, linting, and type checking
+   - Dependabot for dependency updates
+   - Release workflow for NPM publishing with provenance
+
+5. **Development Requirements**
+   - Node.js >= 22.0.0 required for development
+   - ES2022 target with ESNext modules
