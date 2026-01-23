@@ -35,7 +35,7 @@
     "science",
     "education"
   ],
-  "author": "PASCO Scientific",
+  "author": "Martin Veillette",
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "expr-eval": "^2.0.2"

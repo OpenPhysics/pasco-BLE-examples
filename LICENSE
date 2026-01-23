@@ -1,42 +1,81 @@
-Copyright (c) 2021 PASCO Scientific
+PASCO BLE TypeScript Library License
 
-END USER LICENSE AGREEMENT FOR SOURCE CODE
+Copyright (c) 2024 Martin Veillette
 
-IMPORTANT – READ THIS AGREEMENT BEFORE USING THE SOURCE CODE. DOWNLOADING
-OR USING THE SOURCE CODE INDICATES YOUR ACCEPTANCE OF THIS AGREEMENT.
+This TypeScript library is an independent implementation for interfacing with
+PASCO wireless BLE sensors. This work was inspired by and developed with
+reference to PASCO Scientific's original Python implementation, which is
+subject to the license terms below.
 
-This End User License Agreement (“EULA”) is a legal agreement between you and
-PASCO scientific (“PASCO”), as the licensor of the source code (“Code”)
-including updates or modified Code provided to you by PASCO, whether stored on
-media or downloaded via any method.
+================================================================================
+ACKNOWLEDGMENT OF ORIGINAL WORK
+================================================================================
 
-PASCO may add to, change, or remove any part, term, or condition of this EULA,
-including but not limited to as it applies to the Code at any time without
-prior notice or liability to you. Any such additions, changes, or removals
-shall apply as soon as they are posted. By continuing to use the Code after so
-posted, you are indicating your acceptance thereto.
+This TypeScript implementation acknowledges and honors the original work by
+PASCO Scientific. The protocol specifications, sensor datasheets, and
+communication methods were referenced from PASCO's Python implementation:
 
-ELIGIBLE LICENSEES – CONDITIONS:
+    Copyright (c) 2021 PASCO Scientific
 
-The Code is available for use solely by Licensee for personal, non-commercial
-and educational uses only. Redistribution and use in source and binary forms,
-with or without modification, are permitted provided that the following
-conditions are met:
+While this TypeScript library is an independent implementation with its own
+architecture and code, users must respect PASCO Scientific's intellectual
+property rights and trademark ownership.
 
-1. Neither the name of the Source Code provider nor the names of its
-   contributors may be used to endorse or promote products derived from this
-   source code without specific prior written permission.
-2. Redistribution in any form must meet condition #1, and the following
-   disclaimer in the documentation and/or other materials provided with the
-   distribution:
-   THIS SOURCE CODE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-   TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-   PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-   OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-   OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+================================================================================
+LICENSE TERMS FOR THIS TYPESCRIPT IMPLEMENTATION
+================================================================================
+
+Permission is hereby granted to use, copy, modify, and distribute this
+TypeScript library for PERSONAL, NON-COMMERCIAL, and EDUCATIONAL purposes only,
+subject to the following conditions:
+
+1. ATTRIBUTION REQUIREMENTS:
+   - Redistributions of source code must retain this copyright notice and the
+     acknowledgment of PASCO Scientific's original work.
+   - Redistributions in binary form must reproduce this copyright notice in the
+     documentation and/or other materials provided with the distribution.
+   - Neither the name "PASCO Scientific" nor "Martin Veillette" may be used to
+     endorse or promote products derived from this software without specific
+     prior written permission.
+
+2. USAGE RESTRICTIONS:
+   - This software is licensed for personal, non-commercial, and educational
+     use only.
+   - Commercial use, including but not limited to integration into commercial
+     products or services, requires separate written permission from the
+     copyright holder.
+   - PASCO® is a registered trademark of PASCO Scientific. Use of PASCO's
+     trademarks requires compliance with their trademark guidelines.
+
+3. NO WARRANTY:
+   THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+   INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+   AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+   COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+4. INDEPENDENT IMPLEMENTATION:
+   This TypeScript library is an independent implementation and is not
+   officially endorsed, maintained, or supported by PASCO Scientific. For
+   official PASCO software and support, please visit www.pasco.com.
+
+================================================================================
+ORIGINAL PASCO WORK
+================================================================================
+
+This TypeScript implementation was developed with reference to PASCO Scientific's
+original Python implementation, which is available at:
+
+    https://github.com/PASCOscientific/pasco_python
+
+Please refer to the above repository for PASCO's original license terms and
+implementation details.
+
+For questions about this TypeScript implementation, please refer to the
+project repository. For questions about PASCO products or official software,
+please contact PASCO Scientific at www.pasco.com.
