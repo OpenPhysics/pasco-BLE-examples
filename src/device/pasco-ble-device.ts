@@ -394,7 +394,12 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
           `Attempting auto-reconnect (${this._reconnectAttempts + 1}/${this._options.maxReconnectAttempts})`,
         );
 
-        await new Promise((resolve) => setTimeout(resolve, this._options.reconnectDelay));
+        // Add jitter to prevent thundering herd when multiple devices reconnect
+        // Jitter is ±25% of the base delay
+        const jitter = this._options.reconnectDelay * 0.25;
+        const delay = this._options.reconnectDelay + (Math.random() * 2 - 1) * jitter;
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
         await this.reconnect();
       }
     }
