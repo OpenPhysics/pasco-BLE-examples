@@ -16,26 +16,16 @@ import {
 } from '@/utils/math.js';
 
 import { CouldNotDecodeData, InvalidEquation } from '../errors.js';
-
-/**
- * State shared with the decoder for accessing sensor data
- */
-export interface DecoderState {
-  sensorData: Map<number, Map<number, number | null>>;
-  sensorDataPrev: Map<number, Map<number, number | null>>;
-  deviceMeasurements: Map<number, Map<number, Measurement>>;
-  dataStack: Map<number, number[]>;
-  dataResults: Map<string, number | null>;
-}
+import type { SensorStateAccess } from './sensor-state.js';
 
 /**
  * Decodes raw binary data from sensors into calculated measurement values
  */
 export class MeasurementDecoder {
-  private state: DecoderState;
+  private readonly _state: SensorStateAccess;
 
-  constructor(state: DecoderState) {
-    this.state = state;
+  constructor(state: SensorStateAccess) {
+    this._state = state;
   }
 
   /**
@@ -44,15 +34,13 @@ export class MeasurementDecoder {
   decode(sensorId: number): void {
     try {
       // Save previous data for derivative calculations
-      const prevData = new Map(this.state.sensorData.get(sensorId));
-      this.state.sensorDataPrev.set(sensorId, prevData);
+      this._state.savePreviousSensorData(sensorId);
 
-      const stack = this.state.dataStack.get(sensorId) ?? [];
-      const measurements = this.state.deviceMeasurements.get(sensorId);
+      const measurements = this._state.getMeasurements(sensorId);
       if (!measurements) return;
 
       // Phase 1: Decode raw measurements from binary data
-      this._decodeRawMeasurements(sensorId, measurements, stack);
+      this._decodeRawMeasurements(sensorId, measurements);
 
       // Phase 2: Calculate derived measurements
       this._calculateDerivedMeasurements(sensorId, measurements);
@@ -72,31 +60,31 @@ export class MeasurementDecoder {
    */
   private _decodeRawMeasurements(
     sensorId: number,
-    measurements: Map<number, Measurement>,
-    stack: number[],
+    measurements: ReadonlyMap<number, Measurement>,
   ): void {
     for (const [mId, m] of measurements) {
       let resultValue: number | null = null;
 
       if (m.Type === 'RawDigital' && m.DataSize) {
-        resultValue = this._decodeRawDigital(m, stack);
+        resultValue = this._decodeRawDigital(m, sensorId);
       } else if (m.Type === 'Direct' && m.DataSize) {
-        resultValue = this._decodeDirect(m, stack);
+        resultValue = this._decodeDirect(m, sensorId);
       } else if (m.Type === 'Constant') {
         resultValue = this._decodeConstant(m);
       }
 
-      this.state.sensorData.get(sensorId)?.set(mId, resultValue);
+      this._state.setSensorValue(sensorId, mId, resultValue);
     }
   }
 
   /**
    * Decode RawDigital measurement type
    */
-  private _decodeRawDigital(m: Measurement, stack: number[]): number {
+  private _decodeRawDigital(m: Measurement, sensorId: number): number {
+    const bytes = this._state.consumeFromDataStack(sensorId, m.DataSize!);
     let byteValue = 0;
-    for (let d = 0; d < m.DataSize! && stack.length > 0; d++) {
-      byteValue += (stack.shift() ?? 0) * 2 ** (8 * d);
+    for (let d = 0; d < bytes.length; d++) {
+      byteValue += (bytes[d] ?? 0) * 2 ** (8 * d);
     }
 
     if (m.DataSize === 4 || (m.TwosComp && parseInt(m.TwosComp, 10) === 1)) {
@@ -109,10 +97,11 @@ export class MeasurementDecoder {
   /**
    * Decode Direct measurement type
    */
-  private _decodeDirect(m: Measurement, stack: number[]): number {
+  private _decodeDirect(m: Measurement, sensorId: number): number {
+    const bytes = this._state.consumeFromDataStack(sensorId, m.DataSize!);
     let byteValue = 0;
-    for (let d = 0; d < m.DataSize! && stack.length > 0; d++) {
-      byteValue += (stack.shift() ?? 0) * 2 ** (8 * d);
+    for (let d = 0; d < bytes.length; d++) {
+      byteValue += (bytes[d] ?? 0) * 2 ** (8 * d);
     }
 
     let resultValue: number;
@@ -148,10 +137,10 @@ export class MeasurementDecoder {
    */
   private _calculateDerivedMeasurements(
     sensorId: number,
-    measurements: Map<number, Measurement>,
+    measurements: ReadonlyMap<number, Measurement>,
   ): void {
     for (const [mId, m] of measurements) {
-      const currentValue = this.state.sensorData.get(sensorId)?.get(mId);
+      const currentValue = this._state.getSensorValue(sensorId, mId);
       if (currentValue !== null) continue;
 
       let resultValue = this._getMeasurementValue(sensorId, mId);
@@ -167,7 +156,7 @@ export class MeasurementDecoder {
         }
       }
 
-      this.state.sensorData.get(sensorId)?.set(mId, resultValue);
+      this._state.setSensorValue(sensorId, mId, resultValue);
     }
   }
 
@@ -175,7 +164,7 @@ export class MeasurementDecoder {
    * Get the calculated value for a measurement
    */
   private _getMeasurementValue(sensorId: number, measurementId: number): number | null {
-    const m = this.state.deviceMeasurements.get(sensorId)?.get(measurementId);
+    const m = this._state.getMeasurement(sensorId, measurementId);
     if (!m) return null;
 
     if (m.Inputs !== undefined) {
@@ -221,9 +210,9 @@ export class MeasurementDecoder {
     const inputs = inputStr.split(',').map((i) => parseInt(i, 10));
     if (inputs.length !== 3) return null;
 
-    const ax = this.state.sensorData.get(sensorId)?.get(inputs[0]!);
-    const ay = this.state.sensorData.get(sensorId)?.get(inputs[1]!);
-    const az = this.state.sensorData.get(sensorId)?.get(inputs[2]!);
+    const ax = this._state.getSensorValue(sensorId, inputs[0]!);
+    const ay = this._state.getSensorValue(sensorId, inputs[1]!);
+    const az = this._state.getSensorValue(sensorId, inputs[2]!);
 
     if (ax == null || ay == null || az == null) return null;
     return threeInputVector(ax, ay, az);
@@ -237,7 +226,7 @@ export class MeasurementDecoder {
     const needInput = inputs[0];
     if (needInput === undefined) return null;
 
-    const value = this.state.sensorData.get(sensorId)?.get(needInput);
+    const value = this._state.getSensorValue(sensorId, needInput);
     if (value != null) return value;
 
     return this._getMeasurementValue(sensorId, needInput);
@@ -277,7 +266,7 @@ export class MeasurementDecoder {
     const inputValue = this._getInputValue(inputStr, sensorId);
     if (inputValue === null) return null;
 
-    const prevValue = this.state.sensorDataPrev.get(sensorId)?.get(needInput);
+    const prevValue = this._state.getPreviousSensorValue(sensorId, needInput);
     if (prevValue == null) return null;
 
     return (inputValue - prevValue) / 2;
@@ -304,7 +293,7 @@ export class MeasurementDecoder {
    */
   private _getInputValue(inputStr: string, sensorId: number): number | null {
     const needInput = parseInt(inputStr, 10);
-    const storedValue = this.state.sensorData.get(sensorId)?.get(needInput);
+    const storedValue = this._state.getSensorValue(sensorId, needInput);
 
     if (storedValue != null) return storedValue;
     return this._getMeasurementValue(sensorId, needInput);
@@ -322,7 +311,7 @@ export class MeasurementDecoder {
       const varKey = match.slice(1, -1);
       const varId = parseInt(varKey, 10);
 
-      let value = this.state.sensorData.get(sensorId)?.get(varId);
+      let value = this._state.getSensorValue(sensorId, varId);
       if (value == null) {
         value = this._getMeasurementValue(sensorId, varId);
       }
@@ -341,12 +330,14 @@ export class MeasurementDecoder {
    * Update the visible results map with decoded values
    */
   private _updateVisibleResults(): void {
-    for (const [sid, meas] of this.state.deviceMeasurements) {
+    // Get all sensor IDs that have measurements
+    const deviceMeasurements = this._state.deviceMeasurementsMap;
+    for (const [sid, meas] of deviceMeasurements) {
       for (const [mId, m] of meas) {
         if (m.Visible === 1) {
-          const value = this.state.sensorData.get(sid)?.get(mId);
+          const value = this._state.getSensorValue(sid, mId);
           if (value != null) {
-            this.state.dataResults.set(m.NameTag, value);
+            this._state.setResult(m.NameTag, value);
           }
         }
       }

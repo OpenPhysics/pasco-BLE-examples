@@ -2,7 +2,14 @@
  * Sensor Manager
  *
  * Manages sensor state, initialization, and data reading for PASCO BLE devices.
- * Coordinates between SensorInitializer and MeasurementDecoder.
+ * Coordinates between SensorInitializer and MeasurementDecoder through a
+ * centralized SensorState container.
+ *
+ * Architecture:
+ * - SensorState: Single source of truth for all sensor data
+ * - SensorInitializer: Reads datasheets and populates state during setup
+ * - MeasurementDecoder: Reads raw data and updates state during data collection
+ * - SensorManager: Orchestrates the above and provides the public API
  */
 
 import type { Measurement, SensorChannel } from '@/types/index.js';
@@ -13,9 +20,10 @@ import {
   MeasurementNotFound,
   SensorNotFound,
 } from '../errors.js';
-import { type DecoderState, MeasurementDecoder } from './measurement-decoder.js';
+import { MeasurementDecoder } from './measurement-decoder.js';
 import { PROTOCOL, type ProtocolHandler } from './protocol-handler.js';
-import { type InitializerState, SensorInitializer } from './sensor-initializer.js';
+import { SensorInitializer } from './sensor-initializer.js';
+import { SensorState } from './sensor-state.js';
 
 /**
  * Options for sensor manager
@@ -34,63 +42,49 @@ export interface SensorManagerOptions {
  */
 export class SensorManager {
   // Options
-  private _options: SensorManagerOptions;
+  private readonly _options: SensorManagerOptions;
 
-  // Sensor state maps
-  private _sensorNames: Map<string, SensorChannel> = new Map();
-  private _deviceMeasurements: Map<number, Map<number, Measurement>> = new Map();
-  private _dataStack: Map<number, number[]> = new Map();
-  private _sensorData: Map<number, Map<number, number | null>> = new Map();
-  private _sensorDataPrev: Map<number, Map<number, number | null>> = new Map();
-  private _dataResults: Map<string, number | null> = new Map();
-  private _measurementSensorIds: Map<string, number> = new Map();
-  private _deviceChannels: SensorChannel[] = [];
-  private _dataAckCounter: Map<number, number> = new Map();
-  private _notifySensorId: number | null = null;
+  // Centralized state container
+  private readonly _state: SensorState;
 
   // Specialized handlers
-  private _decoder: MeasurementDecoder;
-  private _initializer: SensorInitializer;
+  private readonly _decoder: MeasurementDecoder;
+  private readonly _initializer: SensorInitializer;
+
+  // Track which sensor we're reading from
+  private _notifySensorId: number | null = null;
 
   constructor(options: SensorManagerOptions) {
     this._options = options;
 
-    // Create shared state for decoder
-    const decoderState: DecoderState = {
-      sensorData: this._sensorData,
-      sensorDataPrev: this._sensorDataPrev,
-      deviceMeasurements: this._deviceMeasurements,
-      dataStack: this._dataStack,
-      dataResults: this._dataResults,
-    };
-    this._decoder = new MeasurementDecoder(decoderState);
+    // Create centralized state
+    this._state = new SensorState();
 
-    // Create shared state for initializer
-    const initState: InitializerState = {
-      deviceChannels: this._deviceChannels,
-      deviceMeasurements: this._deviceMeasurements,
-      sensorNames: this._sensorNames,
-      measurementSensorIds: this._measurementSensorIds,
-      dataResults: this._dataResults,
-      dataAckCounter: this._dataAckCounter,
-      dataStack: this._dataStack,
-      sensorData: this._sensorData,
-    };
-    this._initializer = new SensorInitializer(initState);
+    // Create handlers with state access
+    this._decoder = new MeasurementDecoder(this._state);
+    this._initializer = new SensorInitializer(this._state);
   }
 
   // ==================== Properties ====================
 
+  /**
+   * Get the centralized state object (for advanced use cases)
+   * @internal
+   */
+  get state(): SensorState {
+    return this._state;
+  }
+
   get dataResults(): Map<string, number | null> {
-    return this._dataResults;
+    return this._state.dataResultsMap;
   }
 
   get deviceSensors(): Map<string, SensorChannel> {
-    return this._sensorNames;
+    return this._state.sensorNamesMap;
   }
 
   get deviceChannels(): SensorChannel[] {
-    return this._deviceChannels;
+    return [...this._state.getChannels()];
   }
 
   /**
@@ -98,7 +92,7 @@ export class SensorManager {
    * @internal
    */
   get deviceMeasurements(): Map<number, Map<number, Measurement>> {
-    return this._deviceMeasurements;
+    return this._state.deviceMeasurementsMap;
   }
 
   /**
@@ -106,7 +100,7 @@ export class SensorManager {
    * @internal
    */
   get sensorData(): Map<number, Map<number, number | null>> {
-    return this._sensorData;
+    return this._state.sensorDataMap;
   }
 
   // ==================== Initialization ====================
@@ -117,9 +111,6 @@ export class SensorManager {
   async initializeFromInterface(interfaceId: number): Promise<string[]> {
     this._initializer.initializeFromInterface(interfaceId);
 
-    // Sync the device channels reference
-    this._deviceChannels = this._initializer.state.deviceChannels;
-
     // Check for pluggable sensors
     if (this._initializer.hasPluggableSensors()) {
       await this._scanControlnodePlugins();
@@ -128,22 +119,14 @@ export class SensorManager {
     }
 
     // Return list of sensor names
-    return Array.from(this._sensorNames.keys());
+    return Array.from(this._state.getSensorNames());
   }
 
   /**
    * Reset all sensor state (for reconnection)
    */
   reset(): void {
-    this._sensorNames.clear();
-    this._deviceMeasurements.clear();
-    this._dataStack.clear();
-    this._sensorData.clear();
-    this._sensorDataPrev.clear();
-    this._dataResults.clear();
-    this._measurementSensorIds.clear();
-    this._deviceChannels = [];
-    this._dataAckCounter.clear();
+    this._state.reset();
     this._notifySensorId = null;
   }
 
@@ -155,7 +138,7 @@ export class SensorManager {
    * @returns true if the sensor exists and is initialized
    */
   isSensorReady(sensorName: string): boolean {
-    return this._sensorNames.has(sensorName);
+    return this._state.hasSensor(sensorName);
   }
 
   /**
@@ -164,7 +147,7 @@ export class SensorManager {
    * @throws SensorNotFound if the sensor is not initialized
    */
   ensureSensorReady(sensorName: string): void {
-    if (!this._sensorNames.has(sensorName)) {
+    if (!this._state.hasSensor(sensorName)) {
       throw new SensorNotFound(`Sensor "${sensorName}" not initialized`);
     }
   }
@@ -176,7 +159,7 @@ export class SensorManager {
    * @throws SensorNotFound if the sensor does not exist
    */
   getSensorOrThrow(sensorName: string): SensorChannel {
-    const sensor = this._sensorNames.get(sensorName);
+    const sensor = this._state.getSensorByName(sensorName);
     if (!sensor) {
       throw new SensorNotFound(`Sensor "${sensorName}" not found`);
     }
@@ -189,7 +172,7 @@ export class SensorManager {
    * @returns true if the measurement exists
    */
   isMeasurementReady(measurement: string): boolean {
-    return this._measurementSensorIds.has(measurement);
+    return this._state.hasMeasurement(measurement);
   }
 
   /**
@@ -198,7 +181,7 @@ export class SensorManager {
    * @throws MeasurementNotFound if the measurement is not available
    */
   ensureMeasurementReady(measurement: string): void {
-    if (!this._measurementSensorIds.has(measurement)) {
+    if (!this._state.hasMeasurement(measurement)) {
       throw new MeasurementNotFound(`Measurement "${measurement}" not available`);
     }
   }
@@ -212,7 +195,7 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-    return Array.from(this._sensorNames.keys());
+    return Array.from(this._state.getSensorNames());
   }
 
   /**
@@ -230,13 +213,13 @@ export class SensorManager {
 
     if (!sensorName) {
       const measurementList: string[] = [];
-      for (const sensor of this._deviceChannels) {
+      for (const sensor of this._state.getChannels()) {
         measurementList.push(...sensor.measurements);
       }
       return measurementList;
     }
 
-    const sensor = this._sensorNames.get(sensorName);
+    const sensor = this._state.getSensorByName(sensorName);
     if (!sensor) {
       throw new SensorNotFound();
     }
@@ -257,14 +240,14 @@ export class SensorManager {
       throw new InvalidParameter();
     }
 
-    const sensorId = this._measurementSensorIds.get(measurement);
+    const sensorId = this._state.getMeasurementSensorId(measurement);
     if (sensorId === undefined) {
       throw new InvalidParameter();
     }
 
-    const measurements = this._deviceMeasurements.get(sensorId);
+    const measurements = this._state.getMeasurements(sensorId);
     if (measurements) {
-      for (const [_, m] of measurements) {
+      for (const [, m] of measurements) {
         if (m.NameTag === measurement) {
           return m.UnitType ?? null;
         }
@@ -307,13 +290,13 @@ export class SensorManager {
       throw new InvalidParameter();
     }
 
-    const sensorId = this._measurementSensorIds.get(measurement);
+    const sensorId = this._state.getMeasurementSensorId(measurement);
     if (sensorId === undefined) {
       throw new MeasurementNotFound();
     }
 
     await this._getSensorMeasurements(sensorId);
-    return this._dataResults.get(measurement) ?? null;
+    return this._state.getResult(measurement) ?? null;
   }
 
   /**
@@ -338,7 +321,7 @@ export class SensorManager {
     // Get unique sensor IDs
     const sensorIds = new Set<number>();
     for (const m of measurements) {
-      const sensorId = this._measurementSensorIds.get(m);
+      const sensorId = this._state.getMeasurementSensorId(m);
       if (sensorId === undefined) {
         throw new MeasurementNotFound();
       }
@@ -353,7 +336,7 @@ export class SensorManager {
     // Build result
     const result: Record<string, number | null> = {};
     for (const measurement of measurements) {
-      result[measurement] = this._dataResults.get(measurement) ?? null;
+      result[measurement] = this._state.getResult(measurement) ?? null;
     }
     return result;
   }
@@ -366,18 +349,14 @@ export class SensorManager {
   handleMeasurementResponse(sensorId: number, data: number[]): void {
     if (data[0] !== undefined && data[0] <= 0x1f) {
       // Periodic data
-      const stack = this._dataStack.get(sensorId) ?? [];
-      stack.push(...data.slice(1));
-      this._dataStack.set(sensorId, stack);
+      this._state.appendToDataStack(sensorId, data.slice(1));
 
-      const counter = (this._dataAckCounter.get(sensorId) ?? 0) + 1;
-      this._dataAckCounter.set(sensorId, counter);
-
+      const counter = this._state.incrementAckCounter(sensorId);
       this._decoder.decode(sensorId);
 
       // Send acknowledgement every 8 packets
       if (counter > 8) {
-        this._dataAckCounter.set(sensorId, 0);
+        this._state.setAckCounter(sensorId, 0);
         const responseServiceId = sensorId + 1;
         this._options.protocolHandler.sendAck(responseServiceId, [data[0]!]).catch(() => {});
       }
@@ -387,7 +366,7 @@ export class SensorManager {
       if (data[2] === PROTOCOL.GCMD_READ_ONE_SAMPLE) {
         // Store data for the sensor we requested from
         if (this._notifySensorId !== null) {
-          this._dataStack.set(this._notifySensorId, data.slice(3));
+          this._state.setDataStack(this._notifySensorId, data.slice(3));
         }
       }
     }
@@ -435,11 +414,9 @@ export class SensorManager {
 
     // Find packet size for this sensor
     let packetSize = 0;
-    for (const sensor of this._deviceChannels) {
-      if (sensor.id === sensorId) {
-        packetSize = sensor.total_data_size;
-        break;
-      }
+    const channel = this._state.getChannel(sensorId);
+    if (channel) {
+      packetSize = channel.total_data_size;
     }
 
     // Request data

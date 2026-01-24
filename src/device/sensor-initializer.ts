@@ -13,42 +13,11 @@
  * sensors that are detected at runtime.
  */
 
-import type { Measurement, SensorChannel } from '@/types/index.js';
+import type { SensorChannel } from '@/types/index.js';
 
 import { getInterface, getSensor } from '../datasheets.js';
 import { SensorSetupError } from '../errors.js';
-
-/**
- * State shared with the initializer for setting up sensors
- *
- * This state object is populated during initialization and used throughout
- * the device lifecycle for sensor management and data collection.
- */
-export interface InitializerState {
-  /** Array of sensor channels on the device (from wireless interface definition) */
-  deviceChannels: SensorChannel[];
-
-  /** Map of channel ID -> measurement ID -> measurement definition */
-  deviceMeasurements: Map<number, Map<number, Measurement>>;
-
-  /** Map of sensor name -> sensor channel (for lookups by name) */
-  sensorNames: Map<string, SensorChannel>;
-
-  /** Map of measurement name -> channel ID (for finding which sensor provides a measurement) */
-  measurementSensorIds: Map<string, number>;
-
-  /** Map of measurement name -> latest value (updated during data collection) */
-  dataResults: Map<string, number | null>;
-
-  /** Map of channel ID -> acknowledgement counter (for BLE protocol) */
-  dataAckCounter: Map<number, number>;
-
-  /** Map of channel ID -> data buffer stack (for accumulating multi-packet data) */
-  dataStack: Map<number, number[]>;
-
-  /** Map of channel ID -> (measurement ID -> raw value) (latest sensor readings) */
-  sensorData: Map<number, Map<number, number | null>>;
-}
+import type { SensorStateWriter } from './sensor-state.js';
 
 /**
  * Initializes sensors from PASCO datasheets and builds lookup tables
@@ -60,10 +29,18 @@ export interface InitializerState {
  * - Managing state for both fixed and pluggable sensors
  */
 export class SensorInitializer {
-  readonly state: InitializerState;
+  private readonly _state: SensorStateWriter;
+  private _deviceChannels: SensorChannel[] = [];
 
-  constructor(state: InitializerState) {
-    this.state = state;
+  constructor(state: SensorStateWriter) {
+    this._state = state;
+  }
+
+  /**
+   * Get the current device channels
+   */
+  get deviceChannels(): readonly SensorChannel[] {
+    return this._deviceChannels;
   }
 
   /**
@@ -81,7 +58,7 @@ export class SensorInitializer {
       throw new SensorSetupError(`Interface ${interfaceId} not found`);
     }
 
-    this.state.deviceChannels = iface.channels.map((c) => ({
+    this._deviceChannels = iface.channels.map((c) => ({
       id: c.ID,
       name: c.NameTag ?? '',
       sensor_id: c.SensorID ?? 0,
@@ -93,6 +70,9 @@ export class SensorInitializer {
       channel_id_tag: c.ChannelIDTag ?? '',
       factory_cal_ids: [],
     }));
+
+    // Update state with the new channels
+    this._state.setChannels(this._deviceChannels);
   }
 
   /**
@@ -105,7 +85,7 @@ export class SensorInitializer {
    * @returns true if at least one channel supports plug detection
    */
   hasPluggableSensors(): boolean {
-    return this.state.deviceChannels.some((ch) => ch.plug_detect === 1);
+    return this._deviceChannels.some((ch) => ch.plug_detect === 1);
   }
 
   /**
@@ -132,16 +112,18 @@ export class SensorInitializer {
       // Update sensor IDs for plugin sensors
       if (pluginSensorIds) {
         let i = 0;
-        for (const channel of this.state.deviceChannels) {
+        for (const channel of this._deviceChannels) {
           if (channel.plug_detect === 1) {
             channel.sensor_id = pluginSensorIds[i] ?? 0;
             i++;
           }
         }
+        // Sync updated channels back to state
+        this._state.setChannels(this._deviceChannels);
       }
 
       // Initialize each sensor channel
-      for (const channel of this.state.deviceChannels) {
+      for (const channel of this._deviceChannels) {
         if (channel.type === 'Pasport' && channel.sensor_id !== 0) {
           this._initializeSensor(channel);
         }
@@ -174,9 +156,9 @@ export class SensorInitializer {
    */
   private _initializeSensor(channel: SensorChannel): void {
     // Initialize BLE protocol state for this channel
-    this.state.dataAckCounter.set(channel.id, 0);
-    this.state.dataStack.set(channel.id, []);
-    this.state.deviceMeasurements.set(channel.id, new Map());
+    this._state.setAckCounter(channel.id, 0);
+    this._state.setDataStack(channel.id, []);
+    this._state.initMeasurementsForSensor(channel.id);
 
     // Load sensor definition from datasheets
     const sensorData = getSensor(channel.sensor_id);
@@ -190,7 +172,7 @@ export class SensorInitializer {
     // Process all measurements defined in the sensor datasheet
     for (const [mId, m] of sensorData.measurements) {
       // Store full measurement definition for data decoding
-      this.state.deviceMeasurements.get(channel.id)?.set(mId, { ...m });
+      this._state.setMeasurement(channel.id, mId, { ...m });
 
       // Build list of user-visible measurements
       // Filters out:
@@ -218,11 +200,13 @@ export class SensorInitializer {
 
     // Initialize sensor data storage
     // RotaryPos sensors start at 0, others start as null (no data yet)
-    const sensorDataMap = new Map<number, number | null>();
+    this._state.initSensorDataForSensor(channel.id);
     for (const [mId, m] of sensorData.measurements) {
-      sensorDataMap.set(mId, m.Type === 'RotaryPos' ? 0 : null);
+      this._state.setSensorValue(channel.id, mId, m.Type === 'RotaryPos' ? 0 : null);
     }
-    this.state.sensorData.set(channel.id, sensorDataMap);
+
+    // Update the channel in state
+    this._state.setChannels(this._deviceChannels);
   }
 
   /**
@@ -240,23 +224,21 @@ export class SensorInitializer {
    */
   private _buildLookupTables(): void {
     // Clear existing lookups
-    this.state.measurementSensorIds.clear();
-    this.state.dataResults.clear();
+    this._state.clearLookupTables();
 
     // Build measurement name -> channel ID map
     // Allows quick lookup of which sensor provides a measurement
-    for (const channel of this.state.deviceChannels) {
+    for (const channel of this._deviceChannels) {
       for (const measurement of channel.measurements) {
-        this.state.measurementSensorIds.set(measurement, channel.id);
-        this.state.dataResults.set(measurement, null);
+        this._state.mapMeasurementToSensor(measurement, channel.id);
+        this._state.setResult(measurement, null);
       }
     }
 
     // Build sensor name -> channel map
     // Allows quick lookup of channels by sensor name
-    this.state.sensorNames.clear();
-    for (const sensor of this.state.deviceChannels) {
-      this.state.sensorNames.set(sensor.name, sensor);
+    for (const sensor of this._deviceChannels) {
+      this._state.registerSensor(sensor.name, sensor);
     }
   }
 }
