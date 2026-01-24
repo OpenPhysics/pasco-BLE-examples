@@ -63,22 +63,39 @@ This library uses the **Web Bluetooth API**, which has limited browser support:
 ### Check Browser Support Programmatically
 
 ```typescript
-import { checkBrowserSupport, isWebBluetoothSupported } from 'pasco-ble';
+import {
+  checkBrowserSupport,
+  checkBluetoothAvailability,
+  isWebBluetoothSupported
+} from 'pasco-ble';
 
-// Simple check
+// Simple boolean check
 if (!isWebBluetoothSupported()) {
   alert('Please use Chrome, Edge, or Opera to connect to sensors.');
 }
 
-// Detailed check with helpful messages
+// Detailed synchronous check
 const support = checkBrowserSupport();
 if (!support.supported) {
   console.error(support.message);
-  // Example messages:
-  // - "Web Bluetooth requires a secure context (HTTPS)..."
-  // - "Web Bluetooth API is not available. Firefox does not support Web Bluetooth..."
+}
+
+// Full async check (verifies Bluetooth hardware is present)
+const fullCheck = await checkBluetoothAvailability();
+if (!fullCheck.supported) {
+  console.error(fullCheck.message);
+} else if (fullCheck.bluetoothAvailable === false) {
+  console.error('Bluetooth hardware not found or disabled');
 }
 ```
+
+The `BrowserSupport` object includes:
+- `supported`: Whether Web Bluetooth API is available
+- `secureContext`: Whether page is served over HTTPS
+- `level`: `'not-supported'` | `'likely-supported'` | `'available'`
+- `message`: Human-readable status message
+- `browser`: Detected browser name
+- `bluetoothAvailable`: Whether Bluetooth hardware is present (only set after `checkBluetoothAvailability()`)
 
 ## Compatible Sensors
 

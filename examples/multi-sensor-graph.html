@@ -307,7 +307,7 @@
     </script>
 
     <script type="module">
-        import { PASCOBLEDevice, WebBluetoothAdapter } from '../dist/index.js';
+        import { PASCOBLEDevice } from '../dist/index.js';
 
         // Sensor configurations
         const sensors = {
@@ -465,14 +465,13 @@
 
         async function connectSensor(sensorKey) {
             const sensor = sensors[sensorKey];
-            const adapter = new WebBluetoothAdapter();
 
             try {
                 setStatus(sensor, 'connecting', 'Select your sensor...');
                 sensor.elements.connectBtn.disabled = true;
                 errorDiv.innerHTML = '';
 
-                sensor.device = new PASCOBLEDevice(adapter);
+                sensor.device = new PASCOBLEDevice();
 
                 // Scan for devices
                 const devices = await sensor.device.scan(sensor.filter);

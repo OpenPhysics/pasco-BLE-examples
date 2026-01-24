@@ -287,7 +287,7 @@
     </script>
 
     <script type="module">
-        import { PASCOBLEDevice, WebBluetoothAdapter } from '../dist/index.js';
+        import { PASCOBLEDevice } from '../dist/index.js';
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -302,7 +302,6 @@
         const errorDiv = document.getElementById('errorDiv');
         const dataCountSpan = document.getElementById('dataCount');
 
-        const adapter = new WebBluetoothAdapter();
         let device = null;
         let chart = null;
         let dataPoints = [];
@@ -452,7 +451,7 @@
                 setStatus('connecting', 'Select your sensor...');
                 connectBtn.disabled = true;
 
-                device = new PASCOBLEDevice(adapter);
+                device = new PASCOBLEDevice();
                 const devices = await device.scan();
 
                 if (devices.length === 0) {

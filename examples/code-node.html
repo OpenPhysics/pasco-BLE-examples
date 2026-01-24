@@ -264,7 +264,7 @@
     </script>
 
     <script type="module">
-        import { CodeNodeDevice, Icons, WebBluetoothAdapter } from '../dist/index.js';
+        import { CodeNodeDevice, Icons } from '../dist/index.js';
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -277,7 +277,6 @@
         const frequencyValue = document.getElementById('frequencyValue');
         const scrollText = document.getElementById('scrollText');
 
-        const adapter = new WebBluetoothAdapter();
         let codeNode = null;
 
         function log(message) {
@@ -318,7 +317,7 @@
                 connectBtn.disabled = true;
                 errorDiv.innerHTML = '';
 
-                codeNode = new CodeNodeDevice(adapter);
+                codeNode = new CodeNodeDevice();
 
                 const devices = await codeNode.scan('//code.Node');
 
