@@ -36,7 +36,8 @@
         "noUnusedImports": "warn"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "useConsistentMemberAccessibility": "warn"
       },
       "suspicious": {
         "noExplicitAny": "warn"
