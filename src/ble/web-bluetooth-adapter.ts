@@ -17,11 +17,83 @@ export interface WebBLEDevice extends BLEDevice {
 }
 
 /**
+ * Result of browser support check
+ */
+export interface BrowserSupportResult {
+  /** Whether Web Bluetooth API is available */
+  isSupported: boolean;
+  /** Whether the page is served over HTTPS (required for Web Bluetooth) */
+  isSecureContext: boolean;
+  /** Detailed reason if not supported */
+  reason?: string;
+}
+
+/** Cached browser support result */
+let cachedBrowserSupport: BrowserSupportResult | null = null;
+
+/**
  * Web Bluetooth adapter for browser environments
  */
 export class WebBluetoothAdapter extends BLEAdapterBase {
   isAvailable(): boolean {
     return typeof navigator !== 'undefined' && navigator.bluetooth !== undefined;
+  }
+
+  /**
+   * Check browser support for Web Bluetooth with detailed information.
+   * Results are cached after first check for performance.
+   * @returns Detailed browser support information
+   */
+  static checkBrowserSupport(): BrowserSupportResult {
+    if (cachedBrowserSupport !== null) {
+      return cachedBrowserSupport;
+    }
+
+    // Check if running in browser
+    if (typeof navigator === 'undefined' || typeof window === 'undefined') {
+      cachedBrowserSupport = {
+        isSupported: false,
+        isSecureContext: false,
+        reason: 'Not running in a browser environment',
+      };
+      return cachedBrowserSupport;
+    }
+
+    // Check secure context (HTTPS required)
+    const isSecureContext = window.isSecureContext ?? false;
+    if (!isSecureContext) {
+      cachedBrowserSupport = {
+        isSupported: false,
+        isSecureContext: false,
+        reason: 'Web Bluetooth requires HTTPS (secure context)',
+      };
+      return cachedBrowserSupport;
+    }
+
+    // Check Web Bluetooth API availability
+    if (!navigator.bluetooth) {
+      cachedBrowserSupport = {
+        isSupported: false,
+        isSecureContext: true,
+        reason:
+          'Web Bluetooth API not available. Supported browsers: Chrome 56+, Edge 79+, Opera 43+',
+      };
+      return cachedBrowserSupport;
+    }
+
+    cachedBrowserSupport = {
+      isSupported: true,
+      isSecureContext: true,
+    };
+    return cachedBrowserSupport;
+  }
+
+  /**
+   * Clear the cached browser support result.
+   * Useful for testing or when conditions may have changed.
+   */
+  static clearBrowserSupportCache(): void {
+    cachedBrowserSupport = null;
   }
 
   async scan(nameFilters?: string[], _timeout?: number): Promise<WebBLEDevice[]> {
