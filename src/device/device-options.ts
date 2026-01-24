@@ -4,7 +4,7 @@
  * Configuration options for PASCOBLEDevice.
  */
 
-import type { RetryOptions } from '../utils/retry.js';
+import type { RetryOptions } from '@/utils/retry.js';
 
 /**
  * Log levels for device logging
@@ -57,7 +57,7 @@ export interface DeviceOptions {
 
   /**
    * Log level for device operations.
-   * @default 'none'
+   * @default 'error'
    */
   logLevel?: LogLevel;
 
@@ -101,7 +101,7 @@ export const DEFAULT_DEVICE_OPTIONS: Required<Omit<DeviceOptions, 'logger'>> = {
   autoReconnect: false,
   maxReconnectAttempts: 3,
   reconnectDelay: 2000,
-  logLevel: 'none',
+  logLevel: 'error',
   emitDataEvents: true,
   emitNotificationEvents: false,
 };

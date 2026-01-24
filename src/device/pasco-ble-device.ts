@@ -5,8 +5,13 @@
  * This is the refactored version that delegates to specialized modules.
  */
 
-import type { BLEAdapterBase, BLEClientBase } from '../ble/ble-adapter.js';
-import { createBLEAdapter } from '../ble/index.js';
+import type { BLEAdapterBase, BLEClientBase } from '@/ble/ble-adapter.js';
+import { createBLEAdapter } from '@/ble/index.js';
+import type { BLEDevice } from '@/types/ble.js';
+import { COMPATIBLE_DEVICES } from '@/types/device.js';
+import type { Measurement, SensorChannel } from '@/types/index.js';
+import { decode64 } from '@/utils/binary.js';
+import { type DeviceEvents, TypedEventEmitter } from '@/utils/event-emitter.js';
 import {
   BLEAlreadyConnectedError,
   BLEConnectionError,
@@ -14,11 +19,6 @@ import {
   DeviceNotConnected,
   InvalidParameter,
 } from '../errors.js';
-import type { BLEDevice } from '../types/ble.js';
-import { COMPATIBLE_DEVICES } from '../types/device.js';
-import type { Measurement, SensorChannel } from '../types/index.js';
-import { decode64 } from '../utils/binary.js';
-import { type DeviceEvents, TypedEventEmitter } from '../utils/event-emitter.js';
 import { type ConnectionState, ConnectionStateMachine } from './connection-state.js';
 import {
   createLogger,
@@ -231,7 +231,9 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
       if (this._stateMachine.isConnected) {
         throw new BLEAlreadyConnectedError();
       }
-      throw new BLEConnectionError(); // Already connecting or other invalid state
+      throw new BLEConnectionError(
+        `Cannot connect: device is in '${this._stateMachine.state}' state`,
+      );
     }
 
     // Transition to connecting state
@@ -246,7 +248,9 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
       const connectPromise = this._client.connect();
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(new BLEConnectionError());
+          reject(
+            new BLEConnectionError(`Connection timeout after ${this._options.connectionTimeout}ms`),
+          );
         }, this._options.connectionTimeout);
       });
 
@@ -301,10 +305,16 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
       if (foundDevices.length > 0 && foundDevices[0]) {
         await this.connect(foundDevices[0]);
       } else {
-        throw new BLEConnectionError();
+        throw new BLEConnectionError(`Device with ID '${pascoDeviceId}' not found`);
       }
-    } catch {
-      throw new BLEConnectionError();
+    } catch (error) {
+      if (error instanceof BLEConnectionError) {
+        throw error;
+      }
+      const cause = error instanceof Error ? error : new Error(String(error));
+      throw new BLEConnectionError(`Failed to connect to device '${pascoDeviceId}'`, {
+        cause,
+      });
     }
   }
 
@@ -384,7 +394,12 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
           `Attempting auto-reconnect (${this._reconnectAttempts + 1}/${this._options.maxReconnectAttempts})`,
         );
 
-        await new Promise((resolve) => setTimeout(resolve, this._options.reconnectDelay));
+        // Add jitter to prevent thundering herd when multiple devices reconnect
+        // Jitter is ±25% of the base delay
+        const jitter = this._options.reconnectDelay * 0.25;
+        const delay = this._options.reconnectDelay + (Math.random() * 2 - 1) * jitter;
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
         await this.reconnect();
       }
     }

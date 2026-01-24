@@ -116,9 +116,18 @@ export class TypedEventEmitter<TEvents extends { [K in keyof TEvents]: unknown }
       for (const listener of listeners) {
         try {
           listener(data);
-        } catch {
-          // Prevent listener errors from breaking emission
-          // Errors are silently swallowed to maintain event flow
+        } catch (error) {
+          // Emit listener errors as error events to prevent silent failures
+          // Skip if this is already an error event to prevent infinite loops
+          if (event !== 'error') {
+            this.emit(
+              'error' as K,
+              {
+                error: error instanceof Error ? error : new Error(String(error)),
+                context: `Error in '${String(event)}' event listener`,
+              } as TEvents[K],
+            );
+          }
         }
       }
     }
@@ -128,9 +137,18 @@ export class TypedEventEmitter<TEvents extends { [K in keyof TEvents]: unknown }
       for (const listener of onceListeners) {
         try {
           listener(data);
-        } catch {
-          // Prevent listener errors from breaking emission
-          // Errors are silently swallowed to maintain event flow
+        } catch (error) {
+          // Emit listener errors as error events to prevent silent failures
+          // Skip if this is already an error event to prevent infinite loops
+          if (event !== 'error') {
+            this.emit(
+              'error' as K,
+              {
+                error: error instanceof Error ? error : new Error(String(error)),
+                context: `Error in '${String(event)}' once listener`,
+              } as TEvents[K],
+            );
+          }
         }
       }
       this._onceListeners.delete(event);

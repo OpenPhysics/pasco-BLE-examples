@@ -5,7 +5,7 @@
  * Implementations are provided for Node.js (Noble) and Browser (Web Bluetooth).
  */
 
-import type { BLECharacteristic, BLEClient, BLEDevice, NotifyCallback } from '../types/ble.js';
+import type { BLECharacteristic, BLEClient, BLEDevice, NotifyCallback } from '@/types/ble.js';
 
 /**
  * Abstract BLE adapter interface

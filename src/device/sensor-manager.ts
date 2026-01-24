@@ -5,13 +5,13 @@
  * Coordinates between SensorInitializer and MeasurementDecoder.
  */
 
+import type { Measurement, SensorChannel } from '@/types/index.js';
 import {
   DeviceNotConnected,
   InvalidParameter,
   MeasurementNotFound,
   SensorNotFound,
 } from '../errors.js';
-import type { Measurement, SensorChannel } from '../types/index.js';
 import { type DecoderState, MeasurementDecoder } from './measurement-decoder.js';
 import { PROTOCOL, type ProtocolHandler } from './protocol-handler.js';
 import { type InitializerState, SensorInitializer } from './sensor-initializer.js';

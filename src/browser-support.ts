@@ -3,6 +3,14 @@
  */
 
 /**
+ * Support level for Web Bluetooth
+ */
+export type SupportLevel =
+  | 'not-supported' // API not available or browser incompatible
+  | 'likely-supported' // API exists but not yet tested
+  | 'available'; // API confirmed available (requires async check)
+
+/**
  * Browser support status for Web Bluetooth
  */
 export interface BrowserSupport {
@@ -10,10 +18,14 @@ export interface BrowserSupport {
   supported: boolean;
   /** Whether the current context is secure (HTTPS or localhost) */
   secureContext: boolean;
+  /** Support level (requires async check for 'available') */
+  level: SupportLevel;
   /** Human-readable status message */
   message: string;
   /** Detected browser name (if identifiable) */
   browser: string | undefined;
+  /** Whether Bluetooth is available on the system (undefined until checked) */
+  bluetoothAvailable?: boolean;
 }
 
 /**
@@ -96,6 +108,7 @@ export function checkBrowserSupport(): BrowserSupport {
     return {
       supported: false,
       secureContext: false,
+      level: 'not-supported',
       message:
         'Web Bluetooth is only available in browser environments. This library does not support Node.js.',
       browser,
@@ -112,6 +125,7 @@ export function checkBrowserSupport(): BrowserSupport {
     return {
       supported: false,
       secureContext: false,
+      level: 'not-supported',
       message:
         'Web Bluetooth requires a secure context (HTTPS). Please serve your page over HTTPS or use localhost for development.',
       browser,
@@ -127,6 +141,7 @@ export function checkBrowserSupport(): BrowserSupport {
     return {
       supported: false,
       secureContext: true,
+      level: 'not-supported',
       message: `Web Bluetooth API is not available in this browser.${browserHint} Please use Chrome 56+, Edge 79+, or Opera 43+.`,
       browser,
     };
@@ -135,7 +150,9 @@ export function checkBrowserSupport(): BrowserSupport {
   return {
     supported: true,
     secureContext: true,
-    message: 'Web Bluetooth is supported in this browser.',
+    level: 'likely-supported',
+    message:
+      'Web Bluetooth API is available. Call checkBluetoothAvailability() to verify Bluetooth hardware is present.',
     browser,
   };
 }
@@ -158,4 +175,81 @@ export function checkBrowserSupport(): BrowserSupport {
  */
 export function isWebBluetoothSupported(): boolean {
   return checkBrowserSupport().supported;
+}
+
+/**
+ * Checks if Bluetooth hardware is actually available on the system.
+ *
+ * This performs a runtime check using the Web Bluetooth API to verify that:
+ * - The browser supports Web Bluetooth (API is present)
+ * - Bluetooth hardware is present on the system
+ * - Bluetooth is not disabled by the user or system policy
+ *
+ * Note: This function requires user interaction in some browsers (gesture requirement).
+ *
+ * @returns Extended browser support status with Bluetooth availability
+ *
+ * @example
+ * ```typescript
+ * import { checkBluetoothAvailability } from 'pasco-ble';
+ *
+ * const support = await checkBluetoothAvailability();
+ *
+ * if (!support.supported) {
+ *   alert(support.message);
+ * } else if (support.bluetoothAvailable === false) {
+ *   alert('Bluetooth hardware not found or disabled');
+ * } else {
+ *   // Safe to proceed with scanning
+ *   await device.scan();
+ * }
+ * ```
+ */
+export async function checkBluetoothAvailability(): Promise<BrowserSupport> {
+  const baseSupport = checkBrowserSupport();
+
+  // If basic support check failed, return early
+  if (!baseSupport.supported) {
+    return baseSupport;
+  }
+
+  // Try to check actual Bluetooth hardware availability
+  try {
+    // Use getAvailability() if available (Chrome 56+, Edge 79+, Opera 43+)
+    if (navigator.bluetooth && 'getAvailability' in navigator.bluetooth) {
+      const available = await navigator.bluetooth.getAvailability();
+
+      if (!available) {
+        return {
+          ...baseSupport,
+          level: 'not-supported',
+          supported: false,
+          bluetoothAvailable: false,
+          message:
+            'Bluetooth hardware not found or disabled. Please enable Bluetooth on your device.',
+        };
+      }
+
+      return {
+        ...baseSupport,
+        level: 'available',
+        bluetoothAvailable: true,
+        message: 'Web Bluetooth is fully available and ready to use.',
+      };
+    }
+
+    // If getAvailability() not available, assume it's supported
+    return {
+      ...baseSupport,
+      level: 'likely-supported',
+      message: 'Web Bluetooth API is available (hardware status could not be verified).',
+    };
+  } catch (error) {
+    // If checking availability fails, return likely-supported
+    return {
+      ...baseSupport,
+      level: 'likely-supported',
+      message: `Web Bluetooth API is available but status check failed: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
 }

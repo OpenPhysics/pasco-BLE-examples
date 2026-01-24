@@ -4,11 +4,11 @@
  * Handles BLE communication protocol for PASCO devices.
  */
 
-import type { BLEClientBase } from '../ble/ble-adapter.js';
-import { createPascoUuid } from '../ble/ble-adapter.js';
+import type { BLEClientBase } from '@/ble/ble-adapter.js';
+import { createPascoUuid } from '@/ble/ble-adapter.js';
+import type { BLECharacteristic } from '@/types/ble.js';
+import { type RetryOptions, withRetry } from '@/utils/retry.js';
 import { CommunicationError } from '../errors.js';
-import type { BLECharacteristic } from '../types/ble.js';
-import { type RetryOptions, withRetry } from '../utils/retry.js';
 
 /**
  * Protocol constants for PASCO BLE communication
@@ -145,8 +145,9 @@ export class ProtocolHandler {
     const uuid = createPascoUuid(serviceId, PROTOCOL.SEND_CMD_CHAR_ID);
     try {
       await this._client?.writeGattChar(uuid, new Uint8Array(command));
-    } catch {
-      throw new CommunicationError();
+    } catch (error) {
+      const cause = error instanceof Error ? error : new Error(String(error));
+      throw new CommunicationError(`Failed to write command to service ${serviceId}`, { cause });
     }
   }
 
@@ -170,8 +171,11 @@ export class ProtocolHandler {
     const uuid = createPascoUuid(serviceId, PROTOCOL.SEND_ACK_CHAR_ID);
     try {
       await this._client?.writeGattChar(uuid, new Uint8Array(command));
-    } catch {
-      throw new CommunicationError();
+    } catch (error) {
+      const cause = error instanceof Error ? error : new Error(String(error));
+      throw new CommunicationError(`Failed to send acknowledgement to service ${serviceId}`, {
+        cause,
+      });
     }
   }
 

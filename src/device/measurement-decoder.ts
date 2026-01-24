@@ -4,17 +4,17 @@
  * Handles decoding of raw sensor data into measurement values.
  */
 
-import { CouldNotDecodeData, InvalidEquation } from '../errors.js';
-import type { Measurement } from '../types/index.js';
-import { binaryFraction, twosComplement } from '../utils/binary.js';
-import { evaluateEquation } from '../utils/equation-parser.js';
+import type { Measurement } from '@/types/index.js';
+import { binaryFraction, twosComplement } from '@/utils/binary.js';
+import { evaluateEquation } from '@/utils/equation-parser.js';
 import {
   calc4Params,
   calcLinearParams,
   calcRotaryPos,
   limit,
   threeInputVector,
-} from '../utils/math.js';
+} from '@/utils/math.js';
+import { CouldNotDecodeData, InvalidEquation } from '../errors.js';
 
 /**
  * State shared with the decoder for accessing sensor data
