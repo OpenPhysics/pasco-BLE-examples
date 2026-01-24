@@ -654,11 +654,4 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     }
     await super.disconnect();
   }
-
-  /**
-   * Helper function to create a delay
-   */
-  protected _delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 }

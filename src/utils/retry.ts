@@ -130,3 +130,87 @@ export function retryable<TArgs extends unknown[], TResult>(
 ): (...args: TArgs) => Promise<TResult> {
   return (...args: TArgs) => withRetry(() => fn(...args), options);
 }
+
+/**
+ * Error thrown when an operation times out
+ */
+export class TimeoutError extends Error {
+  constructor(message: string = 'Operation timed out') {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
+/**
+ * Wrap a promise with a timeout.
+ * If the promise doesn't resolve within the specified time, a TimeoutError is thrown.
+ *
+ * @param promise - The promise to wrap
+ * @param timeoutMs - Timeout duration in milliseconds
+ * @param message - Optional custom error message
+ * @returns The result of the promise if it resolves in time
+ * @throws TimeoutError if the promise doesn't resolve within the timeout
+ *
+ * @example
+ * ```typescript
+ * // Basic usage
+ * const result = await withTimeout(
+ *   fetch('https://api.example.com/data'),
+ *   5000,
+ *   'API request timed out'
+ * );
+ *
+ * // With async operations
+ * const data = await withTimeout(
+ *   device.readData('Temperature'),
+ *   3000
+ * );
+ * ```
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message?: string,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new TimeoutError(message ?? `Operation timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise
+      .then((result) => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+/**
+ * Create a timeout-wrapped version of an async function.
+ *
+ * @param fn - The async function to wrap
+ * @param timeoutMs - Timeout duration in milliseconds
+ * @param message - Optional custom error message
+ * @returns A wrapped function that times out after the specified duration
+ *
+ * @example
+ * ```typescript
+ * const timedFetch = withTimeoutFn(
+ *   (url: string) => fetch(url),
+ *   5000,
+ *   'Fetch timed out'
+ * );
+ * const response = await timedFetch('https://api.example.com');
+ * ```
+ */
+export function withTimeoutFn<TArgs extends unknown[], TResult>(
+  fn: (...args: TArgs) => Promise<TResult>,
+  timeoutMs: number,
+  message?: string,
+): (...args: TArgs) => Promise<TResult> {
+  return (...args: TArgs) => withTimeout(fn(...args), timeoutMs, message);
+}

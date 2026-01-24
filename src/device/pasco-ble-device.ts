@@ -326,6 +326,26 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
   }
 
   /**
+   * Ensure the device is connected, throwing if not.
+   * Use this helper at the start of methods that require a connection.
+   * @throws DeviceNotConnected if the device is not connected
+   */
+  protected ensureConnected(): void {
+    if (!this.isConnected()) {
+      throw new DeviceNotConnected();
+    }
+  }
+
+  /**
+   * Helper function to create a delay.
+   * Useful for waiting between operations or polling.
+   * @param ms Delay duration in milliseconds
+   */
+  protected _delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
    * Disconnect from the device
    */
   async disconnect(): Promise<void> {

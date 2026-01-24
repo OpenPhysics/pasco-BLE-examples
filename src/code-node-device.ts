@@ -252,13 +252,6 @@ export class CodeNodeDevice extends PASCOBLEDevice {
     await this.setLedsInArray([], 0);
     await this.setSoundFrequency(0);
   }
-
-  /**
-   * Helper function to create a delay
-   */
-  protected _delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 }
 
 // Re-export Icons for convenience

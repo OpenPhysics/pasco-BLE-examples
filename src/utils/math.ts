@@ -92,6 +92,26 @@ export function limit(num: number, minimum: number, maximum: number): number {
 }
 
 /**
+ * Round a number to a specified number of decimal places.
+ * Uses the common pattern: Math.round(value * 10^precision) / 10^precision
+ *
+ * @param value The number to round
+ * @param precision Number of decimal places (default: 0)
+ * @returns The rounded number
+ *
+ * @example
+ * ```typescript
+ * roundToPrecision(3.14159, 2)  // 3.14
+ * roundToPrecision(3.14159, 0)  // 3
+ * roundToPrecision(123.456, 1)  // 123.5
+ * ```
+ */
+export function roundToPrecision(value: number, precision: number = 0): number {
+  const multiplier = 10 ** precision;
+  return Math.round(value * multiplier) / multiplier;
+}
+
+/**
  * Calculate 3-input vector magnitude (for acceleration, etc.)
  */
 export function threeInputVector(ax: number, ay: number, az: number): number {
