@@ -2,7 +2,24 @@
  * BLE Adapter Abstract Interface
  *
  * Defines the platform-agnostic interface for BLE operations.
- * Implementations are provided for Node.js (Noble) and Browser (Web Bluetooth).
+ * Currently only Web Bluetooth (browser) is implemented.
+ *
+ * The abstract base classes are provided as extension points for developers
+ * who need to support other platforms (e.g., Node.js with Noble/Bleno).
+ *
+ * @example Implementing a custom adapter
+ * ```typescript
+ * import { BLEAdapterBase, BLEClientBase } from 'pasco-ble/internal';
+ *
+ * class MyCustomAdapter extends BLEAdapterBase {
+ *   scan(nameFilters?: string[]): Promise<BLEDevice[]> { ... }
+ *   stopScan(): Promise<void> { ... }
+ *   createClient(device: BLEDevice): BLEClientBase { ... }
+ *   isAvailable(): boolean { ... }
+ * }
+ *
+ * const device = new PASCOBLEDevice({ adapter: new MyCustomAdapter() });
+ * ```
  */
 
 import type { BLECharacteristic, BLEClient, BLEDevice, NotifyCallback } from '@/types/ble.js';

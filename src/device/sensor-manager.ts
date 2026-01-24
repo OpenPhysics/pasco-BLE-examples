@@ -13,13 +13,9 @@
  */
 
 import type { Measurement, SensorChannel } from '@/types/index.js';
+import { validateArray, validateNonEmptyString, validateString } from '@/utils/validation.js';
 
-import {
-  DeviceNotConnected,
-  InvalidParameter,
-  MeasurementNotFound,
-  SensorNotFound,
-} from '../errors.js';
+import { DeviceNotConnected, MeasurementNotFound, SensorNotFound } from '../errors.js';
 import { MeasurementDecoder } from './measurement-decoder.js';
 import { PROTOCOL, type ProtocolHandler } from './protocol-handler.js';
 import { SensorInitializer } from './sensor-initializer.js';
@@ -35,6 +31,12 @@ export interface SensorManagerOptions {
   protocolHandler: ProtocolHandler;
   /** Check if device is connected */
   isConnected: () => boolean;
+  /**
+   * Optional callback for handling errors that occur in async contexts
+   * where they can't be propagated normally (e.g., notification handlers).
+   * If not provided, errors will be logged to console.warn.
+   */
+  onError?: (error: Error, context: string) => void;
 }
 
 /**
@@ -63,6 +65,19 @@ export class SensorManager {
     // Create handlers with state access
     this._decoder = new MeasurementDecoder(this._state);
     this._initializer = new SensorInitializer(this._state);
+  }
+
+  /**
+   * Handle errors that occur in async contexts where they can't be propagated.
+   * Uses the configured onError callback if available, otherwise logs to console.
+   */
+  private _handleAsyncError(error: unknown, context: string): void {
+    const err = error instanceof Error ? error : new Error(String(error));
+    if (this._options.onError) {
+      this._options.onError(err, context);
+    } else {
+      console.warn(`[SensorManager] Error in ${context}:`, err.message);
+    }
   }
 
   // ==================== Properties ====================
@@ -186,6 +201,56 @@ export class SensorManager {
     }
   }
 
+  // ==================== Low-Level Sensor Access (for subclasses) ====================
+
+  /**
+   * Get channel information by sensor ID
+   * @param sensorId The sensor/channel ID
+   * @returns The channel information, or undefined if not found
+   */
+  getChannelById(sensorId: number): SensorChannel | undefined {
+    return this._state.getChannel(sensorId);
+  }
+
+  /**
+   * Find the measurement ID for a named measurement on a specific sensor
+   * @param sensorId The sensor ID to search
+   * @param measurementName The name of the measurement
+   * @returns The measurement ID, or null if not found
+   */
+  findMeasurementId(sensorId: number, measurementName: string): number | null {
+    const measurements = this._state.getMeasurements(sensorId);
+    if (!measurements) return null;
+
+    for (const [mId, m] of measurements) {
+      if (m.NameTag === measurementName) {
+        return mId;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get a sensor value by sensor ID and measurement ID
+   * @param sensorId The sensor ID
+   * @param measurementId The measurement ID
+   * @returns The sensor value, or null/undefined if not available
+   */
+  getSensorValueById(sensorId: number, measurementId: number): number | null | undefined {
+    return this._state.getSensorValue(sensorId, measurementId);
+  }
+
+  /**
+   * Iterate over device channels that match a filter
+   * @param filter Optional filter function
+   * @returns Array of matching channels
+   */
+  filterChannels(filter?: (channel: SensorChannel) => boolean): SensorChannel[] {
+    const channels = this._state.getChannels();
+    if (!filter) return [...channels];
+    return [...channels].filter(filter);
+  }
+
   // ==================== Sensor API ====================
 
   /**
@@ -207,8 +272,8 @@ export class SensorManager {
       throw new DeviceNotConnected();
     }
 
-    if (sensorName !== undefined && typeof sensorName !== 'string') {
-      throw new InvalidParameter();
+    if (sensorName !== undefined) {
+      validateString(sensorName, 'sensorName');
     }
 
     if (!sensorName) {
@@ -235,14 +300,11 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurement || typeof measurement !== 'string') {
-      throw new InvalidParameter();
-    }
+    validateNonEmptyString(measurement, 'measurement');
 
     const sensorId = this._state.getMeasurementSensorId(measurement);
     if (sensorId === undefined) {
-      throw new InvalidParameter();
+      throw new MeasurementNotFound(measurement);
     }
 
     const measurements = this._state.getMeasurements(sensorId);
@@ -265,10 +327,7 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurements || !Array.isArray(measurements)) {
-      throw new InvalidParameter();
-    }
+    validateArray(measurements, 'measurements');
 
     const result: Record<string, string | null> = {};
     for (const measurement of measurements) {
@@ -285,10 +344,7 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurement || typeof measurement !== 'string') {
-      throw new InvalidParameter();
-    }
+    validateNonEmptyString(measurement, 'measurement');
 
     const sensorId = this._state.getMeasurementSensorId(measurement);
     if (sensorId === undefined) {
@@ -307,15 +363,10 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurements || !Array.isArray(measurements)) {
-      throw new InvalidParameter();
-    }
+    validateArray(measurements, 'measurements');
 
     for (const m of measurements) {
-      if (typeof m !== 'string') {
-        throw new InvalidParameter();
-      }
+      validateString(m, 'measurements[item]');
     }
 
     // Get unique sensor IDs
@@ -358,7 +409,9 @@ export class SensorManager {
       if (counter > 8) {
         this._state.setAckCounter(sensorId, 0);
         const responseServiceId = sensorId + 1;
-        this._options.protocolHandler.sendAck(responseServiceId, [data[0]!]).catch(() => {});
+        this._options.protocolHandler.sendAck(responseServiceId, [data[0]!]).catch((error) => {
+          this._handleAsyncError(error, 'sendAck');
+        });
       }
     } else if (data[0] === PROTOCOL.CNTRLNODE_PLUGINS_CALLBACK) {
       this._updateControlnodePluginSensor(data);
