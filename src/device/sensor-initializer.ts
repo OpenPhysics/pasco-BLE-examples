@@ -91,7 +91,8 @@ export class SensorInitializer {
       if (e instanceof SensorSetupError) {
         throw e;
       }
-      throw new SensorSetupError();
+      const error = e instanceof Error ? e : new Error(String(e));
+      throw new SensorSetupError('Failed to initialize sensors', { cause: error });
     }
   }
 

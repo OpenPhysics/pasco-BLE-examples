@@ -231,7 +231,9 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
       if (this._stateMachine.isConnected) {
         throw new BLEAlreadyConnectedError();
       }
-      throw new BLEConnectionError(); // Already connecting or other invalid state
+      throw new BLEConnectionError(
+        `Cannot connect: device is in '${this._stateMachine.state}' state`,
+      );
     }
 
     // Transition to connecting state
@@ -246,7 +248,9 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
       const connectPromise = this._client.connect();
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(new BLEConnectionError());
+          reject(
+            new BLEConnectionError(`Connection timeout after ${this._options.connectionTimeout}ms`),
+          );
         }, this._options.connectionTimeout);
       });
 
@@ -301,10 +305,16 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
       if (foundDevices.length > 0 && foundDevices[0]) {
         await this.connect(foundDevices[0]);
       } else {
-        throw new BLEConnectionError();
+        throw new BLEConnectionError(`Device with ID '${pascoDeviceId}' not found`);
       }
-    } catch {
-      throw new BLEConnectionError();
+    } catch (error) {
+      if (error instanceof BLEConnectionError) {
+        throw error;
+      }
+      const cause = error instanceof Error ? error : new Error(String(error));
+      throw new BLEConnectionError(`Failed to connect to device '${pascoDeviceId}'`, {
+        cause,
+      });
     }
   }
 

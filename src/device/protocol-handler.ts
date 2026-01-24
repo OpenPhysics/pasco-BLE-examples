@@ -145,8 +145,9 @@ export class ProtocolHandler {
     const uuid = createPascoUuid(serviceId, PROTOCOL.SEND_CMD_CHAR_ID);
     try {
       await this._client?.writeGattChar(uuid, new Uint8Array(command));
-    } catch {
-      throw new CommunicationError();
+    } catch (error) {
+      const cause = error instanceof Error ? error : new Error(String(error));
+      throw new CommunicationError(`Failed to write command to service ${serviceId}`, { cause });
     }
   }
 
@@ -170,8 +171,11 @@ export class ProtocolHandler {
     const uuid = createPascoUuid(serviceId, PROTOCOL.SEND_ACK_CHAR_ID);
     try {
       await this._client?.writeGattChar(uuid, new Uint8Array(command));
-    } catch {
-      throw new CommunicationError();
+    } catch (error) {
+      const cause = error instanceof Error ? error : new Error(String(error));
+      throw new CommunicationError(`Failed to send acknowledgement to service ${serviceId}`, {
+        cause,
+      });
     }
   }
 
