@@ -49,9 +49,13 @@ export {
 export { CodeNodeDevice, Icons } from './code-node-device.js';
 export {
   ControlNodeDevice,
+  type MotorPort,
   type OutputType,
   type PortId,
+  type PowerChannel,
+  type ServoPort,
   type ServoType,
+  type StrictMotorPort,
 } from './control-node-device.js';
 export { PASCOBLEDevice } from './device/index.js';
 export { PascoBot } from './pasco-bot.js';
@@ -77,10 +81,15 @@ export {
   CommunicationError,
   CouldNotDecodeData,
   DeviceNotConnected,
+  ErrorCode,
   type ErrorOptions,
   InvalidEquation,
   InvalidParameter,
+  isPASCOError,
+  isRetryableError,
   MeasurementNotFound,
+  PASCOError,
+  type PASCOErrorOptions,
   SensorNotFound,
   SensorSetupError,
 } from './errors.js';
@@ -111,6 +120,7 @@ export {
   type DeviceEventName,
   type DeviceEvents,
   type EventListener,
+  EventTimeoutError,
   TypedEventEmitter,
 } from './utils/event-emitter.js';
 

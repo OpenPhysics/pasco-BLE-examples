@@ -122,8 +122,38 @@ export {
   type DeviceEventName,
   type DeviceEvents,
   type EventListener,
+  EventTimeoutError,
   TypedEventEmitter,
 } from './utils/event-emitter.js';
+
+// ============================================================================
+// Error Utilities
+// ============================================================================
+
+export {
+  ErrorCode,
+  isPASCOError,
+  isRetryableError,
+  PASCOError,
+  type PASCOErrorOptions,
+} from './errors.js';
+
+// ============================================================================
+// Branded Types
+// ============================================================================
+
+export {
+  asChannelId,
+  asInterfaceId,
+  asMeasurementId,
+  asSensorId,
+  type ChannelId,
+  type InterfaceId,
+  isValidId,
+  type MeasurementId,
+  type SensorId,
+  toNumber,
+} from './types/branded.js';
 
 // ============================================================================
 // Retry Utilities

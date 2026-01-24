@@ -11,15 +11,92 @@ import { unpackInt16LE } from './utils/binary.js';
 import { limit } from './utils/math.js';
 import { validateNonEmptyString, validateNumber } from './utils/validation.js';
 
+/**
+ * Servo control type.
+ * - 'standard': Position-based servo (0-180 degrees)
+ * - 'continuous': Continuous rotation servo (speed -100 to 100)
+ * - 0: Turn servo off
+ */
 export type ServoType = 'standard' | 'continuous' | 0;
+
+/**
+ * Power output type.
+ * - 'USB': Simple on/off control for USB ports
+ * - 'terminal': PWM control for terminal outputs (-100 to 100 power)
+ */
 export type OutputType = 'USB' | 'terminal';
-export type PortId = 'A' | 'B' | 'a' | 'b';
+
+/**
+ * Motor/stepper port identifier.
+ * The Control.Node has two motor ports labeled 'A' and 'B'.
+ * Accepts both uppercase and lowercase for convenience.
+ */
+export type MotorPort = 'A' | 'B' | 'a' | 'b';
+
+/**
+ * Strict motor port (uppercase only).
+ * Used internally after normalization.
+ */
+export type StrictMotorPort = 'A' | 'B';
+
+/**
+ * Servo port identifier.
+ * The Control.Node has two servo ports numbered 1 and 2.
+ */
+export type ServoPort = 1 | 2;
+
+/**
+ * Power output channel.
+ * Each motor port (A, B) has two power channels (1, 2).
+ */
+export type PowerChannel = 1 | 2;
+
+/**
+ * @deprecated Use MotorPort instead. Will be removed in v0.5.0.
+ */
+export type PortId = MotorPort;
 
 /**
  * ControlNode Device class
  *
  * Provides stepper motor, servo, and power output control for the //control.Node.
  */
+/**
+ * Normalize a motor port to uppercase.
+ * @param port The port identifier ('A', 'B', 'a', or 'b')
+ * @returns The normalized uppercase port ('A' or 'B')
+ * @throws InvalidParameter if port is not valid
+ */
+function normalizeMotorPort(port: MotorPort): StrictMotorPort {
+  const upper = port.toUpperCase();
+  if (upper !== 'A' && upper !== 'B') {
+    throw new InvalidParameter('Port must be A or B');
+  }
+  return upper as StrictMotorPort;
+}
+
+/**
+ * Validate a servo port number.
+ * @param port The port number (1 or 2)
+ * @throws InvalidParameter if port is not valid
+ */
+function validateServoPort(port: number): asserts port is ServoPort {
+  if (port !== 1 && port !== 2) {
+    throw new InvalidParameter('Servo port must be 1 or 2');
+  }
+}
+
+/**
+ * Validate a power channel number.
+ * @param channel The channel number (1 or 2)
+ * @throws InvalidParameter if channel is not valid
+ */
+function validatePowerChannel(channel: number): asserts channel is PowerChannel {
+  if (channel !== 1 && channel !== 2) {
+    throw new InvalidParameter('Power channel must be 1 or 2');
+  }
+}
+
 export class ControlNodeDevice extends PASCOBLEDevice {
   // Control Node commands
   protected static readonly CTRLNODE_CMD_SET_SERVO = 3;
@@ -295,16 +372,15 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param acceleration Acceleration (deg/s/s)
    */
   async rotateStepperContinuously(
-    port: PortId,
+    port: MotorPort,
     speed: number,
     acceleration: number,
   ): Promise<void> {
-    if (port.toUpperCase() === 'A') {
+    const normalizedPort = normalizeMotorPort(port);
+    if (normalizedPort === 'A') {
       await this.rotateSteppersContinuously(speed, acceleration, null, null);
-    } else if (port.toUpperCase() === 'B') {
-      await this.rotateSteppersContinuously(null, null, speed, acceleration);
     } else {
-      throw new InvalidParameter('Port must be A or B');
+      await this.rotateSteppersContinuously(null, null, speed, acceleration);
     }
   }
 
@@ -322,13 +398,12 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param port Port of stepper ('A' or 'B')
    * @param acceleration Deceleration (deg/s/s)
    */
-  async stopStepper(port: PortId, acceleration: number): Promise<void> {
-    if (port.toUpperCase() === 'A') {
+  async stopStepper(port: MotorPort, acceleration: number): Promise<void> {
+    const normalizedPort = normalizeMotorPort(port);
+    if (normalizedPort === 'A') {
       await this.stopSteppers(acceleration, null);
-    } else if (port.toUpperCase() === 'B') {
-      await this.stopSteppers(null, acceleration);
     } else {
-      throw new InvalidParameter('Port must be A or B');
+      await this.stopSteppers(null, acceleration);
     }
   }
 
@@ -382,13 +457,14 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param awaitCompletion Whether to wait for completion
    */
   async rotateStepperThrough(
-    port: PortId,
+    port: MotorPort,
     speed: number,
     acceleration: number,
     distance: number,
     awaitCompletion: boolean = false,
   ): Promise<void> {
-    if (port.toUpperCase() === 'A') {
+    const normalizedPort = normalizeMotorPort(port);
+    if (normalizedPort === 'A') {
       await this.rotateSteppersThrough(
         speed,
         acceleration,
@@ -396,20 +472,18 @@ export class ControlNodeDevice extends PASCOBLEDevice {
         null,
         null,
         null,
-        awaitCompletion,
-      );
-    } else if (port.toUpperCase() === 'B') {
-      await this.rotateSteppersThrough(
-        null,
-        null,
-        null,
-        speed,
-        acceleration,
-        distance,
         awaitCompletion,
       );
     } else {
-      throw new InvalidParameter('Port must be A or B');
+      await this.rotateSteppersThrough(
+        null,
+        null,
+        null,
+        speed,
+        acceleration,
+        distance,
+        awaitCompletion,
+      );
     }
   }
 
@@ -477,13 +551,12 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param type Servo type ('standard' or 'continuous')
    * @param value Degrees or percent speed
    */
-  async setServo(port: 1 | 2, type: ServoType, value: number): Promise<void> {
+  async setServo(port: ServoPort, type: ServoType, value: number): Promise<void> {
+    validateServoPort(port);
     if (port === 1) {
       await this.setServos(type, value, 0, 0);
-    } else if (port === 2) {
-      await this.setServos(0, 0, type, value);
     } else {
-      throw new InvalidParameter('Port must be 1 or 2');
+      await this.setServos(0, 0, type, value);
     }
   }
 
@@ -497,11 +570,14 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param value ON/OFF for USB (0 or 1) or percent power for terminal (-100 to 100)
    */
   async setPowerOut(
-    port: PortId,
-    channel: 1 | 2,
+    port: MotorPort,
+    channel: PowerChannel,
     outputType: OutputType,
     value: number,
   ): Promise<void> {
+    const normalizedPort = normalizeMotorPort(port);
+    validatePowerChannel(channel);
+
     const encodeWhichPins: Record<string, number> = {
       'A,1': 3,
       'A,2': 12,
@@ -516,13 +592,9 @@ export class ControlNodeDevice extends PASCOBLEDevice {
       'B,2': 6,
     };
 
-    const key = `${port.toUpperCase()},${channel}`;
-    const whichPins = encodeWhichPins[key];
-    const firstPinIndex = firstPinIndices[key];
-
-    if (whichPins === undefined || firstPinIndex === undefined) {
-      throw new InvalidParameter('Invalid port/channel combination');
-    }
+    const key = `${normalizedPort},${channel}`;
+    const whichPins = encodeWhichPins[key]!;
+    const firstPinIndex = firstPinIndices[key]!;
 
     const lsbPwmPeriod =
       outputType.toLowerCase() === 'terminal' ? ControlNodeDevice.LSB_PWM_PERIOD : 0x00;
@@ -581,20 +653,17 @@ export class ControlNodeDevice extends PASCOBLEDevice {
    * @param red Percent power of red light (0-100)
    * @param blue Percent power of blue light (0-100)
    */
-  async setGreenhouseLight(port: PortId, red: number, blue: number): Promise<void> {
-    const whichPins: Record<string, number> = { A: 0x0f, B: 0xf0 };
-    const pins = whichPins[port.toUpperCase()];
-
-    if (pins === undefined) {
-      throw new InvalidParameter('Port must be A or B');
-    }
+  async setGreenhouseLight(port: MotorPort, red: number, blue: number): Promise<void> {
+    const normalizedPort = normalizeMotorPort(port);
+    const whichPins: Record<StrictMotorPort, number> = { A: 0x0f, B: 0xf0 };
+    const pins = whichPins[normalizedPort];
 
     // Brightness is inverted: +5V turns off the light
     const redValue = Math.round((100 - red) * 2.55) + 1;
     const blueValue = Math.round((100 - blue) * 2.55) + 1;
 
     let values: number[];
-    if (port.toUpperCase() === 'A') {
+    if (normalizedPort === 'A') {
       values = [redValue, 0, blueValue, 0];
     } else {
       values = [0, 0, 0, 0, redValue, 0, blueValue, 0];
