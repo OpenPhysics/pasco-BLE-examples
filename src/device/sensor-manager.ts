@@ -6,6 +6,7 @@
  */
 
 import type { Measurement, SensorChannel } from '@/types/index.js';
+
 import {
   DeviceNotConnected,
   InvalidParameter,

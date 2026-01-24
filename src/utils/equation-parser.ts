@@ -4,6 +4,7 @@
  */
 
 import * as mathjs from 'mathjs';
+
 import { dewpoint, heatindex, limit, linearInterpolate, usound, windchill } from './math.js';
 
 // Use mathjs directly for evaluation

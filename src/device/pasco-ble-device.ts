@@ -12,6 +12,7 @@ import { COMPATIBLE_DEVICES } from '@/types/device.js';
 import type { Measurement, SensorChannel } from '@/types/index.js';
 import { decode64 } from '@/utils/binary.js';
 import { type DeviceEvents, TypedEventEmitter } from '@/utils/event-emitter.js';
+
 import {
   BLEAlreadyConnectedError,
   BLEConnectionError,

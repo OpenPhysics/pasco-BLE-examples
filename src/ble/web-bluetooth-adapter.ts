@@ -7,6 +7,7 @@
 
 import type { BLECharacteristic, BLEDevice, NotifyCallback } from '@/types/ble.js';
 import { COMPATIBLE_DEVICES } from '@/types/device.js';
+
 import { BLEAdapterBase, BLEClientBase, getServiceIdFromUuid, isPascoUuid } from './ble-adapter.js';
 
 /**

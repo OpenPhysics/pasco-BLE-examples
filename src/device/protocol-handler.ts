@@ -8,6 +8,7 @@ import type { BLEClientBase } from '@/ble/ble-adapter.js';
 import { createPascoUuid, getServiceIdFromUuid } from '@/ble/ble-adapter.js';
 import type { BLECharacteristic } from '@/types/ble.js';
 import { type RetryOptions, withRetry } from '@/utils/retry.js';
+
 import { CommunicationError } from '../errors.js';
 
 /**
