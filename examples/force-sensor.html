@@ -166,7 +166,7 @@
     </script>
 
     <script type="module">
-        import { PASCOBLEDevice, WebBluetoothAdapter } from '../dist/index.js';
+        import { PASCOBLEDevice } from '../dist/index.js';
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -176,9 +176,6 @@
         const measurementsCard = document.getElementById('measurementsCard');
         const measurementsList = document.getElementById('measurementsList');
         const errorDiv = document.getElementById('errorDiv');
-
-        // Create WebBluetooth adapter for browser use
-        const adapter = new WebBluetoothAdapter();
 
         let device = null;
         let readingInterval = null;
@@ -199,7 +196,7 @@
                 connectBtn.disabled = true;
                 errorDiv.innerHTML = '';
 
-                device = new PASCOBLEDevice(adapter);
+                device = new PASCOBLEDevice();
 
                 // Scan for Force Accel devices (shows browser picker)
                 const devices = await device.scan('Force Accel');

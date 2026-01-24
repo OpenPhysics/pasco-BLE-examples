@@ -19,12 +19,9 @@ A TypeScript/JavaScript library for connecting to PASCO Wireless sensors **in we
 - [Compatible Sensors](#compatible-sensors)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
-- [Python to TypeScript](#python-to-typescript)
 - [//code.Node](#codenode)
 - [//control.Node](#controlnode)
 - [PascoBot](#pascobot)
-- [Browser Usage](#browser-usage)
-- [Advanced Usage](#advanced-usage)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -63,20 +60,10 @@ This library uses the **Web Bluetooth API**, which has limited browser support:
 ### Check Browser Support Programmatically
 
 ```typescript
-import { checkBrowserSupport, isWebBluetoothSupported } from 'pasco-ble';
+import { isWebBluetoothSupported } from 'pasco-ble';
 
-// Simple check
 if (!isWebBluetoothSupported()) {
   alert('Please use Chrome, Edge, or Opera to connect to sensors.');
-}
-
-// Detailed check with helpful messages
-const support = checkBrowserSupport();
-if (!support.supported) {
-  console.error(support.message);
-  // Example messages:
-  // - "Web Bluetooth requires a secure context (HTTPS)..."
-  // - "Web Bluetooth API is not available. Firefox does not support Web Bluetooth..."
 }
 ```
 
@@ -190,18 +177,6 @@ if (!support.supported) {
 
 ## API Reference
 
-### Device Structure
-
-- **Device**: A physical PASCO wireless sensor
-- **Sensor**: A device can have multiple sensors built in
-- **Measurements**: Each sensor can offer multiple measurements
-
-**Example:** A Wireless Weather Sensor has 4 sensors:
-- `WirelessWeatherSensor`: Temperature, RelativeHumidity, BarometricPressure, WindSpeed, DewPoint, etc.
-- `WirelessGPSSensor`: Latitude, Longitude, Altitude, Speed
-- `WirelessLightSensor`: UVIndex, Illuminance, SolarIrradiance
-- `WirelessCompass`: WindDirection, MagneticHeading, TrueHeading
-
 ### PASCOBLEDevice
 
 ```typescript
@@ -234,59 +209,25 @@ await device.readDataList(measurements);      // Read multiple measurements
 
 ## Python to TypeScript
 
-This library provides a functionally equivalent API to PASCO's official Python library, with TypeScript conventions:
+This library provides a functionally equivalent API to [PASCO's official Python library](https://github.com/PASCOscientific/pasco_python), using TypeScript conventions:
 
-| Python API | TypeScript API | 
-|------------|----------------|
-| `device = PASCOBLEDevice()` | `const device = new PASCOBLEDevice()` | 
-| `device.scan(sensor_name_filter)` | `await device.scan(sensorNameFilter?)` | 
-| `device.connect(ble_device)` | `await device.connect(bleDevice)` | 
-| `device.connect_by_id(id)` | `await device.connectById(id)` | 
-| `device.disconnect()` | `await device.disconnect()` | 
+| Python | TypeScript |
+|--------|------------|
+| `PASCOBLEDevice()` | `new PASCOBLEDevice()` |
+| `device.scan()` | `await device.scan()` |
+| `device.connect(ble_device)` | `await device.connect(bleDevice)` |
+| `device.connect_by_id(id)` | `await device.connectById(id)` |
+| `device.disconnect()` | `await device.disconnect()` |
 | `device.is_connected()` | `device.isConnected()` |
 | `device.get_sensor_list()` | `device.getSensorList()` |
-| `device.get_measurement_list(sensor)` | `device.getMeasurementList(sensor?)` |
+| `device.get_measurement_list()` | `device.getMeasurementList()` |
 | `device.read_data(measurement)` | `await device.readData(measurement)` |
-| `device.read_data_list(measurements)` | `await device.readDataList(measurements)` |
 | `device.get_measurement_unit(m)` | `device.getMeasurementUnit(m)` |
-| `device.get_measurement_unit_list(m)` | `device.getMeasurementUnitList(m)` | 
 
-### Key Differences
-
-1. **Naming Convention**: Python uses `snake_case`, TypeScript uses `camelCase`
-2. **Async Operations**: All I/O operations return Promises in TypeScript
-3. **Type Safety**: Full TypeScript type definitions for IDE support and compile-time checking
-4. **Event System**: TypeScript version includes event emitters for connection/data events
-
-### Example Comparison
-
-**Python:**
-```python
-from pasco_ble import PASCOBLEDevice
-
-device = PASCOBLEDevice()
-devices = device.scan()
-device.connect(devices[0])
-sensors = device.get_sensor_list()
-value = device.read_data("Force")
-device.disconnect()
-```
-
-**TypeScript:**
-```typescript
-import { PASCOBLEDevice } from 'pasco-ble';
-
-const device = new PASCOBLEDevice();
-const devices = await device.scan();
-await device.connect(devices[0]);
-const sensors = device.getSensorList();
-const value = await device.readData("Force");
-await device.disconnect();
-```
-
-For more information about the official Python implementation, visit:
-- [PASCO Python Library](https://github.com/PASCOscientific/pasco_python)
-- [PASCO Python Examples](https://github.com/PASCOscientific/pasco_python_examples)
+**Key Differences:**
+- Python uses `snake_case`, TypeScript uses `camelCase`
+- All I/O operations return Promises in TypeScript
+- Full TypeScript type definitions for IDE support
 
 ## //code.Node
 
@@ -439,80 +380,6 @@ await bot.stop();
 await bot.disconnect();
 ```
 
-## Browser Usage
-
-The library works in browsers using the Web Bluetooth API:
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>PASCO Sensor Demo</title>
-</head>
-<body>
-  <button id="connect">Connect to Sensor</button>
-  <div id="output"></div>
-
-  <script type="module">
-    import { PASCOBLEDevice } from 'https://unpkg.com/pasco-ble/dist/index.js';
-
-    document.getElementById('connect').onclick = async () => {
-      const sensor = new PASCOBLEDevice();
-
-      // In browsers, scan() opens a device picker dialog
-      const devices = await sensor.scan();
-
-      if (devices.length > 0) {
-        await sensor.connect(devices[0]);
-
-        const temp = await sensor.readData('Temperature');
-        document.getElementById('output').textContent = `Temperature: ${temp}`;
-
-        await sensor.disconnect();
-      }
-    };
-  </script>
-</body>
-</html>
-```
-
-> **Note:** Web Bluetooth requires HTTPS and a user gesture (button click) to initiate scanning/connecting.
-
-## Advanced Usage
-
-### Internal APIs
-
-For advanced users building extensions or custom implementations, internal utilities are available via a separate import path:
-
-```typescript
-// Main API (stable, recommended)
-import { PASCOBLEDevice, checkBrowserSupport } from 'pasco-ble';
-
-// Internal APIs (may change between versions)
-import {
-  // BLE protocol internals
-  BLEAdapterBase,
-  ProtocolHandler,
-  PROTOCOL,
-
-  // Binary utilities
-  packInt16LE,
-  unpackFloat32LE,
-  twosComplement,
-
-  // Sensor data
-  SENSORS,
-  getSensor,
-
-  // Math functions
-  linearInterpolate,
-  heatindex,
-  dewpoint,
-} from 'pasco-ble/internal';
-```
-
-> **Warning:** Internal APIs are not covered by semantic versioning guarantees and may change in minor releases. Use them only when the main API doesn't meet your needs.
-
 ## Examples
 
 See the `examples/` directory for complete browser examples:
@@ -555,17 +422,6 @@ For Python examples using PASCO's official library, see [pasco_python_examples r
 - Use `getMeasurementList()` to see available measurements
 - Measurement names are case-sensitive
 - Some measurements require specific sensors to be connected
-
-### 5. Browser compatibility
-
-**Supported Browsers:**
-- ✅ Chrome 56+ (Windows, macOS, Linux, Android)
-- ✅ Edge 79+ (Windows, macOS)
-- ✅ Opera 43+
-- ❌ Firefox (Web Bluetooth not supported)
-- ❌ Safari (Web Bluetooth not supported)
-
-Check browser support: [caniuse.com/web-bluetooth](https://caniuse.com/web-bluetooth)
 
 ## License
 

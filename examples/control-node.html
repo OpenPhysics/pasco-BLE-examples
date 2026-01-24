@@ -323,7 +323,7 @@
     </script>
 
     <script type="module">
-        import { ControlNodeDevice, WebBluetoothAdapter } from '../dist/index.js';
+        import { ControlNodeDevice } from '../dist/index.js';
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -344,7 +344,6 @@
         const speakerFreq = document.getElementById('speakerFreq');
         const speakerFreqVal = document.getElementById('speakerFreqVal');
 
-        const adapter = new WebBluetoothAdapter();
         let controlNode = null;
         let readingInterval = null;
 
@@ -372,7 +371,7 @@
                 setStatus('connecting', 'Select your Control.Node...');
                 connectBtn.disabled = true;
 
-                controlNode = new ControlNodeDevice(adapter);
+                controlNode = new ControlNodeDevice();
                 const devices = await controlNode.scan('//control.Node');
 
                 if (devices.length === 0) {

@@ -81,8 +81,17 @@ import { withRetry, withTimeout, TimeoutError } from '@/utils/retry';
 // Retry with exponential backoff
 const result = await withRetry(() => device.connect(), { maxRetries: 3 });
 
-// Timeout wrapper
+// Timeout wrapper (throws TimeoutError if operation takes too long)
 const data = await withTimeout(device.readData('Temperature'), 5000);
+
+// Handle timeout errors
+try {
+  await withTimeout(longOperation(), 1000);
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    console.log('Operation timed out');
+  }
+}
 ```
 
 ### Math Operations (`src/utils/math.ts`)
