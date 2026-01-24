@@ -9,6 +9,7 @@ import { PASCOBLEDevice } from './device/index.js';
 import { DeviceNotConnected, InvalidParameter, MeasurementNotFound } from './errors.js';
 import { unpackInt16LE } from './utils/binary.js';
 import { limit } from './utils/math.js';
+import { validateNonEmptyString, validateNumber } from './utils/validation.js';
 
 export type ServoType = 'standard' | 'continuous' | 0;
 export type OutputType = 'USB' | 'terminal';
@@ -73,10 +74,7 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurement || typeof measurement !== 'string') {
-      throw new InvalidParameter();
-    }
+    validateNonEmptyString(measurement, 'measurement');
 
     if (port === undefined) {
       return super.readData(measurement);
@@ -572,10 +570,7 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (typeof frequency !== 'number') {
-      throw new InvalidParameter('frequency must be a number');
-    }
+    validateNumber(frequency, 'frequency');
 
     const freq = Math.round(limit(frequency, 0, 20000));
 

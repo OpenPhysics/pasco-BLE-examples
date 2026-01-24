@@ -13,13 +13,9 @@
  */
 
 import type { Measurement, SensorChannel } from '@/types/index.js';
+import { validateArray, validateNonEmptyString, validateString } from '@/utils/validation.js';
 
-import {
-  DeviceNotConnected,
-  InvalidParameter,
-  MeasurementNotFound,
-  SensorNotFound,
-} from '../errors.js';
+import { DeviceNotConnected, MeasurementNotFound, SensorNotFound } from '../errors.js';
 import { MeasurementDecoder } from './measurement-decoder.js';
 import { PROTOCOL, type ProtocolHandler } from './protocol-handler.js';
 import { SensorInitializer } from './sensor-initializer.js';
@@ -207,8 +203,8 @@ export class SensorManager {
       throw new DeviceNotConnected();
     }
 
-    if (sensorName !== undefined && typeof sensorName !== 'string') {
-      throw new InvalidParameter();
+    if (sensorName !== undefined) {
+      validateString(sensorName, 'sensorName');
     }
 
     if (!sensorName) {
@@ -235,14 +231,11 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurement || typeof measurement !== 'string') {
-      throw new InvalidParameter();
-    }
+    validateNonEmptyString(measurement, 'measurement');
 
     const sensorId = this._state.getMeasurementSensorId(measurement);
     if (sensorId === undefined) {
-      throw new InvalidParameter();
+      throw new MeasurementNotFound(measurement);
     }
 
     const measurements = this._state.getMeasurements(sensorId);
@@ -265,10 +258,7 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurements || !Array.isArray(measurements)) {
-      throw new InvalidParameter();
-    }
+    validateArray(measurements, 'measurements');
 
     const result: Record<string, string | null> = {};
     for (const measurement of measurements) {
@@ -285,10 +275,7 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurement || typeof measurement !== 'string') {
-      throw new InvalidParameter();
-    }
+    validateNonEmptyString(measurement, 'measurement');
 
     const sensorId = this._state.getMeasurementSensorId(measurement);
     if (sensorId === undefined) {
@@ -307,15 +294,10 @@ export class SensorManager {
     if (!this._options.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (!measurements || !Array.isArray(measurements)) {
-      throw new InvalidParameter();
-    }
+    validateArray(measurements, 'measurements');
 
     for (const m of measurements) {
-      if (typeof m !== 'string') {
-        throw new InvalidParameter();
-      }
+      validateString(m, 'measurements[item]');
     }
 
     // Get unique sensor IDs
