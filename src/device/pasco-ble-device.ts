@@ -12,6 +12,7 @@ import { COMPATIBLE_DEVICES } from '@/types/device.js';
 import type { Measurement, SensorChannel } from '@/types/index.js';
 import { decode64 } from '@/utils/binary.js';
 import { type DeviceEvents, TypedEventEmitter } from '@/utils/event-emitter.js';
+import { TimeoutError, withTimeout } from '@/utils/retry.js';
 
 import {
   BLEAlreadyConnectedError,
@@ -250,20 +251,20 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
 
     try {
       // Create connection with timeout
-      const connectPromise = this._client.connect();
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(
-            new BLEConnectionError(`Connection timeout after ${this._options.connectionTimeout}ms`),
-          );
-        }, this._options.connectionTimeout);
-      });
-
-      await Promise.race([connectPromise, timeoutPromise]);
+      await withTimeout(
+        this._client.connect(),
+        this._options.connectionTimeout,
+        `Connection timeout after ${this._options.connectionTimeout}ms`,
+      );
     } catch (e) {
       this._client = null;
       this._stateMachine.transitionTo('disconnected', 'connection failed');
-      const error = e instanceof BLEConnectionError ? e : new BLEConnectionError();
+      const error =
+        e instanceof BLEConnectionError
+          ? e
+          : e instanceof TimeoutError
+            ? new BLEConnectionError(e.message)
+            : new BLEConnectionError();
       this._logger.error('Connection failed:', error.message);
       this.emit('error', { error, context: 'connect' });
       throw error;
