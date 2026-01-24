@@ -159,6 +159,10 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
     this._sensorManager = new SensorManager({
       protocolHandler: this._protocol,
       isConnected: () => this.isConnected(),
+      onError: (error, context) => {
+        this._logger.warn(`Async error in ${context}:`, error.message);
+        this.emit('error', { error, context });
+      },
     });
   }
 

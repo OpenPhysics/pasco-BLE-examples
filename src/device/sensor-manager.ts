@@ -31,6 +31,12 @@ export interface SensorManagerOptions {
   protocolHandler: ProtocolHandler;
   /** Check if device is connected */
   isConnected: () => boolean;
+  /**
+   * Optional callback for handling errors that occur in async contexts
+   * where they can't be propagated normally (e.g., notification handlers).
+   * If not provided, errors will be logged to console.warn.
+   */
+  onError?: (error: Error, context: string) => void;
 }
 
 /**
@@ -59,6 +65,19 @@ export class SensorManager {
     // Create handlers with state access
     this._decoder = new MeasurementDecoder(this._state);
     this._initializer = new SensorInitializer(this._state);
+  }
+
+  /**
+   * Handle errors that occur in async contexts where they can't be propagated.
+   * Uses the configured onError callback if available, otherwise logs to console.
+   */
+  private _handleAsyncError(error: unknown, context: string): void {
+    const err = error instanceof Error ? error : new Error(String(error));
+    if (this._options.onError) {
+      this._options.onError(err, context);
+    } else {
+      console.warn(`[SensorManager] Error in ${context}:`, err.message);
+    }
   }
 
   // ==================== Properties ====================
@@ -340,7 +359,9 @@ export class SensorManager {
       if (counter > 8) {
         this._state.setAckCounter(sensorId, 0);
         const responseServiceId = sensorId + 1;
-        this._options.protocolHandler.sendAck(responseServiceId, [data[0]!]).catch(() => {});
+        this._options.protocolHandler.sendAck(responseServiceId, [data[0]!]).catch((error) => {
+          this._handleAsyncError(error, 'sendAck');
+        });
       }
     } else if (data[0] === PROTOCOL.CNTRLNODE_PLUGINS_CALLBACK) {
       this._updateControlnodePluginSensor(data);
