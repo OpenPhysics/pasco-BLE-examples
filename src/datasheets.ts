@@ -37,119 +37,119 @@ export const WIRELESS_INTERFACES: Record<number, ParsedInterface> = {
   1025: {
     id: 1025,
     nameTag: 'WirelessTemperature',
-    channels: [{ ID: 0, Type: 'Pasport', SensorID: 0x2020 }],
+    channels: [{ ID: 0, Type: 'Pasport', SensorID: 2020 }],
   },
   1026: {
     id: 1026,
     nameTag: 'WirelessPH',
-    channels: [{ ID: 0, Type: 'Pasport', SensorID: 0x2021 }],
+    channels: [{ ID: 0, Type: 'Pasport', SensorID: 2021 }],
   },
   1027: {
     id: 1027,
     nameTag: 'WirelessPressure',
-    channels: [{ ID: 0, Type: 'Pasport', SensorID: 0x2022 }],
+    channels: [{ ID: 0, Type: 'Pasport', SensorID: 2022 }],
   },
   1028: {
     id: 1028,
     nameTag: 'WirelessForceAccel',
     channels: [
-      { ID: 0, NameTag: 'Force', Type: 'Pasport', SensorID: 0x2023 },
-      { ID: 1, NameTag: 'Accel', Type: 'Pasport', SensorID: 0x2024 },
-      { ID: 2, NameTag: 'Gyro', Type: 'Pasport', SensorID: 0x2028 },
+      { ID: 0, NameTag: 'Force', Type: 'Pasport', SensorID: 2023 },
+      { ID: 1, NameTag: 'Accel', Type: 'Pasport', SensorID: 2024 },
+      { ID: 2, NameTag: 'Gyro', Type: 'Pasport', SensorID: 2028 },
     ],
   },
   1029: {
     id: 1029,
     nameTag: 'SmartCart',
     channels: [
-      { ID: 0, NameTag: 'Force', Type: 'Pasport', SensorID: 0x2025 },
-      { ID: 1, NameTag: 'Accel', Type: 'Pasport', SensorID: 0x2026 },
-      { ID: 2, NameTag: 'Position', Type: 'Pasport', SensorID: 0x2027 },
-      { ID: 3, NameTag: 'Gyro', Type: 'Pasport', SensorID: 0x2029 },
+      { ID: 0, NameTag: 'Force', Type: 'Pasport', SensorID: 2025 },
+      { ID: 1, NameTag: 'Accel', Type: 'Pasport', SensorID: 2026 },
+      { ID: 2, NameTag: 'Position', Type: 'Pasport', SensorID: 2027 },
+      { ID: 3, NameTag: 'Gyro', Type: 'Pasport', SensorID: 2029 },
     ],
   },
   1030: {
     id: 1030,
     nameTag: 'WirelessLight',
     channels: [
-      { ID: 0, Type: 'Pasport', SensorID: 0x2030 },
-      { ID: 1, Type: 'Pasport', SensorID: 0x2034 },
+      { ID: 0, Type: 'Pasport', SensorID: 2030 },
+      { ID: 1, Type: 'Pasport', SensorID: 2034 },
     ],
   },
   1031: {
     id: 1031,
     nameTag: 'WirelessVoltage',
-    channels: [{ ID: 0, Type: 'Pasport', SensorID: 0x2031 }],
+    channels: [{ ID: 0, Type: 'Pasport', SensorID: 2031 }],
   },
   1032: {
     id: 1032,
     nameTag: 'WirelessCurrent',
-    channels: [{ ID: 0, Type: 'Pasport', SensorID: 0x2032 }],
+    channels: [{ ID: 0, Type: 'Pasport', SensorID: 2032 }],
   },
   1033: {
     id: 1033,
     nameTag: 'WirelessConductivity',
-    channels: [{ ID: 0, Type: 'Pasport', SensorID: 0x2033 }],
+    channels: [{ ID: 0, Type: 'Pasport', SensorID: 2033 }],
   },
   1034: {
     id: 1034,
     nameTag: 'WirelessCO2',
-    channels: [{ ID: 0, Type: 'Pasport', SensorID: 0x2035 }],
+    channels: [{ ID: 0, Type: 'Pasport', SensorID: 2035 }],
   },
   1036: {
     id: 1036,
     nameTag: 'WirelessWeather',
     channels: [
-      { ID: 0, NameTag: 'Weather', Type: 'Pasport', SensorID: 0x2037 },
-      { ID: 1, NameTag: 'GPS', Type: 'Pasport', SensorID: 0x2038 },
-      { ID: 2, NameTag: 'Light', Type: 'Pasport', SensorID: 0x2039 },
-      { ID: 3, NameTag: 'Compass', Type: 'Pasport', SensorID: 0x2045 },
+      { ID: 0, NameTag: 'Weather', Type: 'Pasport', SensorID: 2037 },
+      { ID: 1, NameTag: 'GPS', Type: 'Pasport', SensorID: 2038 },
+      { ID: 2, NameTag: 'Light', Type: 'Pasport', SensorID: 2039 },
+      { ID: 3, NameTag: 'Compass', Type: 'Pasport', SensorID: 2045 },
     ],
   },
   1041: {
     id: 1041,
     nameTag: 'WirelessRotaryMotion',
-    channels: [{ ID: 0, NameTag: 'Position', Type: 'Pasport', SensorID: 0x2047 }],
+    channels: [{ ID: 0, NameTag: 'Position', Type: 'Pasport', SensorID: 2047 }],
   },
   1042: {
     id: 1042,
     nameTag: 'WirelessMotion',
-    channels: [{ ID: 0, NameTag: 'Position', Type: 'Pasport', SensorID: 0x2048 }],
+    channels: [{ ID: 0, NameTag: 'Position', Type: 'Pasport', SensorID: 2048 }],
   },
   1043: {
     id: 1043,
     nameTag: 'WirelessDropCounter',
-    channels: [{ ID: 0, NameTag: 'Drops', Type: 'Pasport', SensorID: 0x2050 }],
+    channels: [{ ID: 0, NameTag: 'Drops', Type: 'Pasport', SensorID: 2050 }],
   },
   1044: {
     id: 1044,
     nameTag: 'WirelessMagField',
-    channels: [{ ID: 0, NameTag: 'MagField', Type: 'Pasport', SensorID: 0x2051 }],
+    channels: [{ ID: 0, NameTag: 'MagField', Type: 'Pasport', SensorID: 2051 }],
   },
   1045: {
     id: 1045,
     nameTag: 'WirelessODO',
-    channels: [{ ID: 0, NameTag: 'ODO', Type: 'Pasport', SensorID: 0x2049 }],
+    channels: [{ ID: 0, NameTag: 'ODO', Type: 'Pasport', SensorID: 2049 }],
   },
   1046: {
     id: 1046,
     nameTag: 'WirelessFastRespTemp',
-    channels: [{ ID: 0, NameTag: 'Temperature', Type: 'Pasport', SensorID: 0x2052 }],
+    channels: [{ ID: 0, NameTag: 'Temperature', Type: 'Pasport', SensorID: 2052 }],
   },
   1047: {
     id: 1047,
     nameTag: 'WirelessAccelAlt',
     channels: [
-      { ID: 0, NameTag: 'Accel', Type: 'Pasport', SensorID: 0x2053 },
-      { ID: 1, NameTag: 'Gyro', Type: 'Pasport', SensorID: 0x2056 },
-      { ID: 2, NameTag: 'Altimeter', Type: 'Pasport', SensorID: 0x2054 },
+      { ID: 0, NameTag: 'Accel', Type: 'Pasport', SensorID: 2053 },
+      { ID: 1, NameTag: 'Gyro', Type: 'Pasport', SensorID: 2056 },
+      { ID: 2, NameTag: 'Altimeter', Type: 'Pasport', SensorID: 2054 },
     ],
   },
   // Smart Gate interface
   1048: {
     id: 1048,
     nameTag: 'WirelessSmartGate',
-    channels: [{ ID: 0, NameTag: 'SmartGate', Type: 'Pasport', SensorID: 0x2055 }],
+    channels: [{ ID: 0, NameTag: 'SmartGate', Type: 'Pasport', SensorID: 2055 }],
   },
   // Oxygen Gas (O2) interface (PS-3217)
   1049: {
@@ -171,15 +171,15 @@ export const WIRELESS_INTERFACES: Record<number, ParsedInterface> = {
     id: 1052,
     nameTag: 'WirelessSound',
     channels: [
-      { ID: 0, NameTag: 'SoundWave', Type: 'Pasport', SensorID: 0x2062 },
-      { ID: 1, NameTag: 'SoundLevel', Type: 'Pasport', SensorID: 0x2063 },
+      { ID: 0, NameTag: 'SoundWave', Type: 'Pasport', SensorID: 2062 },
+      { ID: 1, NameTag: 'SoundLevel', Type: 'Pasport', SensorID: 2063 },
     ],
   },
   // Soil Moisture interface
   1055: {
     id: 1055,
     nameTag: 'WirelessSoilMoisture',
-    channels: [{ ID: 0, NameTag: 'SoilMoisture', Type: 'Pasport', SensorID: 0x2065 }],
+    channels: [{ ID: 0, NameTag: 'SoilMoisture', Type: 'Pasport', SensorID: 2065 }],
   },
   // Code.Node interface (PS-3231)
   1056: {
@@ -197,8 +197,8 @@ export const WIRELESS_INTERFACES: Record<number, ParsedInterface> = {
     id: 1057,
     nameTag: 'WirelessControlNode',
     channels: [
-      { ID: 0, NameTag: 'StepperA', Type: 'Pasport', SensorID: 0x2060, OutputType: '1' },
-      { ID: 1, NameTag: 'StepperB', Type: 'Pasport', SensorID: 0x2060, OutputType: '1' },
+      { ID: 0, NameTag: 'StepperA', Type: 'Pasport', SensorID: 2060, OutputType: '1' },
+      { ID: 1, NameTag: 'StepperB', Type: 'Pasport', SensorID: 2060, OutputType: '1' },
       { ID: 2, NameTag: 'Sensor', Type: 'Pasport', PlugDetect: 1 },
       { ID: 3, NameTag: 'PluginA', Type: 'Pasport', PlugDetect: 1 },
       { ID: 4, NameTag: 'PluginB', Type: 'Pasport', PlugDetect: 1 },
@@ -212,8 +212,8 @@ export const WIRELESS_INTERFACES: Record<number, ParsedInterface> = {
  */
 export const SENSORS: Record<number, ParsedSensor> = {
   // Wireless Temperature Sensor (PS-3201)
-  8224: {
-    id: 0x2020,
+  2020: {
+    id: 2020,
     tag: 'WirelessTemperatureSensor',
     measurements: new Map([
       [
@@ -256,8 +256,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Pressure Sensor (PS-3203)
-  8226: {
-    id: 0x2022,
+  2022: {
+    id: 2022,
     tag: 'WirelessPressureSensor',
     measurements: new Map([
       [
@@ -287,8 +287,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless pH Sensor (PS-3204)
-  8225: {
-    id: 0x2021,
+  2021: {
+    id: 2021,
     tag: 'WirelessPHSensor',
     measurements: new Map([
       [
@@ -331,8 +331,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Force Sensor (PS-3202)
-  8227: {
-    id: 0x2023,
+  2023: {
+    id: 2023,
     tag: 'WirelessForceSensor',
     measurements: new Map([
       [
@@ -375,8 +375,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Acceleration Sensor (PS-3202)
-  8228: {
-    id: 0x2024,
+  2024: {
+    id: 2024,
     tag: 'WirelessAccelerationSensor',
     measurements: new Map([
       [
@@ -469,8 +469,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Gyro Sensor (PS-3202)
-  8232: {
-    id: 0x2028,
+  2028: {
+    id: 2028,
     tag: 'WirelessGyroSensor',
     measurements: new Map([
       [
@@ -551,8 +551,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Light Sensor (PS-3213)
-  8240: {
-    id: 0x2030,
+  2030: {
+    id: 2030,
     tag: 'WirelessLightSensor1',
     measurements: new Map([
       [
@@ -616,8 +616,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Voltage Sensor (PS-3211)
-  8241: {
-    id: 0x2031,
+  2031: {
+    id: 2031,
     tag: 'WirelessVoltageSensor',
     measurements: new Map([
       [
@@ -672,8 +672,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Current Sensor (PS-3212)
-  8242: {
-    id: 0x2032,
+  2032: {
+    id: 2032,
     tag: 'WirelessCurrentSensor',
     measurements: new Map([
       [
@@ -728,8 +728,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Conductivity Sensor (PS-3210)
-  8243: {
-    id: 0x2033,
+  2033: {
+    id: 2033,
     tag: 'WirelessConductivitySensor',
     measurements: new Map([
       [
@@ -795,8 +795,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Light Sensor 2 / Light UVA (PS-3213)
-  8244: {
-    id: 0x2034,
+  2034: {
+    id: 2034,
     tag: 'WirelessLightSensor2',
     measurements: new Map([
       [
@@ -894,8 +894,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless CO2 Sensor (PS-3208)
-  8245: {
-    id: 0x2035,
+  2035: {
+    id: 2035,
     tag: 'WirelessCO2Sensor',
     measurements: new Map([
       [
@@ -938,8 +938,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Optical DO Sensor (PS-3224)
-  8265: {
-    id: 0x2049,
+  2049: {
+    id: 2049,
     tag: 'WirelessODOSensor',
     measurements: new Map([
       [
@@ -1016,8 +1016,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Drop Counter Sensor (PS-3214)
-  8272: {
-    id: 0x2050,
+  2050: {
+    id: 2050,
     tag: 'WirelessDropCounterSensor',
     measurements: new Map([
       [
@@ -1061,8 +1061,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Magnetic Field Sensor (PS-3221)
-  8273: {
-    id: 0x2051,
+  2051: {
+    id: 2051,
     tag: 'WirelessMagFieldSensor',
     measurements: new Map([
       [
@@ -1143,8 +1143,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Temperature Link (PS-3222)
-  8274: {
-    id: 0x2052,
+  2052: {
+    id: 2052,
     tag: 'WirelessTempLink',
     measurements: new Map([
       [
@@ -1187,8 +1187,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // SmartCart Force Sensor (ME-1240)
-  8229: {
-    id: 0x2025,
+  2025: {
+    id: 2025,
     tag: 'SmartCartForceSensor',
     measurements: new Map([
       [
@@ -1231,8 +1231,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // SmartCart Acceleration Sensor (ME-1240)
-  8230: {
-    id: 0x2026,
+  2026: {
+    id: 2026,
     tag: 'SmartCartAccelerationSensor',
     measurements: new Map([
       [
@@ -1325,8 +1325,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // SmartCart Position Sensor (ME-1240)
-  8231: {
-    id: 0x2027,
+  2027: {
+    id: 2027,
     tag: 'SmartCartPositionSensor',
     measurements: new Map([
       [
@@ -1383,8 +1383,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // SmartCart Gyro Sensor (ME-1240)
-  8233: {
-    id: 0x2029,
+  2029: {
+    id: 2029,
     tag: 'SmartCartGyroSensor',
     measurements: new Map([
       [
@@ -1465,8 +1465,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Accelerometer (PS-3223 Accel Alt)
-  8275: {
-    id: 0x2053,
+  2053: {
+    id: 2053,
     tag: 'WirelessAccelerometer',
     measurements: new Map([
       [
@@ -1559,8 +1559,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Altimeter (PS-3223 Accel Alt)
-  8276: {
-    id: 0x2054,
+  2054: {
+    id: 2054,
     tag: 'WirelessAltimeter',
     measurements: new Map([
       [
@@ -1602,8 +1602,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Smart Gate Sensor (PS-3225)
-  8277: {
-    id: 0x2055,
+  2055: {
+    id: 2055,
     tag: 'WirelessSmartGateSensor',
     measurements: new Map([
       [
@@ -1633,8 +1633,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Gyro Sensor (PS-3223 Accel Alt)
-  8278: {
-    id: 0x2056,
+  2056: {
+    id: 2056,
     tag: 'WirelessGyroSensorAlt',
     measurements: new Map([
       [
@@ -2111,8 +2111,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Control.Node Stepper Motor
-  8288: {
-    id: 0x2060,
+  2060: {
+    id: 2060,
     tag: 'ControlNodeStepper',
     measurements: new Map([
       [
@@ -2143,8 +2143,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Control.Node Acceleration Sensor (built-in)
-  8289: {
-    id: 0x2061,
+  2061: {
+    id: 2061,
     tag: 'ControlNodeAcceleration',
     measurements: new Map([
       [
@@ -2225,8 +2225,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Weather Sensor (PS-3209)
-  8247: {
-    id: 0x2037,
+  2037: {
+    id: 2037,
     tag: 'WirelessWeatherSensor',
     measurements: new Map([
       [
@@ -2324,8 +2324,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless GPS Sensor (PS-3209)
-  8248: {
-    id: 0x2038,
+  2038: {
+    id: 2038,
     tag: 'WirelessGPSSensor',
     measurements: new Map([
       [
@@ -2435,8 +2435,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Light Sensor for Weather (PS-3209)
-  8249: {
-    id: 0x2039,
+  2039: {
+    id: 2039,
     tag: 'WirelessLightSensor',
     measurements: new Map([
       [
@@ -2502,8 +2502,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Compass Sensor (PS-3209)
-  8261: {
-    id: 0x2045,
+  2045: {
+    id: 2045,
     tag: 'WirelessCompass',
     measurements: new Map([
       [
@@ -2533,8 +2533,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Rotary Motion Sensor (PS-3220)
-  8263: {
-    id: 0x2047,
+  2047: {
+    id: 2047,
     tag: 'WirelessRotaryMotionSensor',
     measurements: new Map([
       [
@@ -2640,8 +2640,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Motion Sensor (PS-3219)
-  8264: {
-    id: 0x2048,
+  2048: {
+    id: 2048,
     tag: 'WirelessMotionSensor',
     measurements: new Map([
       [
@@ -2720,8 +2720,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Sound Wave Sensor (PS-3227)
-  8290: {
-    id: 0x2062,
+  2062: {
+    id: 2062,
     tag: 'WirelessSoundWaveSensor',
     measurements: new Map([
       [
@@ -2740,8 +2740,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Sound Level Sensor (PS-3227)
-  8291: {
-    id: 0x2063,
+  2063: {
+    id: 2063,
     tag: 'WirelessSoundLevelSensor',
     measurements: new Map([
       [
@@ -2770,8 +2770,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
     ]),
   },
   // Wireless Soil Moisture Sensor (PS-3228)
-  8293: {
-    id: 0x2065,
+  2065: {
+    id: 2065,
     tag: 'WirelessSoilMoistureSensor',
     measurements: new Map([
       [
