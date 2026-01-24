@@ -501,6 +501,84 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
   }
 
   /**
+   * Stream continuous measurement data using an async iterator.
+   * Yields values at the specified interval until the device disconnects
+   * or the iterator is broken out of.
+   *
+   * @param measurement The measurement name to read
+   * @param intervalMs Time between readings in milliseconds (default: 100)
+   * @yields The measurement value (number or null if reading failed)
+   *
+   * @example
+   * ```typescript
+   * // Read temperature continuously
+   * for await (const temp of device.streamData('Temperature', 200)) {
+   *   console.log(`Temperature: ${temp}°C`);
+   *   if (temp !== null && temp > 100) {
+   *     console.log('Too hot!');
+   *     break;  // Stop streaming
+   *   }
+   * }
+   *
+   * // With error handling
+   * try {
+   *   for await (const value of device.streamData('pH')) {
+   *     updateDisplay(value);
+   *   }
+   * } catch (error) {
+   *   console.error('Stream error:', error);
+   * }
+   * ```
+   */
+  async *streamData(measurement: string, intervalMs = 100): AsyncGenerator<number | null> {
+    while (this.isConnected()) {
+      const value = await this.readData(measurement);
+      yield value;
+
+      // Check if still connected before waiting
+      if (!this.isConnected()) {
+        break;
+      }
+
+      await this._delay(intervalMs);
+    }
+  }
+
+  /**
+   * Stream multiple measurements continuously using an async iterator.
+   * Yields all measurement values at the specified interval.
+   *
+   * @param measurements Array of measurement names to read
+   * @param intervalMs Time between readings in milliseconds (default: 100)
+   * @yields Object with measurement names as keys and values
+   *
+   * @example
+   * ```typescript
+   * // Read multiple measurements
+   * const measurements = ['Temperature', 'Humidity', 'Pressure'];
+   * for await (const data of device.streamDataList(measurements, 500)) {
+   *   console.log(`Temp: ${data['Temperature']}, Humidity: ${data['Humidity']}`);
+   * }
+   * ```
+   */
+  async *streamDataList(
+    measurements: string[],
+    intervalMs = 100,
+  ): AsyncGenerator<Record<string, number | null>> {
+    while (this.isConnected()) {
+      const values = await this.readDataList(measurements);
+      yield values;
+
+      // Check if still connected before waiting
+      if (!this.isConnected()) {
+        break;
+      }
+
+      await this._delay(intervalMs);
+    }
+  }
+
+  /**
    * Detect devices attached to control node
    */
   async scanControlnodePlugins(): Promise<void> {
