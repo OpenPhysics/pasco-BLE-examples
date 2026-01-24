@@ -151,19 +151,19 @@ export const WIRELESS_INTERFACES: Record<number, ParsedInterface> = {
     nameTag: 'WirelessSmartGate',
     channels: [{ ID: 0, NameTag: 'SmartGate', Type: 'Pasport', SensorID: 0x2055 }],
   },
-  // Oxygen Gas (O2) interface
+  // Oxygen Gas (O2) interface (PS-3217)
   1049: {
     id: 1049,
     nameTag: 'WirelessOxygenGas',
-    channels: [{ ID: 0, NameTag: 'Oxygen', Type: 'Pasport', SensorID: 0x2057 }],
+    channels: [{ ID: 0, NameTag: 'Oxygen', Type: 'Pasport', SensorID: 2057 }],
   },
-  // Diffraction interface
+  // Diffraction interface (OS-8441)
   1050: {
     id: 1050,
     nameTag: 'WirelessDiffraction',
     channels: [
-      { ID: 0, NameTag: 'Position', Type: 'Pasport', SensorID: 0x2058 },
-      { ID: 1, NameTag: 'Intensity', Type: 'Pasport', SensorID: 0x2059 },
+      { ID: 0, NameTag: 'Position', Type: 'Pasport', SensorID: 2058 },
+      { ID: 1, NameTag: 'Intensity', Type: 'Pasport', SensorID: 2059 },
     ],
   },
   // Sound interface
@@ -181,14 +181,15 @@ export const WIRELESS_INTERFACES: Record<number, ParsedInterface> = {
     nameTag: 'WirelessSoilMoisture',
     channels: [{ ID: 0, NameTag: 'SoilMoisture', Type: 'Pasport', SensorID: 0x2065 }],
   },
-  // Code.Node interface
+  // Code.Node interface (PS-3231)
   1056: {
     id: 1056,
     nameTag: 'WirelessCodeNode',
     channels: [
-      { ID: 0, NameTag: 'Light', Type: 'Pasport', SensorID: 0x2057 },
-      { ID: 1, NameTag: 'Accel', Type: 'Pasport', SensorID: 0x2058 },
-      { ID: 2, NameTag: 'Sound', Type: 'Pasport', SensorID: 0x2059 },
+      { ID: 0, NameTag: 'TempLightSound', Type: 'Pasport', SensorID: 2066 },
+      { ID: 1, NameTag: 'Compass', Type: 'Pasport', SensorID: 2067 },
+      { ID: 2, NameTag: 'Acceleration', Type: 'Pasport', SensorID: 2068 },
+      { ID: 3, NameTag: 'Buttons', Type: 'Pasport', SensorID: 2069 },
     ],
   },
   // Control.Node interface
@@ -1505,16 +1506,16 @@ export const SENSORS: Record<number, ParsedSensor> = {
       ],
     ]),
   },
-  // Code.Node Light Sensor
-  8279: {
-    id: 0x2057,
-    tag: 'CodeNodeLight',
+  // Wireless Oxygen Gas Sensor (PS-3217)
+  2057: {
+    id: 2057,
+    tag: 'WirelessOxygenGasSensor',
     measurements: new Map([
       [
         0,
         {
           ID: 0,
-          NameTag: 'RawLight',
+          NameTag: 'RawO2',
           Type: 'RawDigital',
           DataSize: 2,
           Internal: 1,
@@ -1525,22 +1526,262 @@ export const SENSORS: Record<number, ParsedSensor> = {
         1,
         {
           ID: 1,
-          NameTag: 'LightLevel',
-          Type: 'LinearConv',
+          NameTag: 'RawTemp',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        2,
+        {
+          ID: 2,
+          NameTag: 'RawHumidity',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        3,
+        {
+          ID: 3,
+          NameTag: 'OxygenGasConcentration',
+          Type: 'UserCal',
           Inputs: '0',
-          Params: '0.0244140625,0',
+          Params: '0,0,13697,20.9',
           UnitType: 'percent',
           Precision: 1,
           Visible: 1,
-          Limits: '0,100',
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'Temperature',
+          Type: 'Equation',
+          Equation: '(([1]/65536)*165)-40',
+          UnitType: 'DegC',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        5,
+        {
+          ID: 5,
+          NameTag: 'RelativeHumidity',
+          Type: 'Equation',
+          Equation: '([2]/65536)*100',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
         },
       ],
     ]),
   },
-  // Code.Node Accelerometer
-  8280: {
-    id: 0x2058,
-    tag: 'CodeNodeAccelerometer',
+  // Diffraction Position Sensor (OS-8441)
+  2058: {
+    id: 2058,
+    tag: 'DiffractionPosition',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'RawCountChange',
+          Type: 'RawDigital',
+          DataSize: 2,
+          TwosComp: '1',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'Position',
+          Type: 'RotaryPos',
+          Inputs: '0',
+          Params: '0.01,2000',
+          UnitType: 'm',
+          Precision: 2,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
+  // Diffraction Intensity Sensor (OS-8441)
+  2059: {
+    id: 2059,
+    tag: 'DiffractionIntensity',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'RawIntensity',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'LightIntensity',
+          Type: 'LinearConv',
+          Inputs: '0',
+          Params: '0.0015259,0',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
+  // Code.Node Temperature/Light/Sound Sensor (PS-3231)
+  2066: {
+    id: 2066,
+    tag: 'CodeNodeTempLightSound',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'RawTemperature',
+          Type: 'RawDigital',
+          DataSize: 2,
+          TwosComp: '1',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'RawLight',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        2,
+        {
+          ID: 2,
+          NameTag: 'RawSoundLevel',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        3,
+        {
+          ID: 3,
+          NameTag: 'Temperature',
+          Type: 'Equation',
+          Equation: '[0]*0.01',
+          UnitType: 'DegC',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'Brightness',
+          Type: 'Equation',
+          Equation: 'sqrt([1])*0.3906',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        5,
+        {
+          ID: 5,
+          NameTag: 'Loudness',
+          Type: 'Equation',
+          Equation: '[2]*0.001526',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
+  // Code.Node Magnetic Field Sensor (PS-3231)
+  2067: {
+    id: 2067,
+    tag: 'CodeNodeMagneticField',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'RawMagX',
+          Type: 'RawDigital',
+          DataSize: 2,
+          TwosComp: '1',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'RawMagY',
+          Type: 'RawDigital',
+          DataSize: 2,
+          TwosComp: '1',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        2,
+        {
+          ID: 2,
+          NameTag: 'RawMagZ',
+          Type: 'RawDigital',
+          DataSize: 2,
+          TwosComp: '1',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        7,
+        {
+          ID: 7,
+          NameTag: 'MagneticFieldStrength',
+          Type: 'Equation',
+          Equation: '[1]*0.15',
+          UnitType: 'utesla',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
+  // Code.Node Motion Sensor (PS-3231)
+  2068: {
+    id: 2068,
+    tag: 'CodeNodeMotion',
     measurements: new Map([
       [
         0,
@@ -1549,8 +1790,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
           NameTag: 'RawX',
           Type: 'RawDigital',
           DataSize: 2,
-          Internal: 1,
           TwosComp: '1',
+          Internal: 1,
           Visible: 0,
         },
       ],
@@ -1561,8 +1802,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
           NameTag: 'RawY',
           Type: 'RawDigital',
           DataSize: 2,
-          Internal: 1,
           TwosComp: '1',
+          Internal: 1,
           Visible: 0,
         },
       ],
@@ -1573,8 +1814,8 @@ export const SENSORS: Record<number, ParsedSensor> = {
           NameTag: 'RawZ',
           Type: 'RawDigital',
           DataSize: 2,
-          Internal: 1,
           TwosComp: '1',
+          Internal: 1,
           Visible: 0,
         },
       ],
@@ -1583,11 +1824,11 @@ export const SENSORS: Record<number, ParsedSensor> = {
         {
           ID: 3,
           NameTag: 'Accelerationx',
-          Type: 'LinearConv',
+          Type: 'FactoryCal',
           Inputs: '0',
-          Params: '0.00024414,0',
-          UnitType: 'grav',
-          Precision: 2,
+          Params: '0,0,1,0.002394',
+          UnitType: 'ms2',
+          Precision: 1,
           Visible: 1,
         },
       ],
@@ -1596,69 +1837,67 @@ export const SENSORS: Record<number, ParsedSensor> = {
         {
           ID: 4,
           NameTag: 'Accelerationy',
-          Type: 'LinearConv',
+          Type: 'FactoryCal',
           Inputs: '1',
-          Params: '0.00024414,0',
-          UnitType: 'grav',
-          Precision: 2,
+          Params: '0,0,1,0.002394',
+          UnitType: 'ms2',
+          Precision: 1,
           Visible: 1,
         },
       ],
       [
-        5,
+        7,
         {
-          ID: 5,
-          NameTag: 'Accelerationz',
-          Type: 'LinearConv',
-          Inputs: '2',
-          Params: '0.00024414,0',
-          UnitType: 'grav',
-          Precision: 2,
+          ID: 7,
+          NameTag: 'TiltAngleX',
+          Type: 'Equation',
+          Equation: 'atan2([3],sqrt(([4]*[4])+([5]*[5])))*180/3.1416',
+          UnitType: 'deg',
+          Precision: 1,
           Visible: 1,
         },
       ],
       [
-        6,
+        8,
         {
-          ID: 6,
-          NameTag: 'AccelerationResultant',
-          Type: 'ThreeInputVector',
-          Inputs: '3,4,5',
-          UnitType: 'grav',
-          Precision: 2,
+          ID: 8,
+          NameTag: 'TiltAngleY',
+          Type: 'Equation',
+          Equation: 'atan2([4],sqrt(([3]*[3])+([5]*[5])))*180/3.1416',
+          UnitType: 'deg',
+          Precision: 1,
           Visible: 1,
         },
       ],
     ]),
   },
-  // Code.Node Sound Sensor
-  8281: {
-    id: 0x2059,
-    tag: 'CodeNodeSound',
+  // Code.Node Buttons (PS-3231)
+  2069: {
+    id: 2069,
+    tag: 'CodeNodeButtons',
     measurements: new Map([
       [
         0,
         {
           ID: 0,
-          NameTag: 'RawSound',
+          NameTag: 'Button1',
           Type: 'RawDigital',
-          DataSize: 2,
-          Internal: 1,
-          Visible: 0,
+          DataSize: 1,
+          UnitType: 'Unitless',
+          Precision: 0,
+          Visible: 1,
         },
       ],
       [
         1,
         {
           ID: 1,
-          NameTag: 'SoundLevel',
-          Type: 'LinearConv',
-          Inputs: '0',
-          Params: '0.0244140625,0',
-          UnitType: 'percent',
-          Precision: 1,
+          NameTag: 'Button2',
+          Type: 'RawDigital',
+          DataSize: 1,
+          UnitType: 'Unitless',
+          Precision: 0,
           Visible: 1,
-          Limits: '0,100',
         },
       ],
     ]),
