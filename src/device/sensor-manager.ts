@@ -201,6 +201,56 @@ export class SensorManager {
     }
   }
 
+  // ==================== Low-Level Sensor Access (for subclasses) ====================
+
+  /**
+   * Get channel information by sensor ID
+   * @param sensorId The sensor/channel ID
+   * @returns The channel information, or undefined if not found
+   */
+  getChannelById(sensorId: number): SensorChannel | undefined {
+    return this._state.getChannel(sensorId);
+  }
+
+  /**
+   * Find the measurement ID for a named measurement on a specific sensor
+   * @param sensorId The sensor ID to search
+   * @param measurementName The name of the measurement
+   * @returns The measurement ID, or null if not found
+   */
+  findMeasurementId(sensorId: number, measurementName: string): number | null {
+    const measurements = this._state.getMeasurements(sensorId);
+    if (!measurements) return null;
+
+    for (const [mId, m] of measurements) {
+      if (m.NameTag === measurementName) {
+        return mId;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get a sensor value by sensor ID and measurement ID
+   * @param sensorId The sensor ID
+   * @param measurementId The measurement ID
+   * @returns The sensor value, or null/undefined if not available
+   */
+  getSensorValueById(sensorId: number, measurementId: number): number | null | undefined {
+    return this._state.getSensorValue(sensorId, measurementId);
+  }
+
+  /**
+   * Iterate over device channels that match a filter
+   * @param filter Optional filter function
+   * @returns Array of matching channels
+   */
+  filterChannels(filter?: (channel: SensorChannel) => boolean): SensorChannel[] {
+    const channels = this._state.getChannels();
+    if (!filter) return [...channels];
+    return [...channels].filter(filter);
+  }
+
   // ==================== Sensor API ====================
 
   /**

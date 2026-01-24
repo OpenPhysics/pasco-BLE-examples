@@ -542,8 +542,59 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
     await this._sensorManager.requestSensorMeasurements(sensorId);
   }
 
+  // ==================== Protected Helpers (Preferred API for Subclasses) ====================
+
+  /**
+   * Get the last response data packet from a command.
+   * Use this instead of accessing _dataPacket directly.
+   */
+  protected getResponseData(): Uint8Array {
+    return new Uint8Array(this._dataPacket);
+  }
+
+  /**
+   * Find measurement ID by name for a specific sensor
+   * @param sensorId The sensor/channel ID
+   * @param measurementName The measurement name to find
+   * @returns The measurement ID, or null if not found
+   */
+  protected findMeasurementId(sensorId: number, measurementName: string): number | null {
+    return this._sensorManager.findMeasurementId(sensorId, measurementName);
+  }
+
+  /**
+   * Get a sensor value by sensor ID and measurement ID
+   * @param sensorId The sensor/channel ID
+   * @param measurementId The measurement ID
+   * @returns The sensor value, or null/undefined if not available
+   */
+  protected getSensorValueById(sensorId: number, measurementId: number): number | null | undefined {
+    return this._sensorManager.getSensorValueById(sensorId, measurementId);
+  }
+
+  /**
+   * Get channel information by sensor ID
+   * @param sensorId The sensor/channel ID
+   * @returns The channel info, or undefined if not found
+   */
+  protected getChannelById(sensorId: number): SensorChannel | undefined {
+    return this._sensorManager.getChannelById(sensorId);
+  }
+
+  /**
+   * Filter device channels by a predicate
+   * @param filter Optional filter function
+   * @returns Matching channels
+   */
+  protected filterChannels(filter?: (channel: SensorChannel) => boolean): SensorChannel[] {
+    return this._sensorManager.filterChannels(filter);
+  }
+
+  // ==================== Deprecated Raw Access (Use Helpers Above Instead) ====================
+
   /**
    * Get device measurements map (for subclass use)
+   * @deprecated Use findMeasurementId() instead
    */
   protected get _deviceMeasurements(): Map<number, Map<number, Measurement>> {
     return this._sensorManager.deviceMeasurements;
@@ -551,6 +602,7 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
 
   /**
    * Get sensor data map (for subclass use)
+   * @deprecated Use getSensorValueById() instead
    */
   protected get _sensorData(): Map<number, Map<number, number | null>> {
     return this._sensorManager.sensorData;
@@ -558,6 +610,7 @@ export class PASCOBLEDevice extends TypedEventEmitter<DeviceEvents> {
 
   /**
    * Get device channels (for subclass use)
+   * @deprecated Use filterChannels() or getChannelById() instead
    */
   protected get _deviceChannels(): SensorChannel[] {
     return this._sensorManager.deviceChannels;

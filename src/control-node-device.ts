@@ -89,23 +89,13 @@ export class ControlNodeDevice extends PASCOBLEDevice {
 
       await this._getSensorMeasurements(sensorId);
 
-      // Find measurement ID
-      let measurementId: number | null = null;
-      const measurements = this._deviceMeasurements.get(sensorId);
-      if (measurements) {
-        for (const [mId, m] of measurements) {
-          if (m.NameTag === measurement) {
-            measurementId = mId;
-            break;
-          }
-        }
-      }
-
+      // Find measurement ID using the helper method
+      const measurementId = this.findMeasurementId(sensorId, measurement);
       if (measurementId === null) {
         throw new MeasurementNotFound();
       }
 
-      let value = this._sensorData.get(sensorId)?.get(measurementId) ?? null;
+      let value = this.getSensorValueById(sensorId, measurementId) ?? null;
 
       // Convert from radians to degrees for angular measurements
       if (value !== null && (measurement === 'Angle' || measurement === 'AngularVelocity')) {
@@ -124,11 +114,11 @@ export class ControlNodeDevice extends PASCOBLEDevice {
 
       await this._requestSensorData(sensorId);
 
-      // Parse the response data
-      if (this._dataPacket.length >= 8) {
-        const data = new Uint8Array(this._dataPacket);
+      // Parse the response data using the helper method
+      const responseData = this.getResponseData();
+      if (responseData.length >= 8) {
         // Servo resistance is at indices 3 and 4 (port-based)
-        const value = unpackInt16LE(data, (port + 2) * 2);
+        const value = unpackInt16LE(responseData, (port + 2) * 2);
         return value * 12.5;
       }
     }
@@ -153,8 +143,8 @@ export class ControlNodeDevice extends PASCOBLEDevice {
 
     await this.writeAwaitCallback(service, command);
 
-    // Parse response data
-    const data = new Uint8Array(this._dataPacket);
+    // Parse response data using the helper method
+    const data = this.getResponseData();
     const rawInfo = [
       unpackInt16LE(data, 0), // steps remaining A
       unpackInt16LE(data, 2), // steps remaining B
@@ -217,12 +207,11 @@ export class ControlNodeDevice extends PASCOBLEDevice {
     const continuous1 = effDistA === 'continuous';
     const continuous2 = effDistB === 'continuous';
 
-    // Calculate multipliers for low speed steppers
+    // Calculate multipliers for low speed steppers using helper method
     const mul: Record<number, number> = {};
-    for (const sensor of this._deviceChannels) {
-      if (sensor.channel_id_tag) {
-        mul[sensor.id] = sensor.sensor_id === ControlNodeDevice.CN_ACC_ID_LOW_SPEED_STEPPER ? 6 : 1;
-      }
+    const channels = this.filterChannels((ch) => !!ch.channel_id_tag);
+    for (const sensor of channels) {
+      mul[sensor.id] = sensor.sensor_id === ControlNodeDevice.CN_ACC_ID_LOW_SPEED_STEPPER ? 6 : 1;
     }
     const mulA = mul[0] ?? 1;
     const mulB = mul[1] ?? 1;
