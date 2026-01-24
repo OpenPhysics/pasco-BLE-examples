@@ -209,7 +209,25 @@ await device.readDataList(measurements);      // Read multiple measurements
 
 ## Python to TypeScript
 
-This library provides a functionally equivalent API to [PASCO's official Python library](https://github.com/PASCOscientific/pasco_python), using TypeScript conventions (`camelCase` instead of `snake_case`, async/await for I/O operations).
+This library provides a functionally equivalent API to [PASCO's official Python library](https://github.com/PASCOscientific/pasco_python), using TypeScript conventions:
+
+| Python | TypeScript |
+|--------|------------|
+| `PASCOBLEDevice()` | `new PASCOBLEDevice()` |
+| `device.scan()` | `await device.scan()` |
+| `device.connect(ble_device)` | `await device.connect(bleDevice)` |
+| `device.connect_by_id(id)` | `await device.connectById(id)` |
+| `device.disconnect()` | `await device.disconnect()` |
+| `device.is_connected()` | `device.isConnected()` |
+| `device.get_sensor_list()` | `device.getSensorList()` |
+| `device.get_measurement_list()` | `device.getMeasurementList()` |
+| `device.read_data(measurement)` | `await device.readData(measurement)` |
+| `device.get_measurement_unit(m)` | `device.getMeasurementUnit(m)` |
+
+**Key Differences:**
+- Python uses `snake_case`, TypeScript uses `camelCase`
+- All I/O operations return Promises in TypeScript
+- Full TypeScript type definitions for IDE support
 
 ## //code.Node
 
