@@ -27,6 +27,36 @@ export class CodeNodeDevice extends PASCOBLEDevice {
   protected static readonly CODENODE_CMD_SET_LEDS = 0x03;
   protected static readonly CODENODE_CMD_SET_SOUND_FREQ = 0x04;
 
+  /** LED matrix dimension (5x5 grid) */
+  private static readonly LED_MATRIX_SIZE = 5;
+
+  /**
+   * Validate LED coordinate is within the 5x5 matrix bounds
+   * @param x Column value to validate
+   * @param y Row value to validate
+   * @throws InvalidParameter if coordinates are not integers or out of range [0-4]
+   */
+  private _validateLedCoordinate(x: number, y: number): void {
+    if (!Number.isInteger(x) || !Number.isInteger(y)) {
+      throw new InvalidParameter('x and y must be integers');
+    }
+
+    const maxIndex = CodeNodeDevice.LED_MATRIX_SIZE - 1;
+    if (x < 0 || x > maxIndex || y < 0 || y > maxIndex) {
+      throw new InvalidParameter(`x and y must be in range [0-${maxIndex}]`);
+    }
+  }
+
+  /**
+   * Convert (x, y) coordinate to LED index
+   * @param x Column value [0-4]
+   * @param y Row value [0-4]
+   * @returns LED index for the matrix
+   */
+  private _coordinateToLedIndex(x: number, y: number): number {
+    return 20 - y * CodeNodeDevice.LED_MATRIX_SIZE + x;
+  }
+
   /**
    * Set an individual LED on the 5x5 matrix
    * @param x Column value [0-4] (left to right)
@@ -38,20 +68,13 @@ export class CodeNodeDevice extends PASCOBLEDevice {
       throw new DeviceNotConnected();
     }
 
-    if (!Number.isInteger(x) || !Number.isInteger(y)) {
-      throw new InvalidParameter('x and y must be integers');
-    }
-
-    if (x < 0 || x > 4 || y < 0 || y > 4) {
-      throw new InvalidParameter('x and y must be in range [0-4]');
-    }
+    this._validateLedCoordinate(x, y);
 
     if (typeof intensity !== 'number') {
       throw new InvalidParameter('intensity must be a number');
     }
 
-    // Converts xy position to LED index
-    const ledIndex = 20 - y * 5 + x;
+    const ledIndex = this._coordinateToLedIndex(x, y);
     const ledIntensity = Math.round(limit(intensity, 0, 255));
 
     const cmd = [
@@ -91,16 +114,8 @@ export class CodeNodeDevice extends PASCOBLEDevice {
     let ledActivate = 0;
 
     for (const [x, y] of xyList) {
-      if (!Number.isInteger(x) || !Number.isInteger(y)) {
-        throw new InvalidParameter('x and y must be integers');
-      }
-
-      if (x < 0 || x > 4 || y < 0 || y > 4) {
-        throw new InvalidParameter('x and y must be in range [0-4]');
-      }
-
-      // Converts xy position to LED index
-      const ledIndex = 20 - y * 5 + x;
+      this._validateLedCoordinate(x, y);
+      const ledIndex = this._coordinateToLedIndex(x, y);
       ledActivate += 2 ** ledIndex;
     }
 
@@ -236,13 +251,6 @@ export class CodeNodeDevice extends PASCOBLEDevice {
     await this.setRgbLed(0, 0, 0);
     await this.setLedsInArray([], 0);
     await this.setSoundFrequency(0);
-  }
-
-  /**
-   * Helper function to create a delay
-   */
-  protected _delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

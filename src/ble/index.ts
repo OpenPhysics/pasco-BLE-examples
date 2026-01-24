@@ -14,6 +14,7 @@ export type {
   BLEDevice,
   NotifyCallback,
 } from '@/types/ble.js';
+
 export {
   BLEAdapterBase,
   BLEClientBase,

@@ -102,20 +102,44 @@ export abstract class BLEClientBase implements BLEClient {
   abstract discoverServicesAndCharacteristics(): Promise<void>;
 }
 
+// ==================== PASCO UUID Utilities ====================
+
 /**
- * PASCO-specific UUID generation
+ * PASCO UUID patterns for matching and validation
+ * All PASCO BLE UUIDs follow the format: 4a5c000X-000Y-0000-0000-5c1e741f1c00
+ */
+export const PASCO_UUID = {
+  /** Base prefix for all PASCO UUIDs */
+  PREFIX: '4a5c000',
+  /** Suffix for all PASCO UUIDs */
+  SUFFIX: '5c1e741f1c00',
+  /** Pattern to extract service ID (single digit after prefix) */
+  SERVICE_ID_PATTERN: /4a5c000(\d)/,
+  /** Pattern to extract characteristic ID */
+  CHARACTERISTIC_ID_PATTERN: /4a5c000\d-000(\d)/,
+} as const;
+
+/**
+ * Create a PASCO BLE UUID from service and characteristic IDs
  * Creates UUIDs in the format: 4a5c000X-000Y-0000-0000-5c1e741f1c00
  * where X is the service ID and Y is the characteristic ID
+ *
+ * @param serviceId The service ID (0-9)
+ * @param characteristicId The characteristic ID (0-9)
+ * @returns The full UUID string
  */
 export function createPascoUuid(serviceId: number, characteristicId: number): string {
-  return `4a5c000${serviceId}-000${characteristicId}-0000-0000-5c1e741f1c00`;
+  return `${PASCO_UUID.PREFIX}${serviceId}-000${characteristicId}-0000-0000-${PASCO_UUID.SUFFIX}`;
 }
 
 /**
- * Extract service ID from PASCO UUID
+ * Extract service ID from a PASCO UUID
+ *
+ * @param uuid The UUID string to parse
+ * @returns The service ID (0-9), or -1 if not a valid PASCO UUID
  */
 export function getServiceIdFromUuid(uuid: string): number {
-  const match = uuid.match(/4a5c000(\d)/);
+  const match = uuid.match(PASCO_UUID.SERVICE_ID_PATTERN);
   if (match?.[1]) {
     return parseInt(match[1], 10);
   }
@@ -123,10 +147,13 @@ export function getServiceIdFromUuid(uuid: string): number {
 }
 
 /**
- * Extract characteristic ID from PASCO UUID
+ * Extract characteristic ID from a PASCO UUID
+ *
+ * @param uuid The UUID string to parse
+ * @returns The characteristic ID (0-9), or -1 if not a valid PASCO UUID
  */
 export function getCharacteristicIdFromUuid(uuid: string): number {
-  const match = uuid.match(/4a5c000\d-000(\d)/);
+  const match = uuid.match(PASCO_UUID.CHARACTERISTIC_ID_PATTERN);
   if (match?.[1]) {
     return parseInt(match[1], 10);
   }
@@ -134,8 +161,12 @@ export function getCharacteristicIdFromUuid(uuid: string): number {
 }
 
 /**
- * Check if a UUID is a PASCO UUID
+ * Check if a UUID is a PASCO BLE UUID
+ *
+ * @param uuid The UUID string to check
+ * @returns true if the UUID matches the PASCO format
  */
 export function isPascoUuid(uuid: string): boolean {
-  return uuid.toLowerCase().startsWith('4a5c000') && uuid.toLowerCase().endsWith('5c1e741f1c00');
+  const lower = uuid.toLowerCase();
+  return lower.startsWith(PASCO_UUID.PREFIX) && lower.endsWith(PASCO_UUID.SUFFIX);
 }

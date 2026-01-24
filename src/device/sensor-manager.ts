@@ -6,6 +6,7 @@
  */
 
 import type { Measurement, SensorChannel } from '@/types/index.js';
+
 import {
   DeviceNotConnected,
   InvalidParameter,
@@ -144,6 +145,62 @@ export class SensorManager {
     this._deviceChannels = [];
     this._dataAckCounter.clear();
     this._notifySensorId = null;
+  }
+
+  // ==================== Sensor Validation Helpers ====================
+
+  /**
+   * Check if a sensor is initialized and ready
+   * @param sensorName The sensor name to check
+   * @returns true if the sensor exists and is initialized
+   */
+  isSensorReady(sensorName: string): boolean {
+    return this._sensorNames.has(sensorName);
+  }
+
+  /**
+   * Ensure a sensor is initialized, throwing if not
+   * @param sensorName The sensor name to validate
+   * @throws SensorNotFound if the sensor is not initialized
+   */
+  ensureSensorReady(sensorName: string): void {
+    if (!this._sensorNames.has(sensorName)) {
+      throw new SensorNotFound(`Sensor "${sensorName}" not initialized`);
+    }
+  }
+
+  /**
+   * Get sensor channel info, throwing if not found
+   * @param sensorName The sensor name
+   * @returns The sensor channel information
+   * @throws SensorNotFound if the sensor does not exist
+   */
+  getSensorOrThrow(sensorName: string): SensorChannel {
+    const sensor = this._sensorNames.get(sensorName);
+    if (!sensor) {
+      throw new SensorNotFound(`Sensor "${sensorName}" not found`);
+    }
+    return sensor;
+  }
+
+  /**
+   * Check if a measurement is available
+   * @param measurement The measurement name to check
+   * @returns true if the measurement exists
+   */
+  isMeasurementReady(measurement: string): boolean {
+    return this._measurementSensorIds.has(measurement);
+  }
+
+  /**
+   * Ensure a measurement is available, throwing if not
+   * @param measurement The measurement name to validate
+   * @throws MeasurementNotFound if the measurement is not available
+   */
+  ensureMeasurementReady(measurement: string): void {
+    if (!this._measurementSensorIds.has(measurement)) {
+      throw new MeasurementNotFound(`Measurement "${measurement}" not available`);
+    }
   }
 
   // ==================== Sensor API ====================

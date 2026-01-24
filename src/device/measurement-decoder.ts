@@ -14,6 +14,7 @@ import {
   limit,
   threeInputVector,
 } from '@/utils/math.js';
+
 import { CouldNotDecodeData, InvalidEquation } from '../errors.js';
 
 /**

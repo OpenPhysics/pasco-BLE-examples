@@ -41,6 +41,25 @@ export type DeviceEventName = keyof DeviceEvents;
 export class TypedEventEmitter<TEvents extends { [K in keyof TEvents]: unknown } = DeviceEvents> {
   private _listeners: Map<keyof TEvents, Set<EventListener<unknown>>> = new Map();
   private _onceListeners: Map<keyof TEvents, Set<EventListener<unknown>>> = new Map();
+  private _debugMode = false;
+
+  /**
+   * Enable or disable debug mode for listener error logging
+   * When enabled, errors thrown by event listeners are logged to console
+   * in addition to being emitted as error events.
+   * @param enabled Whether to enable debug mode
+   */
+  setDebugMode(enabled: boolean): void {
+    this._debugMode = enabled;
+  }
+
+  /**
+   * Check if debug mode is enabled
+   * @returns true if debug mode is enabled
+   */
+  isDebugMode(): boolean {
+    return this._debugMode;
+  }
 
   /**
    * Add an event listener
@@ -117,16 +136,18 @@ export class TypedEventEmitter<TEvents extends { [K in keyof TEvents]: unknown }
         try {
           listener(data);
         } catch (error) {
+          const wrappedError = error instanceof Error ? error : new Error(String(error));
+          const context = `Error in '${String(event)}' event listener`;
+
+          // Log to console in debug mode for easier development troubleshooting
+          if (this._debugMode) {
+            console.error(`[EventEmitter Debug] ${context}:`, wrappedError);
+          }
+
           // Emit listener errors as error events to prevent silent failures
           // Skip if this is already an error event to prevent infinite loops
           if (event !== 'error') {
-            this.emit(
-              'error' as K,
-              {
-                error: error instanceof Error ? error : new Error(String(error)),
-                context: `Error in '${String(event)}' event listener`,
-              } as TEvents[K],
-            );
+            this.emit('error' as K, { error: wrappedError, context } as TEvents[K]);
           }
         }
       }
@@ -138,16 +159,18 @@ export class TypedEventEmitter<TEvents extends { [K in keyof TEvents]: unknown }
         try {
           listener(data);
         } catch (error) {
+          const wrappedError = error instanceof Error ? error : new Error(String(error));
+          const context = `Error in '${String(event)}' once listener`;
+
+          // Log to console in debug mode for easier development troubleshooting
+          if (this._debugMode) {
+            console.error(`[EventEmitter Debug] ${context}:`, wrappedError);
+          }
+
           // Emit listener errors as error events to prevent silent failures
           // Skip if this is already an error event to prevent infinite loops
           if (event !== 'error') {
-            this.emit(
-              'error' as K,
-              {
-                error: error instanceof Error ? error : new Error(String(error)),
-                context: `Error in '${String(event)}' once listener`,
-              } as TEvents[K],
-            );
+            this.emit('error' as K, { error: wrappedError, context } as TEvents[K]);
           }
         }
       }

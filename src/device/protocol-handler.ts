@@ -5,9 +5,10 @@
  */
 
 import type { BLEClientBase } from '@/ble/ble-adapter.js';
-import { createPascoUuid } from '@/ble/ble-adapter.js';
+import { createPascoUuid, getServiceIdFromUuid } from '@/ble/ble-adapter.js';
 import type { BLECharacteristic } from '@/types/ble.js';
 import { type RetryOptions, withRetry } from '@/utils/retry.js';
+
 import { CommunicationError } from '../errors.js';
 
 /**
@@ -90,9 +91,9 @@ export class ProtocolHandler {
 
     for (const service of this._client.services) {
       for (const char of service.characteristics) {
-        const match = char.uuid.match(/4a5c000(\d)/);
-        if (match?.[1]) {
-          this._handleService.set(char.handle, parseInt(match[1], 10));
+        const serviceId = getServiceIdFromUuid(char.uuid);
+        if (serviceId >= 0) {
+          this._handleService.set(char.handle, serviceId);
         }
       }
     }

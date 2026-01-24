@@ -31,8 +31,9 @@ export interface DeviceOptions {
 
   /**
    * Retry options for BLE operations.
-   * Set maxRetries > 0 to enable retry logic.
-   * @default { maxRetries: 0 }
+   * Retries are enabled by default (3 retries with exponential backoff).
+   * Set maxRetries to 0 to disable retry logic.
+   * @default { maxRetries: 3, initialDelayMs: 500, maxDelayMs: 5000, backoffMultiplier: 2 }
    */
   retry?: RetryOptions;
 
@@ -92,12 +93,23 @@ export interface DeviceLogger {
 }
 
 /**
+ * Default retry options for BLE operations
+ * Provides reasonable defaults for handling transient connection issues
+ */
+export const DEFAULT_RETRY_OPTIONS: RetryOptions = {
+  maxRetries: 3,
+  initialDelayMs: 500,
+  maxDelayMs: 5000,
+  backoffMultiplier: 2,
+};
+
+/**
  * Default device options
  */
 export const DEFAULT_DEVICE_OPTIONS: Required<Omit<DeviceOptions, 'logger'>> = {
   connectionTimeout: 10000,
   commandTimeout: 5000,
-  retry: { maxRetries: 0 },
+  retry: DEFAULT_RETRY_OPTIONS,
   autoReconnect: false,
   maxReconnectAttempts: 3,
   reconnectDelay: 2000,

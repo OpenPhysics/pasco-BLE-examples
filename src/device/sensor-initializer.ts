@@ -14,6 +14,7 @@
  */
 
 import type { Measurement, SensorChannel } from '@/types/index.js';
+
 import { getInterface, getSensor } from '../datasheets.js';
 import { SensorSetupError } from '../errors.js';
 

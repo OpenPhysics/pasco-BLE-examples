@@ -135,3 +135,61 @@ export function buildByteValue(stack: number[], dataSize: number): number {
   }
   return byteValue;
 }
+
+// ==================== Byte Splitting Utilities ====================
+
+/**
+ * Split a 16-bit integer into individual bytes (little-endian order).
+ * Useful for building command byte arrays.
+ *
+ * @param value The 16-bit integer value
+ * @returns Tuple of [low byte, high byte]
+ *
+ * @example
+ * ```typescript
+ * const [low, high] = splitInt16LE(0x1234);
+ * // low = 0x34, high = 0x12
+ * ```
+ */
+export function splitInt16LE(value: number): [number, number] {
+  return [value & 0xff, (value >> 8) & 0xff];
+}
+
+/**
+ * Split a 32-bit integer into individual bytes (little-endian order).
+ * Useful for building command byte arrays.
+ *
+ * @param value The 32-bit integer value
+ * @returns Tuple of [byte0, byte1, byte2, byte3] (lowest to highest)
+ *
+ * @example
+ * ```typescript
+ * const bytes = splitInt32LE(0x12345678);
+ * // bytes = [0x78, 0x56, 0x34, 0x12]
+ * ```
+ */
+export function splitInt32LE(value: number): [number, number, number, number] {
+  return [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
+}
+
+/**
+ * Spread a 16-bit integer into a command array (little-endian).
+ * Returns an array that can be spread into command building.
+ *
+ * @param value The 16-bit integer value
+ * @returns Array of bytes [low, high]
+ */
+export function int16ToBytes(value: number): number[] {
+  return [value & 0xff, (value >> 8) & 0xff];
+}
+
+/**
+ * Spread a 32-bit integer into a command array (little-endian).
+ * Returns an array that can be spread into command building.
+ *
+ * @param value The 32-bit integer value
+ * @returns Array of bytes [byte0, byte1, byte2, byte3]
+ */
+export function int32ToBytes(value: number): number[] {
+  return [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
+}
