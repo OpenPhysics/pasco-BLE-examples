@@ -794,6 +794,105 @@ export const SENSORS: Record<number, ParsedSensor> = {
       ],
     ]),
   },
+  // Wireless Light Sensor 2 / Light UVA (PS-3213)
+  8244: {
+    id: 0x2034,
+    tag: 'WirelessLightSensor2',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'White',
+          Type: 'Equation',
+          Equation: '([4]+([5]*1.27)+([6]*1.49))/3.76',
+          UnitType: 'Unitless',
+          Precision: 0,
+          Visible: 1,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'R',
+          Type: 'Equation',
+          Equation: '([4]/[0])*26.6',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        2,
+        {
+          ID: 2,
+          NameTag: 'G',
+          Type: 'Equation',
+          Equation: '(([5]*1.27)/[0])*26.6',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        3,
+        {
+          ID: 3,
+          NameTag: 'B',
+          Type: 'Equation',
+          Equation: '(([6]*1.49)/[0])*26.6',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'RawR',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        5,
+        {
+          ID: 5,
+          NameTag: 'RawG',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        6,
+        {
+          ID: 6,
+          NameTag: 'RawB',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        7,
+        {
+          ID: 7,
+          NameTag: 'RawWhite',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+    ]),
+  },
   // Wireless CO2 Sensor (PS-3208)
   8245: {
     id: 0x2035,
@@ -832,6 +931,84 @@ export const SENSORS: Record<number, ParsedSensor> = {
           Inputs: '1',
           Params: '2,0',
           UnitType: 'ppm',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+    ]),
+  },
+  // Wireless Optical DO Sensor (PS-3224)
+  8265: {
+    id: 0x2049,
+    tag: 'WirelessODOSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'RawO2',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'RawTemperature',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        2,
+        {
+          ID: 2,
+          NameTag: 'DissolvedOxygen',
+          Type: 'UserCal',
+          Inputs: '0',
+          Params: '0,0,29375,8.26',
+          UnitType: 'mgpL',
+          Precision: 2,
+          Visible: 1,
+        },
+      ],
+      [
+        3,
+        {
+          ID: 3,
+          NameTag: 'DOSaturation',
+          Type: 'Equation',
+          Equation: '[2]/[5]*100',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'Temperature',
+          Type: 'Equation',
+          Equation: '[1]*0.01',
+          UnitType: 'DegC',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        5,
+        {
+          ID: 5,
+          NameTag: 'DOSatConc',
+          Type: 'Equation',
+          Equation: '14.621-0.41022*[4]+0.007991*[4]*[4]-0.000077774*[4]*[4]*[4]',
+          UnitType: 'mgpL',
           Internal: 1,
           Visible: 0,
         },
@@ -1418,6 +1595,37 @@ export const SENSORS: Record<number, ParsedSensor> = {
           Type: 'Equation',
           Equation: '[0]/1000',
           UnitType: 'm',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+    ]),
+  },
+  // Wireless Smart Gate Sensor (PS-3225)
+  8277: {
+    id: 0x2055,
+    tag: 'WirelessSmartGateSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'Blocked',
+          Type: 'RawDigital',
+          DataSize: 1,
+          UnitType: 'Unitless',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'TimeStamp',
+          Type: 'RawDigital',
+          DataSize: 2,
+          UnitType: 'us',
           Internal: 1,
           Visible: 0,
         },
@@ -2016,6 +2224,314 @@ export const SENSORS: Record<number, ParsedSensor> = {
       ],
     ]),
   },
+  // Wireless Weather Sensor (PS-3209)
+  8247: {
+    id: 0x2037,
+    tag: 'WirelessWeatherSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'Temperature',
+          Type: 'Equation',
+          Equation: '(([8]/65536)*165)-40',
+          UnitType: 'DegC',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'RelativeHumidity',
+          Type: 'Equation',
+          Equation: '([9]/65536)*100',
+          UnitType: 'percent',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        3,
+        {
+          ID: 3,
+          NameTag: 'BarometricPressure',
+          Type: 'Equation',
+          Equation: '[10]*0.002',
+          UnitType: 'kPa',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'WindSpeed',
+          Type: 'Equation',
+          Equation: '[11]*0.0009144',
+          UnitType: 'mps',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        8,
+        {
+          ID: 8,
+          NameTag: 'RawTemperature',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        9,
+        {
+          ID: 9,
+          NameTag: 'RawHumidity',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        10,
+        {
+          ID: 10,
+          NameTag: 'RawBaroPressure',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        11,
+        {
+          ID: 11,
+          NameTag: 'RawWindSpeed',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+    ]),
+  },
+  // Wireless GPS Sensor (PS-3209)
+  8248: {
+    id: 0x2038,
+    tag: 'WirelessGPSSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'RawLatitude',
+          Type: 'RawDigital',
+          DataSize: 4,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'RawLongitude',
+          Type: 'RawDigital',
+          DataSize: 4,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        2,
+        {
+          ID: 2,
+          NameTag: 'RawAltitude',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        3,
+        {
+          ID: 3,
+          NameTag: 'RawSpeed',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'SatelliteCount',
+          Type: 'RawDigital',
+          DataSize: 1,
+          UnitType: 'Unitless',
+          Precision: 0,
+          Visible: 1,
+        },
+      ],
+      [
+        5,
+        {
+          ID: 5,
+          NameTag: 'Latitude',
+          Type: 'Equation',
+          Equation: '[0]*0.000001',
+          UnitType: 'deg',
+          Precision: 5,
+          Visible: 1,
+        },
+      ],
+      [
+        6,
+        {
+          ID: 6,
+          NameTag: 'Longitude',
+          Type: 'Equation',
+          Equation: '[1]*0.000001',
+          UnitType: 'deg',
+          Precision: 5,
+          Visible: 1,
+        },
+      ],
+      [
+        7,
+        {
+          ID: 7,
+          NameTag: 'Altitude',
+          Type: 'Equation',
+          Equation: '([2]/3)-500',
+          UnitType: 'm',
+          Precision: 0,
+          Visible: 1,
+        },
+      ],
+      [
+        8,
+        {
+          ID: 8,
+          NameTag: 'Speed',
+          Type: 'Equation',
+          Equation: '[3]*0.0514444',
+          UnitType: 'mps',
+          Precision: 2,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
+  // Wireless Light Sensor for Weather (PS-3209)
+  8249: {
+    id: 0x2039,
+    tag: 'WirelessLightSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'UVIRaw',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'RawGreen',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        2,
+        {
+          ID: 2,
+          NameTag: 'UVIndex',
+          Type: 'UserCal',
+          Inputs: '0',
+          Params: '0,0,100,1',
+          UnitType: 'Unitless',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+      [
+        3,
+        {
+          ID: 3,
+          NameTag: 'Illuminance',
+          Type: 'LinearConv',
+          Inputs: '4',
+          Params: '2,0',
+          UnitType: 'lux',
+          Precision: 0,
+          Visible: 1,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'LuxCal',
+          Type: 'FactoryCal',
+          Inputs: '1',
+          Params: '0,0,1,1',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+    ]),
+  },
+  // Wireless Compass Sensor (PS-3209)
+  8261: {
+    id: 0x2045,
+    tag: 'WirelessCompass',
+    measurements: new Map([
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'RawHeading',
+          Type: 'RawDigital',
+          DataSize: 2,
+          TwosComp: '1',
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'MagneticHeading',
+          Type: 'Equation',
+          Equation: '[1]*0.1',
+          UnitType: 'deg',
+          Precision: 0,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
   // Wireless Rotary Motion Sensor (PS-3220)
   8263: {
     id: 0x2047,
@@ -2199,6 +2715,116 @@ export const SENSORS: Record<number, ParsedSensor> = {
           Internal: 1,
           Visible: 0,
           Value: '344',
+        },
+      ],
+    ]),
+  },
+  // Wireless Sound Wave Sensor (PS-3227)
+  8290: {
+    id: 0x2062,
+    tag: 'WirelessSoundWaveSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'SoundWaveform',
+          Type: 'RawDigital',
+          DataSize: 2,
+          TwosComp: '1',
+          UnitType: 'Unitless',
+          Precision: 0,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
+  // Wireless Sound Level Sensor (PS-3227)
+  8291: {
+    id: 0x2063,
+    tag: 'WirelessSoundLevelSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'RawSoundLevel',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        1,
+        {
+          ID: 1,
+          NameTag: 'SoundLevel',
+          Type: 'Equation',
+          Equation: '[0]*0.01',
+          UnitType: 'dB',
+          Precision: 1,
+          Visible: 1,
+        },
+      ],
+    ]),
+  },
+  // Wireless Soil Moisture Sensor (PS-3228)
+  8293: {
+    id: 0x2065,
+    tag: 'WirelessSoilMoistureSensor',
+    measurements: new Map([
+      [
+        0,
+        {
+          ID: 0,
+          NameTag: 'adc',
+          Type: 'RawDigital',
+          DataSize: 2,
+          Internal: 1,
+          Visible: 0,
+        },
+      ],
+      [
+        4,
+        {
+          ID: 4,
+          NameTag: 'VWCLoam',
+          Type: 'UserCal',
+          Inputs: '0',
+          Params: '7122,45,51725,0',
+          UnitType: 'percent',
+          Precision: 0,
+          Limits: '0,100',
+          Visible: 1,
+        },
+      ],
+      [
+        5,
+        {
+          ID: 5,
+          NameTag: 'VWCSand',
+          Type: 'UserCal',
+          Inputs: '0',
+          Params: '6344,35,50689,0',
+          UnitType: 'percent',
+          Precision: 0,
+          Limits: '0,100',
+          Visible: 1,
+        },
+      ],
+      [
+        6,
+        {
+          ID: 6,
+          NameTag: 'VWCClay',
+          Type: 'UserCal',
+          Inputs: '0',
+          Params: '6499,45,52875,0',
+          UnitType: 'percent',
+          Precision: 0,
+          Limits: '0,100',
+          Visible: 1,
         },
       ],
     ]),
