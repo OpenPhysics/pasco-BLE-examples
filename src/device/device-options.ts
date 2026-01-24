@@ -4,7 +4,7 @@
  * Configuration options for PASCOBLEDevice.
  */
 
-import type { RetryOptions } from '../utils/retry.js';
+import type { RetryOptions } from '@/utils/retry.js';
 
 /**
  * Log levels for device logging

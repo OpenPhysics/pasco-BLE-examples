@@ -13,7 +13,7 @@ export type {
   BLEClient,
   BLEDevice,
   NotifyCallback,
-} from '../types/ble.js';
+} from '@/types/ble.js';
 export {
   BLEAdapterBase,
   BLEClientBase,

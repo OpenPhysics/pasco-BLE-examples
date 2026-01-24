@@ -5,8 +5,13 @@
  * This is the refactored version that delegates to specialized modules.
  */
 
-import type { BLEAdapterBase, BLEClientBase } from '../ble/ble-adapter.js';
-import { createBLEAdapter } from '../ble/index.js';
+import type { BLEAdapterBase, BLEClientBase } from '@/ble/ble-adapter.js';
+import { createBLEAdapter } from '@/ble/index.js';
+import type { BLEDevice } from '@/types/ble.js';
+import { COMPATIBLE_DEVICES } from '@/types/device.js';
+import type { Measurement, SensorChannel } from '@/types/index.js';
+import { decode64 } from '@/utils/binary.js';
+import { type DeviceEvents, TypedEventEmitter } from '@/utils/event-emitter.js';
 import {
   BLEAlreadyConnectedError,
   BLEConnectionError,
@@ -14,11 +19,6 @@ import {
   DeviceNotConnected,
   InvalidParameter,
 } from '../errors.js';
-import type { BLEDevice } from '../types/ble.js';
-import { COMPATIBLE_DEVICES } from '../types/device.js';
-import type { Measurement, SensorChannel } from '../types/index.js';
-import { decode64 } from '../utils/binary.js';
-import { type DeviceEvents, TypedEventEmitter } from '../utils/event-emitter.js';
 import { type ConnectionState, ConnectionStateMachine } from './connection-state.js';
 import {
   createLogger,

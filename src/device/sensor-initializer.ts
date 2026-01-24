@@ -13,9 +13,9 @@
  * sensors that are detected at runtime.
  */
 
+import type { Measurement, SensorChannel } from '@/types/index.js';
 import { getInterface, getSensor } from '../datasheets.js';
 import { SensorSetupError } from '../errors.js';
-import type { Measurement, SensorChannel } from '../types/index.js';
 
 /**
  * State shared with the initializer for setting up sensors

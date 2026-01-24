@@ -4,11 +4,11 @@
  * Handles BLE communication protocol for PASCO devices.
  */
 
-import type { BLEClientBase } from '../ble/ble-adapter.js';
-import { createPascoUuid } from '../ble/ble-adapter.js';
+import type { BLEClientBase } from '@/ble/ble-adapter.js';
+import { createPascoUuid } from '@/ble/ble-adapter.js';
+import type { BLECharacteristic } from '@/types/ble.js';
+import { type RetryOptions, withRetry } from '@/utils/retry.js';
 import { CommunicationError } from '../errors.js';
-import type { BLECharacteristic } from '../types/ble.js';
-import { type RetryOptions, withRetry } from '../utils/retry.js';
 
 /**
  * Protocol constants for PASCO BLE communication

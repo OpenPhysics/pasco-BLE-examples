@@ -34,9 +34,11 @@
 
 export {
   type BrowserSupport,
+  checkBluetoothAvailability,
   checkBrowserSupport,
   isWebBluetoothSupported,
   SUPPORTED_BROWSERS,
+  type SupportLevel,
   UNSUPPORTED_BROWSERS,
 } from './browser-support.js';
 
