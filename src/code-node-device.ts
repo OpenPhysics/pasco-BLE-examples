@@ -15,6 +15,7 @@ import {
 import { PASCOBLEDevice } from './device/index.js';
 import { DeviceNotConnected, InvalidParameter } from './errors.js';
 import { limit } from './utils/math.js';
+import { validateIntegerRange, validateNumber } from './utils/validation.js';
 
 /**
  * CodeNode Device class
@@ -37,14 +38,9 @@ export class CodeNodeDevice extends PASCOBLEDevice {
    * @throws InvalidParameter if coordinates are not integers or out of range [0-4]
    */
   private _validateLedCoordinate(x: number, y: number): void {
-    if (!Number.isInteger(x) || !Number.isInteger(y)) {
-      throw new InvalidParameter('x and y must be integers');
-    }
-
     const maxIndex = CodeNodeDevice.LED_MATRIX_SIZE - 1;
-    if (x < 0 || x > maxIndex || y < 0 || y > maxIndex) {
-      throw new InvalidParameter(`x and y must be in range [0-${maxIndex}]`);
-    }
+    validateIntegerRange(x, 0, maxIndex, 'x');
+    validateIntegerRange(y, 0, maxIndex, 'y');
   }
 
   /**
@@ -69,10 +65,7 @@ export class CodeNodeDevice extends PASCOBLEDevice {
     }
 
     this._validateLedCoordinate(x, y);
-
-    if (typeof intensity !== 'number') {
-      throw new InvalidParameter('intensity must be a number');
-    }
+    validateNumber(intensity, 'intensity');
 
     const ledIndex = this._coordinateToLedIndex(x, y);
     const ledIntensity = Math.round(limit(intensity, 0, 255));
@@ -106,10 +99,7 @@ export class CodeNodeDevice extends PASCOBLEDevice {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (typeof intensity !== 'number') {
-      throw new InvalidParameter('intensity must be a number');
-    }
+    validateNumber(intensity, 'intensity');
 
     let ledActivate = 0;
 
@@ -144,10 +134,9 @@ export class CodeNodeDevice extends PASCOBLEDevice {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (typeof red !== 'number' || typeof green !== 'number' || typeof blue !== 'number') {
-      throw new InvalidParameter('red, green, and blue must be numbers');
-    }
+    validateNumber(red, 'red');
+    validateNumber(green, 'green');
+    validateNumber(blue, 'blue');
 
     const ledR = Math.round(limit(red, 0, 255));
     const ledG = Math.round(limit(green, 0, 255));
@@ -174,10 +163,7 @@ export class CodeNodeDevice extends PASCOBLEDevice {
     if (!this.isConnected()) {
       throw new DeviceNotConnected();
     }
-
-    if (typeof frequency !== 'number') {
-      throw new InvalidParameter('frequency must be a number');
-    }
+    validateNumber(frequency, 'frequency');
 
     const freq = Math.round(limit(frequency, 0, 20000));
 
