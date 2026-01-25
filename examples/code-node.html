@@ -99,13 +99,14 @@
     <script type="importmap">
     {
         "imports": {
+            "pasco-ble": "https://esm.sh/pasco-ble",
             "expr-eval": "https://esm.sh/expr-eval@2.0.2"
         }
     }
     </script>
 
     <script type="module">
-        import { CodeNodeDevice, Icons } from '../dist/index.js';
+        import { CodeNodeDevice, Icons } from 'pasco-ble';
         import {
             setStatus as setStatusUtil,
             showError as showErrorUtil,

@@ -123,13 +123,14 @@
     <script type="importmap">
     {
         "imports": {
+            "pasco-ble": "https://esm.sh/pasco-ble",
             "expr-eval": "https://esm.sh/expr-eval@2.0.2"
         }
     }
     </script>
 
     <script type="module">
-        import { PASCOBLEDevice } from '../dist/index.js';
+        import { PASCOBLEDevice } from 'pasco-ble';
         import { showError as showErrorUtil, formatNumber } from './common.js';
 
         const sensors = {

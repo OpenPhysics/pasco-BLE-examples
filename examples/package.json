@@ -1,0 +1,22 @@
+{
+  "name": "pasco-ble-examples",
+  "version": "1.0.0",
+  "description": "Browser examples for the pasco-ble library",
+  "type": "module",
+  "scripts": {
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "pasco",
+    "ble",
+    "bluetooth",
+    "web-bluetooth",
+    "sensor",
+    "examples"
+  ],
+  "author": "Martin Veillette",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "pasco-ble": "^0.3.0"
+  }
+}

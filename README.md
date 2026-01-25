@@ -380,14 +380,21 @@ await bot.disconnect();
 
 ## Examples
 
-See the `examples/` directory for complete browser examples:
+Complete browser examples are available in a separate repository:
 
-- `force-sensor.html` - Force sensor with real-time graphing
+**[pasco-ble-examples](https://github.com/veillette/pasco-ble-examples)**
+
+Available examples:
+- `basic-usage.html` - Connect and read all measurements
+- `force-sensor.html` - Force sensor with real-time display
 - `motion-sensor.html` - Motion sensor with position/velocity display
+- `code-node.html` - LED matrix, RGB LED, and speaker control
+- `control-node.html` - Stepper motors, servos, and speaker
+- `sensor-xy-graph.html` - Parametric X-Y plotting with Chart.js
 - `multi-sensor-graph.html` - Multiple sensors on one graph
-- Browser demos for Code.Node, Control.Node, and PascoBot features
+- `smart-cart.html` - 3D position-velocity-time plot with Plotly
 
-All examples are standalone HTML files that can be opened directly in Chrome/Edge.
+All examples are standalone HTML files that load `pasco-ble` from CDN and can be opened directly in Chrome/Edge.
 
 For Python examples using PASCO's official library, see [pasco_python_examples repository](https://github.com/PASCOscientific/pasco_python_examples).
 

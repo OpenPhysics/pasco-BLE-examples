@@ -139,13 +139,14 @@
     <script type="importmap">
     {
         "imports": {
+            "pasco-ble": "https://esm.sh/pasco-ble",
             "expr-eval": "https://esm.sh/expr-eval@2.0.2"
         }
     }
     </script>
 
     <script type="module">
-        import { ControlNodeDevice } from '../dist/index.js';
+        import { ControlNodeDevice } from 'pasco-ble';
         import {
             setStatus as setStatusUtil,
             showError as showErrorUtil,
