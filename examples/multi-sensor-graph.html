@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Multi-device classroom setup for graphing multiple PASCO sensors simultaneously">
+    <meta name="theme-color" content="#1976d2">
     <title>PASCO Multi-Sensor Graph</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="common.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
-    <main class="container">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <main class="container" id="main-content">
         <header>
             <h1>PASCO Multi-Sensor Graph</h1>
         </header>
@@ -33,7 +36,7 @@
 
         <section class="sensor-grid" aria-label="Sensor connections">
             <article class="sensor-card">
-                <h2><span class="color-indicator" style="background: #e91e63;" aria-hidden="true"></span>Wireless Rotary Motion</h2>
+                <h2><span class="color-indicator" style="background: #e91e63;" aria-hidden="true"></span>Wireless Rotary Motion <span class="visually-hidden">(pink line on graph)</span></h2>
                 <p id="rotaryStatus" class="status disconnected">Disconnected</p>
                 <nav class="button-row">
                     <button id="rotaryConnectBtn" class="btn-connect">Connect</button>
@@ -45,15 +48,15 @@
                         <option value="">Connect sensor first</option>
                     </select>
                 </div>
-                <figure class="sensor-reading">
+                <div class="sensor-reading" role="status" aria-label="Rotary motion reading">
                     <output class="value" id="rotaryValue">--</output>
                     <span class="unit" id="rotaryUnit"></span>
-                    <figcaption class="label">Rotary Motion</figcaption>
-                </figure>
+                    <p class="label">Rotary Motion</p>
+                </div>
             </article>
 
             <article class="sensor-card">
-                <h2><span class="color-indicator" style="background: #2196f3;" aria-hidden="true"></span>Wireless Motion</h2>
+                <h2><span class="color-indicator" style="background: #2196f3;" aria-hidden="true"></span>Wireless Motion <span class="visually-hidden">(blue line on graph)</span></h2>
                 <p id="motionStatus" class="status disconnected">Disconnected</p>
                 <nav class="button-row">
                     <button id="motionConnectBtn" class="btn-connect">Connect</button>
@@ -65,15 +68,15 @@
                         <option value="">Connect sensor first</option>
                     </select>
                 </div>
-                <figure class="sensor-reading">
+                <div class="sensor-reading" role="status" aria-label="Motion reading">
                     <output class="value" id="motionValue">--</output>
                     <span class="unit" id="motionUnit"></span>
-                    <figcaption class="label">Motion</figcaption>
-                </figure>
+                    <p class="label">Motion</p>
+                </div>
             </article>
 
             <article class="sensor-card">
-                <h2><span class="color-indicator" style="background: #4caf50;" aria-hidden="true"></span>Wireless Force Acceleration</h2>
+                <h2><span class="color-indicator" style="background: #4caf50;" aria-hidden="true"></span>Wireless Force Acceleration <span class="visually-hidden">(green line on graph)</span></h2>
                 <p id="forceStatus" class="status disconnected">Disconnected</p>
                 <nav class="button-row">
                     <button id="forceConnectBtn" class="btn-connect">Connect</button>
@@ -85,11 +88,11 @@
                         <option value="">Connect sensor first</option>
                     </select>
                 </div>
-                <figure class="sensor-reading">
+                <div class="sensor-reading" role="status" aria-label="Force/Acceleration reading">
                     <output class="value" id="forceValue">--</output>
                     <span class="unit" id="forceUnit"></span>
-                    <figcaption class="label">Force/Acceleration</figcaption>
-                </figure>
+                    <p class="label">Force/Acceleration</p>
+                </div>
             </article>
         </section>
 

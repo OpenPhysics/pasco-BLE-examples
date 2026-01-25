@@ -15,16 +15,32 @@ export function setStatus(element, status, text) {
 }
 
 /**
- * Show a temporary error message
+ * Show an error message with close button
  * @param {HTMLElement} container - Container element for the error
  * @param {string} message - Error message to display
- * @param {number} duration - Duration in ms (default 5000)
+ * @param {number} duration - Duration in ms (default 5000, 0 for persistent)
  */
 export function showError(container, message, duration = 5000) {
-	container.innerHTML = `<div class="error">${escapeHtml(message)}</div>`;
-	setTimeout(() => {
-		container.innerHTML = '';
-	}, duration);
+	const errorDiv = document.createElement('div');
+	errorDiv.className = 'error';
+	errorDiv.innerHTML = `
+		<span class="error-message">${escapeHtml(message)}</span>
+		<button class="error-close" aria-label="Close error message" type="button">&times;</button>
+	`;
+
+	const closeBtn = errorDiv.querySelector('.error-close');
+	closeBtn.addEventListener('click', () => errorDiv.remove());
+
+	container.innerHTML = '';
+	container.appendChild(errorDiv);
+
+	if (duration > 0) {
+		setTimeout(() => {
+			if (container.contains(errorDiv)) {
+				errorDiv.remove();
+			}
+		}, duration);
+	}
 }
 
 /**

@@ -55,6 +55,41 @@ aside[role="alert"] {
     border: 0;
 }
 
+/* Skip link for keyboard navigation */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #1976d2;
+    color: white;
+    padding: 8px 16px;
+    z-index: 100;
+    text-decoration: none;
+    border-radius: 0 0 4px 0;
+    font-weight: 500;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Focus indicators for keyboard navigation */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+    outline: 3px solid #1976d2;
+    outline-offset: 2px;
+}
+
+input[type="range"]:focus-visible {
+    outline-offset: 4px;
+}
+
+input[type="color"]:focus-visible {
+    outline-offset: 2px;
+}
+
 /* Fieldset and Legend */
 fieldset {
     border: none;
@@ -473,6 +508,31 @@ button:disabled {
     padding: 12px;
     border-radius: 4px;
     margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.error-message {
+    flex: 1;
+}
+
+.error-close {
+    background: transparent;
+    border: none;
+    color: #c62828;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    margin: 0;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.error-close:hover {
+    opacity: 1;
 }
 
 .info {
