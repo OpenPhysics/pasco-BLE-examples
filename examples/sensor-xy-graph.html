@@ -5,278 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PASCO Sensor X-Y Graph</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        h3 {
-            color: #555;
-            margin-top: 0;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .status {
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .status.disconnected {
-            background: #ffebee;
-            color: #c62828;
-        }
-        .status.connecting {
-            background: #fff3e0;
-            color: #e65100;
-        }
-        .status.connected {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 14px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .btn-primary {
-            background: #1976d2;
-            color: white;
-        }
-        .btn-primary:hover:not(:disabled) {
-            background: #1565c0;
-        }
-        .btn-danger {
-            background: #d32f2f;
-            color: white;
-        }
-        .btn-danger:hover:not(:disabled) {
-            background: #c62828;
-        }
-        .btn-success {
-            background: #4caf50;
-            color: white;
-        }
-        .btn-success:hover:not(:disabled) {
-            background: #43a047;
-        }
-        .btn-secondary {
-            background: #757575;
-            color: white;
-        }
-        .btn-secondary:hover:not(:disabled) {
-            background: #616161;
-        }
-        .button-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .control-group {
-            margin-bottom: 15px;
-        }
-        .control-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-        }
-        select {
-            padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            min-width: 150px;
-        }
-        .axis-config {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 600px) {
-            .axis-config {
-                grid-template-columns: 1fr;
-            }
-        }
-        .chart-container {
-            position: relative;
-            height: 400px;
-            width: 100%;
-        }
-        .current-values {
-            display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            margin-top: 15px;
-        }
-        .value-display {
-            text-align: center;
-        }
-        .value-display .label {
-            font-size: 12px;
-            color: #666;
-        }
-        .value-display .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #1976d2;
-        }
-        .value-display .unit {
-            font-size: 14px;
-            color: #888;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .stat-box {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .stat-box .label {
-            font-size: 11px;
-            color: #666;
-        }
-        .stat-box .value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-        }
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-        .info {
-            background: #e3f2fd;
-            color: #1565c0;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .data-count {
-            font-size: 12px;
-            color: #666;
-            margin-left: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    <h1>Sensor X-Y Graph</h1>
+    <div class="container">
+        <h1>Sensor X-Y Graph</h1>
 
-    <div class="card">
-        <div id="status" class="status disconnected">Disconnected</div>
-        <div class="button-row">
-            <button id="connectBtn" class="btn-primary">Connect to Sensor</button>
-            <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
+        <div class="card">
+            <div id="status" class="status disconnected">Disconnected</div>
+            <div class="button-row">
+                <button id="connectBtn" class="btn-primary">Connect to Sensor</button>
+                <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
+            </div>
         </div>
+
+        <div class="card" id="configCard" style="display: none;">
+            <h3>Axis Configuration</h3>
+            <div class="axis-config">
+                <div class="control-group">
+                    <label>X-Axis</label>
+                    <select id="xAxisSelect">
+                        <option value="time">Time (seconds)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Y-Axis</label>
+                    <select id="yAxisSelect">
+                    </select>
+                </div>
+            </div>
+            <div class="button-row" style="margin-top: 15px;">
+                <button id="startBtn" class="btn-success" disabled>Start Recording</button>
+                <button id="stopBtn" class="btn-danger" disabled>Stop</button>
+                <button id="clearBtn" class="btn-secondary">Clear Data</button>
+                <span class="data-count" id="dataCount">0 points</span>
+            </div>
+        </div>
+
+        <div class="card" id="chartCard" style="display: none;">
+            <div class="chart-container">
+                <canvas id="xyChart"></canvas>
+            </div>
+            <div class="current-values">
+                <div class="value-display">
+                    <div class="label" id="xLabel">X</div>
+                    <div class="value" id="xValue">--</div>
+                    <div class="unit" id="xUnit"></div>
+                </div>
+                <div class="value-display">
+                    <div class="label" id="yLabel">Y</div>
+                    <div class="value" id="yValue">--</div>
+                    <div class="unit" id="yUnit"></div>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="label">Y Min</div>
+                    <div class="value" id="yMin">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Y Max</div>
+                    <div class="value" id="yMax">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Y Mean</div>
+                    <div class="value" id="yMean">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Duration</div>
+                    <div class="value" id="duration">0.0s</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="info">
+                <strong>About this example:</strong><br>
+                Plot sensor data as an X-Y graph where:<br>
+                - Y-axis: Any sensor measurement<br>
+                - X-axis: Time or another sensor measurement<br><br>
+                This enables parametric plotting (e.g., Force vs. Position,
+                Acceleration X vs. Acceleration Y, Voltage vs. Current).<br><br>
+                <strong>Requirements:</strong><br>
+                - Chrome or Edge browser (Web Bluetooth)<br>
+                - Any PASCO BLE sensor device
+            </div>
+        </div>
+
+        <div id="errorDiv"></div>
     </div>
-
-    <div class="card" id="configCard" style="display: none;">
-        <h3>Axis Configuration</h3>
-        <div class="axis-config">
-            <div class="control-group">
-                <label>X-Axis</label>
-                <select id="xAxisSelect">
-                    <option value="time">Time (seconds)</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label>Y-Axis</label>
-                <select id="yAxisSelect">
-                </select>
-            </div>
-        </div>
-        <div class="button-row" style="margin-top: 15px;">
-            <button id="startBtn" class="btn-success" disabled>Start Recording</button>
-            <button id="stopBtn" class="btn-danger" disabled>Stop</button>
-            <button id="clearBtn" class="btn-secondary">Clear Data</button>
-            <span class="data-count" id="dataCount">0 points</span>
-        </div>
-    </div>
-
-    <div class="card" id="chartCard" style="display: none;">
-        <div class="chart-container">
-            <canvas id="xyChart"></canvas>
-        </div>
-        <div class="current-values">
-            <div class="value-display">
-                <div class="label" id="xLabel">X</div>
-                <div class="value" id="xValue">--</div>
-                <div class="unit" id="xUnit"></div>
-            </div>
-            <div class="value-display">
-                <div class="label" id="yLabel">Y</div>
-                <div class="value" id="yValue">--</div>
-                <div class="unit" id="yUnit"></div>
-            </div>
-        </div>
-        <div class="stats">
-            <div class="stat-box">
-                <div class="label">Y Min</div>
-                <div class="value" id="yMin">--</div>
-            </div>
-            <div class="stat-box">
-                <div class="label">Y Max</div>
-                <div class="value" id="yMax">--</div>
-            </div>
-            <div class="stat-box">
-                <div class="label">Y Mean</div>
-                <div class="value" id="yMean">--</div>
-            </div>
-            <div class="stat-box">
-                <div class="label">Duration</div>
-                <div class="value" id="duration">0.0s</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <strong>About this example:</strong><br>
-            Plot sensor data as an X-Y graph where:<br>
-            - Y-axis: Any sensor measurement<br>
-            - X-axis: Time or another sensor measurement<br><br>
-            This enables parametric plotting (e.g., Force vs. Position,
-            Acceleration X vs. Acceleration Y, Voltage vs. Current).<br><br>
-            <strong>Requirements:</strong><br>
-            - Chrome or Edge browser (Web Bluetooth)<br>
-            - Any PASCO BLE sensor device
-        </div>
-    </div>
-
-    <div id="errorDiv"></div>
 
     <script type="importmap">
     {
@@ -288,6 +105,13 @@
 
     <script type="module">
         import { PASCOBLEDevice } from '../dist/index.js';
+        import {
+            setStatus as setStatusUtil,
+            showError as showErrorUtil,
+            formatNumber,
+            calculateStats,
+            setupDisconnectOnUnload
+        } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -309,15 +133,8 @@
         let recordingInterval = null;
         let startTime = null;
 
-        function setStatus(status, text) {
-            statusDiv.className = 'status ' + status;
-            statusDiv.textContent = text;
-        }
-
-        function showError(message) {
-            errorDiv.innerHTML = `<div class="error">${message}</div>`;
-            setTimeout(() => errorDiv.innerHTML = '', 5000);
-        }
+        const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
+        const showError = (message) => showErrorUtil(errorDiv, message);
 
         function initChart() {
             const ctx = document.getElementById('xyChart').getContext('2d');
@@ -343,22 +160,14 @@
                         x: {
                             type: 'linear',
                             position: 'bottom',
-                            title: {
-                                display: true,
-                                text: 'X'
-                            }
+                            title: { display: true, text: 'X' }
                         },
                         y: {
-                            title: {
-                                display: true,
-                                text: 'Y'
-                            }
+                            title: { display: true, text: 'Y' }
                         }
                     },
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     }
                 }
             });
@@ -382,7 +191,6 @@
 
             chart.update('none');
 
-            // Update labels
             document.getElementById('xLabel').textContent = xAxis === 'time' ? 'Time' : xAxis;
             document.getElementById('yLabel').textContent = yAxis;
             document.getElementById('xUnit').textContent = xUnit;
@@ -392,15 +200,12 @@
         function updateStats() {
             const yAxis = yAxisSelect.value;
             const yValues = dataPoints.map(p => p[yAxis]).filter(v => v !== null && v !== undefined);
+            const stats = calculateStats(yValues);
 
-            if (yValues.length > 0) {
-                const min = Math.min(...yValues);
-                const max = Math.max(...yValues);
-                const mean = yValues.reduce((a, b) => a + b, 0) / yValues.length;
-
-                document.getElementById('yMin').textContent = min.toFixed(3);
-                document.getElementById('yMax').textContent = max.toFixed(3);
-                document.getElementById('yMean').textContent = mean.toFixed(3);
+            if (stats) {
+                document.getElementById('yMin').textContent = formatNumber(stats.min);
+                document.getElementById('yMax').textContent = formatNumber(stats.max);
+                document.getElementById('yMean').textContent = formatNumber(stats.mean);
             }
 
             if (dataPoints.length > 0) {
@@ -418,14 +223,11 @@
             const xVal = xAxis === 'time' ? ((Date.now() - startTime) / 1000) : data[xAxis];
             const yVal = data[yAxis];
 
-            document.getElementById('xValue').textContent = xVal !== null && xVal !== undefined
-                ? (typeof xVal === 'number' ? xVal.toFixed(3) : xVal) : '--';
-            document.getElementById('yValue').textContent = yVal !== null && yVal !== undefined
-                ? (typeof yVal === 'number' ? yVal.toFixed(3) : yVal) : '--';
+            document.getElementById('xValue').textContent = formatNumber(xVal);
+            document.getElementById('yValue').textContent = formatNumber(yVal);
         }
 
         function populateAxisSelects(measurements) {
-            // Clear and populate Y-axis
             yAxisSelect.innerHTML = '';
             measurements.forEach(m => {
                 const option = document.createElement('option');
@@ -435,7 +237,6 @@
                 yAxisSelect.appendChild(option);
             });
 
-            // Add sensor measurements to X-axis (after Time)
             xAxisSelect.innerHTML = '<option value="time">Time (seconds)</option>';
             measurements.forEach(m => {
                 const option = document.createElement('option');
@@ -530,7 +331,7 @@
                 } catch (error) {
                     console.error('Read error:', error);
                 }
-            }, 50); // 20 Hz sampling
+            }, 50);
         }
 
         function stopRecording() {
@@ -560,7 +361,6 @@
             dataCountSpan.textContent = '0 points';
         }
 
-        // Event listeners
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
         startBtn.addEventListener('click', startRecording);
@@ -573,11 +373,7 @@
             updateStats();
         });
 
-        window.addEventListener('beforeunload', () => {
-            if (device && device.isConnected()) {
-                device.disconnect();
-            }
-        });
+        setupDisconnectOnUnload(() => device);
     </script>
 </body>
 </html>
