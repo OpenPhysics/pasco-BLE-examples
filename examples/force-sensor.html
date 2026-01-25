@@ -32,7 +32,17 @@
         </div>
 
         <div class="card">
+            <h3>Console Log</h3>
+            <div class="log" id="log"></div>
+        </div>
+
+        <div class="card">
             <div class="info">
+                <strong>About this example:</strong><br>
+                Demonstrates PASCO Wireless Force Acceleration sensor usage:<br>
+                - Large force display for easy reading<br>
+                - All available measurements shown<br>
+                - Real-time data streaming<br><br>
                 <strong>Requirements:</strong><br>
                 - Chrome or Edge browser (Web Bluetooth)<br>
                 - PASCO Wireless Force Acceleration sensor<br>
@@ -56,6 +66,7 @@
         import {
             setStatus as setStatusUtil,
             showError as showErrorUtil,
+            createLogger,
             formatNumber,
             setupDisconnectOnUnload
         } from './common.js';
@@ -68,15 +79,18 @@
         const measurementsCard = document.getElementById('measurementsCard');
         const measurementsList = document.getElementById('measurementsList');
         const errorDiv = document.getElementById('errorDiv');
+        const logDiv = document.getElementById('log');
 
         let device = null;
         let readingInterval = null;
 
+        const log = createLogger(logDiv);
         const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
         const showError = (message) => showErrorUtil(errorDiv, message);
 
         async function connect() {
             try {
+                log('Scanning for Force Acceleration sensors...');
                 setStatus('connecting', 'Select your sensor...');
                 connectBtn.disabled = true;
                 errorDiv.innerHTML = '';
@@ -88,15 +102,18 @@
                     throw new Error('No device selected');
                 }
 
+                log(`Found device: ${devices[0].name}`);
                 setStatus('connecting', 'Connecting...');
+                log(`Connecting to ${devices[0].name}...`);
                 await device.connect(devices[0]);
 
+                log('Connected!');
                 setStatus('connected', `Connected: ${devices[0].name}`);
                 connectBtn.disabled = true;
                 disconnectBtn.disabled = false;
 
                 const measurements = device.getMeasurementList();
-                console.log('Available measurements:', measurements);
+                log(`Available measurements: ${measurements.join(', ')}`);
 
                 const unit = device.getMeasurementUnit('Force');
                 if (unit) {
@@ -108,6 +125,7 @@
 
             } catch (error) {
                 console.error('Connection error:', error);
+                log(`Error: ${error.message}`);
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
@@ -125,12 +143,14 @@
         async function disconnect() {
             try {
                 stopReading();
+                log('Disconnecting...');
 
                 if (device) {
                     await device.disconnect();
                     device = null;
                 }
 
+                log('Disconnected');
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
@@ -140,6 +160,7 @@
 
             } catch (error) {
                 console.error('Disconnect error:', error);
+                log(`Disconnect error: ${error.message}`);
                 showError(`Disconnect error: ${error.message}`);
             }
         }
@@ -189,6 +210,8 @@
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
         setupDisconnectOnUnload(() => device);
+
+        log('Ready. Click "Connect" to scan for Force sensors.');
     </script>
 </body>
 </html>
