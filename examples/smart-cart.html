@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PASCO Smart Cart 3D Graph</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h3 {
+            color: #555;
+            margin-top: 0;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .status.connecting {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #1565c0;
+        }
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #c62828;
+        }
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+        .btn-success:hover:not(:disabled) {
+            background: #43a047;
+        }
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #616161;
+        }
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .control-group input,
+        .control-group select {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 150px;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 500px;
+        }
+        .current-values {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .value-display {
+            text-align: center;
+            min-width: 100px;
+        }
+        .value-display .label {
+            font-size: 12px;
+            color: #666;
+        }
+        .value-display .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .value-display .unit {
+            font-size: 14px;
+            color: #888;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-box .label {
+            font-size: 11px;
+            color: #666;
+        }
+        .stat-box .value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .data-count {
+            font-size: 12px;
+            color: #666;
+            margin-left: auto;
+        }
+        .sample-rate-display {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Cart 3D Graph</h1>
+
+    <div class="card">
+        <div class="info">
+            <strong>About:</strong> This example visualizes PASCO Wireless Smart Cart data in 3D,
+            plotting Position (X-axis) vs Velocity (Y-axis) vs Time (Z-axis).
+            Based on the <a href="https://github.com/PASCOscientific/pasco_python_examples/tree/master/3D_smartcart" target="_blank">Python example</a>.
+        </div>
+    </div>
+
+    <div class="card">
+        <div id="status" class="status disconnected">Disconnected</div>
+        <div class="button-row">
+            <button id="connectBtn" class="btn-primary">Connect to Smart Cart</button>
+            <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
+        </div>
+    </div>
+
+    <div class="card" id="configCard" style="display: none;">
+        <h3>Recording Settings</h3>
+        <div class="settings-grid">
+            <div class="control-group">
+                <label>Sample Rate (Hz)</label>
+                <input type="number" id="sampleRate" value="10" min="1" max="100" step="1">
+            </div>
+            <div class="control-group">
+                <label>Show Actual Rate</label>
+                <select id="showActualRate">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+        </div>
+        <div class="button-row" style="margin-top: 15px;">
+            <button id="startBtn" class="btn-success" disabled>Start Recording</button>
+            <button id="stopBtn" class="btn-danger" disabled>Stop</button>
+            <button id="clearBtn" class="btn-secondary">Clear Data</button>
+            <span class="data-count" id="dataCount">0 points</span>
+        </div>
+        <div id="actualRateDisplay" class="sample-rate-display"></div>
+    </div>
+
+    <div class="card" id="chartCard" style="display: none;">
+        <h3>3D Position-Velocity-Time Plot</h3>
+        <div id="plot3d" class="chart-container"></div>
+        <div class="current-values">
+            <div class="value-display">
+                <div class="label">Position</div>
+                <div class="value" id="positionValue">--</div>
+                <div class="unit">m</div>
+            </div>
+            <div class="value-display">
+                <div class="label">Velocity</div>
+                <div class="value" id="velocityValue">--</div>
+                <div class="unit">m/s</div>
+            </div>
+            <div class="value-display">
+                <div class="label">Time</div>
+                <div class="value" id="timeValue">--</div>
+                <div class="unit">s</div>
+            </div>
+        </div>
+        <div class="stats">
+            <div class="stat-box">
+                <div class="label">Position Min</div>
+                <div class="value" id="posMin">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Position Max</div>
+                <div class="value" id="posMax">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Velocity Min</div>
+                <div class="value" id="velMin">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Velocity Max</div>
+                <div class="value" id="velMax">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Duration</div>
+                <div class="value" id="duration">0.0s</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Data Points</div>
+                <div class="value" id="pointCount">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="info">
+            <strong>Requirements:</strong><br>
+            - Chrome or Edge browser (Web Bluetooth)<br>
+            - PASCO Wireless Smart Cart<br>
+            - Smart Cart must be powered on<br><br>
+            <strong>Tips:</strong><br>
+            - Click and drag to rotate the 3D plot<br>
+            - Scroll to zoom in/out<br>
+            - Right-click and drag to pan
+        </div>
+    </div>
+
+    <div id="errorDiv"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "expr-eval": "https://esm.sh/expr-eval@2.0.2"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { PASCOBLEDevice } from '../dist/index.js';
+
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const statusDiv = document.getElementById('status');
+        const configCard = document.getElementById('configCard');
+        const chartCard = document.getElementById('chartCard');
+        const sampleRateInput = document.getElementById('sampleRate');
+        const showActualRateSelect = document.getElementById('showActualRate');
+        const actualRateDisplay = document.getElementById('actualRateDisplay');
+        const errorDiv = document.getElementById('errorDiv');
+        const dataCountSpan = document.getElementById('dataCount');
+
+        let device = null;
+        let dataPoints = [];
+        let isRecording = false;
+        let recordingInterval = null;
+        let startTime = null;
+        let lastSampleTime = null;
+
+        function setStatus(status, text) {
+            statusDiv.className = 'status ' + status;
+            statusDiv.textContent = text;
+        }
+
+        function showError(message) {
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => errorDiv.innerHTML = '', 5000);
+        }
+
+        function initPlot() {
+            const trace = {
+                x: [],
+                y: [],
+                z: [],
+                mode: 'lines+markers',
+                type: 'scatter3d',
+                marker: {
+                    size: 3,
+                    color: [],
+                    colorscale: 'Viridis',
+                    showscale: true,
+                    colorbar: {
+                        title: 'Time (s)',
+                        thickness: 15
+                    }
+                },
+                line: {
+                    color: '#1976d2',
+                    width: 2
+                },
+                name: 'Smart Cart Data'
+            };
+
+            const layout = {
+                scene: {
+                    xaxis: { title: 'Position (m)' },
+                    yaxis: { title: 'Velocity (m/s)' },
+                    zaxis: { title: 'Time (s)' },
+                    camera: {
+                        eye: { x: 1.5, y: 1.5, z: 1 }
+                    }
+                },
+                margin: { l: 0, r: 0, t: 30, b: 0 },
+                showlegend: false
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['toImage', 'sendDataToCloud']
+            };
+
+            Plotly.newPlot('plot3d', [trace], layout, config);
+        }
+
+        function updatePlot() {
+            const positions = dataPoints.map(p => p.position);
+            const velocities = dataPoints.map(p => p.velocity);
+            const times = dataPoints.map(p => p.time);
+
+            Plotly.update('plot3d', {
+                x: [positions],
+                y: [velocities],
+                z: [times],
+                'marker.color': [times]
+            });
+        }
+
+        function updateStats() {
+            if (dataPoints.length === 0) return;
+
+            const positions = dataPoints.map(p => p.position);
+            const velocities = dataPoints.map(p => p.velocity);
+
+            document.getElementById('posMin').textContent = Math.min(...positions).toFixed(3);
+            document.getElementById('posMax').textContent = Math.max(...positions).toFixed(3);
+            document.getElementById('velMin').textContent = Math.min(...velocities).toFixed(3);
+            document.getElementById('velMax').textContent = Math.max(...velocities).toFixed(3);
+            document.getElementById('duration').textContent = `${dataPoints[dataPoints.length - 1].time.toFixed(1)}s`;
+            document.getElementById('pointCount').textContent = dataPoints.length;
+            dataCountSpan.textContent = `${dataPoints.length} points`;
+        }
+
+        function updateCurrentValues(position, velocity, time) {
+            document.getElementById('positionValue').textContent = position.toFixed(3);
+            document.getElementById('velocityValue').textContent = velocity.toFixed(3);
+            document.getElementById('timeValue').textContent = time.toFixed(2);
+        }
+
+        async function connect() {
+            try {
+                setStatus('connecting', 'Select your Smart Cart...');
+                connectBtn.disabled = true;
+
+                device = new PASCOBLEDevice();
+                const devices = await device.scan('Smart Cart');
+
+                if (devices.length === 0) {
+                    throw new Error('No device selected');
+                }
+
+                setStatus('connecting', 'Connecting...');
+                await device.connect(devices[0]);
+
+                setStatus('connected', `Connected: ${devices[0].name}`);
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+
+                // Verify the sensor has Position and Velocity measurements
+                const measurements = device.getMeasurementList();
+                const hasPosition = measurements.some(m => m.toLowerCase().includes('position'));
+                const hasVelocity = measurements.some(m => m.toLowerCase().includes('velocity'));
+
+                if (!hasPosition || !hasVelocity) {
+                    console.warn('Available measurements:', measurements);
+                    showError('Warning: Position or Velocity measurements may not be available. Check console for available measurements.');
+                }
+
+                configCard.style.display = 'block';
+                chartCard.style.display = 'block';
+                startBtn.disabled = false;
+
+                initPlot();
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                if (error.message.includes('User cancelled') || error.message.includes('No device selected')) {
+                    showError('Connection cancelled');
+                } else {
+                    showError(`Connection failed: ${error.message}`);
+                }
+            }
+        }
+
+        async function disconnect() {
+            try {
+                stopRecording();
+                if (device) {
+                    await device.disconnect();
+                    device = null;
+                }
+                setStatus('disconnected', 'Disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                configCard.style.display = 'none';
+                chartCard.style.display = 'none';
+            } catch (error) {
+                showError(`Disconnect error: ${error.message}`);
+            }
+        }
+
+        async function readCartData() {
+            if (!device || !device.isConnected()) return null;
+
+            try {
+                const data = await device.readDataList(['Position', 'Velocity']);
+                return {
+                    position: data['Position'] ?? 0,
+                    velocity: data['Velocity'] ?? 0
+                };
+            } catch (error) {
+                console.error('Read error:', error);
+                return null;
+            }
+        }
+
+        function startRecording() {
+            if (!device || !device.isConnected()) return;
+
+            isRecording = true;
+            startTime = Date.now();
+            lastSampleTime = null;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            sampleRateInput.disabled = true;
+
+            const sampleRate = parseFloat(sampleRateInput.value) || 10;
+            const intervalMs = 1000 / sampleRate;
+
+            recordingInterval = setInterval(async () => {
+                if (!device || !device.isConnected() || !isRecording) {
+                    stopRecording();
+                    return;
+                }
+
+                const now = Date.now();
+                const time = (now - startTime) / 1000;
+                const cartData = await readCartData();
+
+                if (cartData) {
+                    dataPoints.push({
+                        time: time,
+                        position: cartData.position,
+                        velocity: cartData.velocity
+                    });
+
+                    updateCurrentValues(cartData.position, cartData.velocity, time);
+                    updatePlot();
+                    updateStats();
+
+                    // Show actual sample rate if enabled
+                    if (showActualRateSelect.value === 'yes' && lastSampleTime !== null && dataPoints.length > 2) {
+                        const actualInterval = (now - lastSampleTime) / 1000;
+                        const actualRate = 1 / actualInterval;
+                        actualRateDisplay.textContent = `Actual sample rate: ${actualRate.toFixed(1)} Hz`;
+                    }
+                    lastSampleTime = now;
+                }
+            }, intervalMs);
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            if (recordingInterval) {
+                clearInterval(recordingInterval);
+                recordingInterval = null;
+            }
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            sampleRateInput.disabled = false;
+            actualRateDisplay.textContent = '';
+        }
+
+        function clearData() {
+            dataPoints = [];
+            initPlot();
+            document.getElementById('positionValue').textContent = '--';
+            document.getElementById('velocityValue').textContent = '--';
+            document.getElementById('timeValue').textContent = '--';
+            document.getElementById('posMin').textContent = '--';
+            document.getElementById('posMax').textContent = '--';
+            document.getElementById('velMin').textContent = '--';
+            document.getElementById('velMax').textContent = '--';
+            document.getElementById('duration').textContent = '0.0s';
+            document.getElementById('pointCount').textContent = '0';
+            dataCountSpan.textContent = '0 points';
+            actualRateDisplay.textContent = '';
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        clearBtn.addEventListener('click', clearData);
+
+        window.addEventListener('beforeunload', () => {
+            if (device && device.isConnected()) {
+                device.disconnect();
+            }
+        });
+    </script>
+</body>
+</html>
