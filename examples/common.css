@@ -746,6 +746,40 @@ pre.log {
     background: #ef6c00;
 }
 
+/* Touch Target Sizing - WCAG 2.5.5 (44x44px minimum) */
+@media (pointer: coarse) {
+    button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    input[type="range"] {
+        min-height: 44px;
+    }
+
+    input[type="color"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    select {
+        min-height: 44px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+        min-height: 44px;
+    }
+
+    .error-close {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
 /* Tablet Responsive (768px) */
 @media (max-width: 768px) {
     body {

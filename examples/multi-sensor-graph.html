@@ -6,6 +6,8 @@
     <meta name="description" content="Multi-device classroom setup for graphing multiple PASCO sensors simultaneously">
     <meta name="theme-color" content="#1976d2">
     <title>PASCO Multi-Sensor Graph</title>
+    <link rel="preconnect" href="https://esm.sh">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="common.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
@@ -103,6 +105,7 @@
                 <button id="startBtn" class="btn-start">Start Recording</button>
                 <button id="stopBtn" class="btn-stop" disabled>Stop Recording</button>
                 <button id="clearBtn" class="btn-clear">Clear Graph</button>
+                <button id="exportBtn" class="btn-secondary" disabled>Export CSV</button>
                 <output class="time-display">Time: <span id="timeDisplay">0.00</span> s</output>
             </nav>
             <figure class="graph-container">
@@ -135,7 +138,7 @@
 
     <script type="module">
         import { PASCOBLEDevice } from 'pasco-ble';
-        import { showError as showErrorUtil, formatNumber } from './common.js';
+        import { showError as showErrorUtil, formatNumber, exportToCSV, generateExportFilename } from './common.js';
 
         const sensors = {
             rotary: {
@@ -340,7 +343,10 @@
                     }
                 }
             }
-            if (isRecording) chart.update('none');
+            if (isRecording) {
+                chart.update('none');
+                document.getElementById('exportBtn').disabled = false;
+            }
         }
 
         function startRecording() {
@@ -366,6 +372,7 @@
             chart.update();
             timeDisplay.textContent = '0.00';
             startTime = null;
+            document.getElementById('exportBtn').disabled = true;
         }
 
         for (const [key, sensor] of Object.entries(sensors)) {
@@ -377,6 +384,30 @@
         startBtn.addEventListener('click', startRecording);
         stopBtn.addEventListener('click', stopRecording);
         clearBtn.addEventListener('click', clearGraph);
+
+        const exportBtn = document.getElementById('exportBtn');
+        exportBtn.addEventListener('click', () => {
+            // Combine all sensor data by time
+            const allData = [];
+            const sensorKeys = Object.keys(sensors);
+
+            sensorKeys.forEach((key, index) => {
+                const dataset = chart.data.datasets[index];
+                dataset.data.forEach(point => {
+                    let row = allData.find(r => r.time === point.x);
+                    if (!row) {
+                        row = { time: point.x };
+                        allData.push(row);
+                    }
+                    row[key] = point.y;
+                });
+            });
+
+            allData.sort((a, b) => a.time - b.time);
+            const columns = ['time', ...sensorKeys];
+            const filename = generateExportFilename('multi-sensor-data');
+            exportToCSV(allData, columns, filename);
+        });
 
         window.addEventListener('beforeunload', () => {
             stopRecording();

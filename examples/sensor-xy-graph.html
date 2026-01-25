@@ -6,6 +6,8 @@
     <meta name="description" content="Parametric X-Y plotting of PASCO sensor data using Chart.js">
     <meta name="theme-color" content="#1976d2">
     <title>PASCO Sensor X-Y Graph</title>
+    <link rel="preconnect" href="https://esm.sh">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="common.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
@@ -43,6 +45,7 @@
                 <button id="startBtn" class="btn-success" disabled>Start Recording</button>
                 <button id="stopBtn" class="btn-danger" disabled>Stop</button>
                 <button id="clearBtn" class="btn-secondary">Clear Data</button>
+                <button id="exportBtn" class="btn-secondary" disabled>Export CSV</button>
                 <output class="data-count" id="dataCount">0 points</output>
             </nav>
         </section>
@@ -124,7 +127,9 @@
             showError as showErrorUtil,
             formatNumber,
             calculateStats,
-            setupDisconnectOnUnload
+            setupDisconnectOnUnload,
+            exportToCSV,
+            generateExportFilename
         } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
@@ -132,6 +137,7 @@
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportBtn');
         const statusDiv = document.getElementById('status');
         const configCard = document.getElementById('configCard');
         const chartCard = document.getElementById('chartCard');
@@ -228,6 +234,7 @@
             }
 
             dataCountSpan.textContent = `${dataPoints.length} points`;
+            exportBtn.disabled = dataPoints.length === 0;
         }
 
         function updateCurrentValues(data) {
@@ -382,6 +389,7 @@
             document.getElementById('yMean').textContent = '--';
             document.getElementById('duration').textContent = '0.0s';
             dataCountSpan.textContent = '0 points';
+            exportBtn.disabled = true;
         }
 
         connectBtn.addEventListener('click', connect);
@@ -389,6 +397,13 @@
         startBtn.addEventListener('click', startRecording);
         stopBtn.addEventListener('click', stopRecording);
         clearBtn.addEventListener('click', clearData);
+        exportBtn.addEventListener('click', () => {
+            const xMeasurement = xAxisSelect.value;
+            const yMeasurement = yAxisSelect.value;
+            const columns = ['time', xMeasurement, yMeasurement];
+            const filename = generateExportFilename('sensor-xy-data');
+            exportToCSV(dataPoints, columns, filename);
+        });
 
         xAxisSelect.addEventListener('change', updateChart);
         yAxisSelect.addEventListener('change', () => {

@@ -3,6 +3,29 @@
  * Shared JavaScript functions for all examples
  */
 
+// ============================================================================
+// Constants - Replace magic numbers with named values
+// ============================================================================
+
+/** Default interval for reading sensor data (ms) */
+export const READ_INTERVAL_MS = 100;
+
+/** Default interval for updating charts (ms) */
+export const CHART_UPDATE_INTERVAL_MS = 50;
+
+/** Default duration for error messages (ms) */
+export const ERROR_DISPLAY_DURATION_MS = 5000;
+
+/** Default sample rate for recording (Hz) */
+export const DEFAULT_SAMPLE_RATE_HZ = 10;
+
+/** Maximum data points to keep in charts */
+export const MAX_CHART_POINTS = 500;
+
+// ============================================================================
+// Status and Error Handling
+// ============================================================================
+
 /**
  * Set the connection status indicator
  * @param {HTMLElement} element - The status element
@@ -186,4 +209,137 @@ export function throttle(func, limit) {
  */
 export function clamp(value, min, max) {
 	return Math.min(Math.max(value, min), max);
+}
+
+// ============================================================================
+// Connection Helpers
+// ============================================================================
+
+/**
+ * Connect to a PASCO BLE device with standard error handling
+ * @param {Object} DeviceClass - The device class to instantiate (PASCOBLEDevice, CodeNodeDevice, etc.)
+ * @param {Object} options - Connection options
+ * @param {string} [options.filter] - Device name filter for scanning
+ * @param {function} [options.onStatus] - Status update callback (status, text)
+ * @param {function} [options.onLog] - Log message callback (message)
+ * @param {function} [options.onError] - Error callback (message)
+ * @returns {Promise<Object>} Connected device instance
+ * @throws {Error} If connection fails or is cancelled
+ */
+export async function connectDevice(DeviceClass, options = {}) {
+	const { filter, onStatus, onLog, onError } = options;
+
+	const device = new DeviceClass();
+
+	try {
+		onLog?.('Scanning for devices...');
+		onStatus?.('connecting', 'Select your device...');
+
+		const devices = await device.scan(filter);
+
+		if (devices.length === 0) {
+			throw new Error('No device selected');
+		}
+
+		const selectedDevice = devices[0];
+		onLog?.(`Found: ${selectedDevice.name}`);
+		onStatus?.('connecting', 'Connecting...');
+
+		await device.connect(selectedDevice);
+
+		onLog?.('Connected!');
+		onStatus?.('connected', `Connected: ${selectedDevice.name}`);
+
+		return device;
+	} catch (error) {
+		onStatus?.('disconnected', 'Disconnected');
+
+		if (error.message.includes('User cancelled')) {
+			onError?.('Connection cancelled by user');
+		} else if (error.message.includes('No device selected')) {
+			onError?.('No device selected');
+		} else {
+			onError?.(`Connection failed: ${error.message}`);
+		}
+
+		throw error;
+	}
+}
+
+/**
+ * Disconnect from a device safely
+ * @param {Object} device - The device to disconnect
+ * @param {Object} options - Disconnect options
+ * @param {function} [options.onStatus] - Status update callback
+ * @param {function} [options.onLog] - Log message callback
+ */
+export async function disconnectDevice(device, options = {}) {
+	const { onStatus, onLog } = options;
+
+	if (!device) return;
+
+	try {
+		onLog?.('Disconnecting...');
+		await device.disconnect();
+		onLog?.('Disconnected');
+		onStatus?.('disconnected', 'Disconnected');
+	} catch (error) {
+		onLog?.(`Disconnect error: ${error.message}`);
+	}
+}
+
+// ============================================================================
+// Data Export
+// ============================================================================
+
+/**
+ * Export data points to CSV and trigger download
+ * @param {Array<Object>} dataPoints - Array of data point objects
+ * @param {string[]} columns - Column names to export
+ * @param {string} [filename='data.csv'] - Download filename
+ */
+export function exportToCSV(dataPoints, columns, filename = 'data.csv') {
+	if (!dataPoints || dataPoints.length === 0) {
+		console.warn('No data to export');
+		return;
+	}
+
+	// Build CSV content
+	const header = columns.join(',');
+	const rows = dataPoints.map((point) =>
+		columns.map((col) => {
+			const value = point[col];
+			// Handle values that might contain commas or quotes
+			if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+				return `"${value.replace(/"/g, '""')}"`;
+			}
+			return value ?? '';
+		}).join(',')
+	);
+
+	const csvContent = [header, ...rows].join('\n');
+
+	// Create and trigger download
+	const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = filename;
+	link.style.display = 'none';
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	URL.revokeObjectURL(url);
+}
+
+/**
+ * Generate a timestamped filename for exports
+ * @param {string} prefix - Filename prefix
+ * @param {string} [extension='csv'] - File extension
+ * @returns {string} Timestamped filename
+ */
+export function generateExportFilename(prefix, extension = 'csv') {
+	const now = new Date();
+	const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+	return `${prefix}_${timestamp}.${extension}`;
 }

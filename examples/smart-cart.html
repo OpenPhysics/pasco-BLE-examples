@@ -6,6 +6,8 @@
     <meta name="description" content="3D position-velocity-time visualization of PASCO Wireless Smart Cart data">
     <meta name="theme-color" content="#1976d2">
     <title>PASCO Smart Cart 3D Graph</title>
+    <link rel="preconnect" href="https://esm.sh">
+    <link rel="preconnect" href="https://cdn.plot.ly">
     <link rel="stylesheet" href="common.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" defer></script>
 </head>
@@ -51,6 +53,7 @@
                 <button id="startBtn" class="btn-success" disabled>Start Recording</button>
                 <button id="stopBtn" class="btn-danger" disabled>Stop</button>
                 <button id="clearBtn" class="btn-secondary">Clear Data</button>
+                <button id="exportBtn" class="btn-secondary" disabled>Export CSV</button>
                 <output class="data-count" id="dataCount">0 points</output>
             </nav>
             <output id="actualRateDisplay" class="sample-rate-display"></output>
@@ -145,7 +148,9 @@
             setStatus as setStatusUtil,
             showError as showErrorUtil,
             formatNumber,
-            setupDisconnectOnUnload
+            setupDisconnectOnUnload,
+            exportToCSV,
+            generateExportFilename
         } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
@@ -153,6 +158,7 @@
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportBtn');
         const statusDiv = document.getElementById('status');
         const configCard = document.getElementById('configCard');
         const chartCard = document.getElementById('chartCard');
@@ -234,6 +240,7 @@
             document.getElementById('duration').textContent = `${dataPoints[dataPoints.length - 1].time.toFixed(1)}s`;
             document.getElementById('pointCount').textContent = dataPoints.length;
             dataCountSpan.textContent = `${dataPoints.length} points`;
+            exportBtn.disabled = dataPoints.length === 0;
         }
 
         function updateCurrentValues(position, velocity, time) {
@@ -395,6 +402,7 @@
             document.getElementById('pointCount').textContent = '0';
             dataCountSpan.textContent = '0 points';
             actualRateDisplay.textContent = '';
+            exportBtn.disabled = true;
         }
 
         connectBtn.addEventListener('click', connect);
@@ -402,6 +410,11 @@
         startBtn.addEventListener('click', startRecording);
         stopBtn.addEventListener('click', stopRecording);
         clearBtn.addEventListener('click', clearData);
+        exportBtn.addEventListener('click', () => {
+            const columns = ['time', 'position', 'velocity'];
+            const filename = generateExportFilename('smart-cart-data');
+            exportToCSV(dataPoints, columns, filename);
+        });
 
         setupDisconnectOnUnload(() => device);
     </script>
