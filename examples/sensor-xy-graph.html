@@ -88,6 +88,22 @@
                     <dd class="value" id="duration">0.0s</dd>
                 </div>
             </dl>
+            <nav class="playback-controls" id="playbackControls" style="display: none;">
+                <button id="playbackBtn" class="btn-playback" type="button">Play</button>
+                <label for="playbackSlider" class="visually-hidden">Playback position</label>
+                <input type="range" id="playbackSlider" class="playback-slider" min="0" max="100" value="0">
+                <output class="playback-time" id="playbackTime">0:00 / 0:00</output>
+                <div class="playback-speed">
+                    <label for="playbackSpeed">Speed:</label>
+                    <select id="playbackSpeed">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.5x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="2">2x</option>
+                        <option value="4">4x</option>
+                    </select>
+                </div>
+            </nav>
         </section>
 
         <footer class="card">
@@ -129,7 +145,10 @@
             calculateStats,
             setupDisconnectOnUnload,
             exportToCSV,
-            generateExportFilename
+            generateExportFilename,
+            createPreferences,
+            createThrottledChartUpdater,
+            createDataPlayback
         } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
@@ -146,15 +165,36 @@
         const errorDiv = document.getElementById('errorDiv');
         const dataCountSpan = document.getElementById('dataCount');
 
+        // Playback elements
+        const playbackControls = document.getElementById('playbackControls');
+        const playbackBtn = document.getElementById('playbackBtn');
+        const playbackSlider = document.getElementById('playbackSlider');
+        const playbackTime = document.getElementById('playbackTime');
+        const playbackSpeed = document.getElementById('playbackSpeed');
+
         let device = null;
         let chart = null;
+        let chartUpdater = null;
         let dataPoints = [];
         let isRecording = false;
         let recordingInterval = null;
         let startTime = null;
+        let playback = null;
+
+        // Preferences with defaults
+        const prefs = createPreferences('pasco-xy-graph', {
+            xAxis: 'time',
+            yAxis: '',
+        });
 
         const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
         const showError = (message) => showErrorUtil(errorDiv, message);
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
 
         function initChart() {
             const ctx = document.getElementById('xyChart').getContext('2d');
@@ -374,6 +414,11 @@
             stopBtn.disabled = true;
             xAxisSelect.disabled = false;
             yAxisSelect.disabled = false;
+
+            // Initialize playback if we have data
+            if (dataPoints.length > 0) {
+                initPlayback();
+            }
         }
 
         function clearData() {
@@ -382,6 +427,11 @@
                 chart.data.datasets[0].data = [];
                 chart.update();
             }
+            if (playback) {
+                playback.destroy();
+                playback = null;
+            }
+            playbackControls.style.display = 'none';
             document.getElementById('xValue').textContent = '--';
             document.getElementById('yValue').textContent = '--';
             document.getElementById('yMin').textContent = '--';
@@ -390,6 +440,62 @@
             document.getElementById('duration').textContent = '0.0s';
             dataCountSpan.textContent = '0 points';
             exportBtn.disabled = true;
+        }
+
+        function initPlayback() {
+            if (playback) playback.destroy();
+
+            playback = createDataPlayback({
+                getData: () => dataPoints,
+                onFrame: (point, index) => {
+                    if (!point) return;
+                    const xAxis = xAxisSelect.value;
+                    const yAxis = yAxisSelect.value;
+
+                    document.getElementById('xValue').textContent = formatNumber(point[xAxis]);
+                    document.getElementById('yValue').textContent = formatNumber(point[yAxis]);
+
+                    // Highlight current point on chart
+                    if (chart && chart.data.datasets[1]) {
+                        chart.data.datasets[1].data = [{ x: point[xAxis], y: point[yAxis] }];
+                        chart.update('none');
+                    }
+                },
+                onPlay: () => {
+                    playbackBtn.textContent = 'Pause';
+                    playbackBtn.classList.add('playing');
+                },
+                onPause: () => {
+                    playbackBtn.textContent = 'Play';
+                    playbackBtn.classList.remove('playing');
+                },
+                onSeek: (index) => {
+                    const total = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time : 0;
+                    const current = dataPoints[index]?.time ?? 0;
+                    playbackTime.textContent = `${formatTime(current)} / ${formatTime(total)}`;
+                    playbackSlider.value = playback.getProgress();
+                },
+                onEnd: () => {
+                    playbackBtn.textContent = 'Play';
+                    playbackBtn.classList.remove('playing');
+                },
+            });
+
+            // Add highlight dataset if not exists
+            if (chart && chart.data.datasets.length === 1) {
+                chart.data.datasets.push({
+                    label: 'Current Point',
+                    data: [],
+                    backgroundColor: 'rgba(255, 87, 34, 1)',
+                    borderColor: 'rgba(255, 87, 34, 1)',
+                    pointRadius: 8,
+                    showLine: false,
+                });
+            }
+
+            playbackControls.style.display = 'flex';
+            const total = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time : 0;
+            playbackTime.textContent = `${formatTime(0)} / ${formatTime(total)}`;
         }
 
         connectBtn.addEventListener('click', connect);
@@ -409,6 +515,25 @@
         yAxisSelect.addEventListener('change', () => {
             updateChart();
             updateStats();
+            // Save preference
+            prefs.set('yAxis', yAxisSelect.value);
+        });
+
+        xAxisSelect.addEventListener('change', () => {
+            prefs.set('xAxis', xAxisSelect.value);
+        });
+
+        // Playback controls
+        playbackBtn.addEventListener('click', () => {
+            if (playback) playback.toggle();
+        });
+
+        playbackSlider.addEventListener('input', () => {
+            if (playback) playback.seekPercent(parseFloat(playbackSlider.value));
+        });
+
+        playbackSpeed.addEventListener('change', () => {
+            if (playback) playback.setSpeed(parseFloat(playbackSpeed.value));
         });
 
         setupDisconnectOnUnload(() => device);

@@ -111,6 +111,22 @@
                     <dd class="value" id="pointCount">0</dd>
                 </div>
             </dl>
+            <nav class="playback-controls" id="playbackControls" style="display: none;">
+                <button id="playbackBtn" class="btn-playback" type="button">Play</button>
+                <label for="playbackSlider" class="visually-hidden">Playback position</label>
+                <input type="range" id="playbackSlider" class="playback-slider" min="0" max="100" value="0">
+                <output class="playback-time" id="playbackTime">0:00 / 0:00</output>
+                <div class="playback-speed">
+                    <label for="playbackSpeed">Speed:</label>
+                    <select id="playbackSpeed">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.5x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="2">2x</option>
+                        <option value="4">4x</option>
+                    </select>
+                </div>
+            </nav>
         </section>
 
         <footer class="card">
@@ -150,7 +166,9 @@
             formatNumber,
             setupDisconnectOnUnload,
             exportToCSV,
-            generateExportFilename
+            generateExportFilename,
+            createPreferences,
+            createDataPlayback
         } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
@@ -159,6 +177,21 @@
         const stopBtn = document.getElementById('stopBtn');
         const clearBtn = document.getElementById('clearBtn');
         const exportBtn = document.getElementById('exportBtn');
+
+        // Playback elements
+        const playbackControls = document.getElementById('playbackControls');
+        const playbackBtn = document.getElementById('playbackBtn');
+        const playbackSlider = document.getElementById('playbackSlider');
+        const playbackTime = document.getElementById('playbackTime');
+        const playbackSpeedSelect = document.getElementById('playbackSpeed');
+
+        // Preferences
+        const prefs = createPreferences('pasco-smart-cart', {
+            sampleRate: 10,
+            showActualRate: 'yes',
+        });
+
+        let playback = null;
         const statusDiv = document.getElementById('status');
         const configCard = document.getElementById('configCard');
         const chartCard = document.getElementById('chartCard');
@@ -386,11 +419,21 @@
             stopBtn.disabled = true;
             sampleRateInput.disabled = false;
             actualRateDisplay.textContent = '';
+
+            // Initialize playback if we have data
+            if (dataPoints.length > 0) {
+                initPlayback();
+            }
         }
 
         function clearData() {
             dataPoints = [];
             initPlot();
+            if (playback) {
+                playback.destroy();
+                playback = null;
+            }
+            playbackControls.style.display = 'none';
             document.getElementById('positionValue').textContent = '--';
             document.getElementById('velocityValue').textContent = '--';
             document.getElementById('timeValue').textContent = '--';
@@ -405,6 +448,54 @@
             exportBtn.disabled = true;
         }
 
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function initPlayback() {
+            if (playback) playback.destroy();
+
+            playback = createDataPlayback({
+                getData: () => dataPoints,
+                onFrame: (point, index) => {
+                    if (!point) return;
+                    document.getElementById('positionValue').textContent = formatNumber(point.position);
+                    document.getElementById('velocityValue').textContent = formatNumber(point.velocity);
+                    document.getElementById('timeValue').textContent = formatNumber(point.time, 2);
+
+                    // Highlight current point on 3D plot
+                    Plotly.restyle('plot3d', {
+                        'marker.size': dataPoints.map((_, i) => i === index ? 12 : 4),
+                        'marker.opacity': dataPoints.map((_, i) => i === index ? 1 : 0.6),
+                    }, [0]);
+                },
+                onPlay: () => {
+                    playbackBtn.textContent = 'Pause';
+                    playbackBtn.classList.add('playing');
+                },
+                onPause: () => {
+                    playbackBtn.textContent = 'Play';
+                    playbackBtn.classList.remove('playing');
+                },
+                onSeek: (index) => {
+                    const total = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time : 0;
+                    const current = dataPoints[index]?.time ?? 0;
+                    playbackTime.textContent = `${formatTime(current)} / ${formatTime(total)}`;
+                    playbackSlider.value = playback.getProgress();
+                },
+                onEnd: () => {
+                    playbackBtn.textContent = 'Play';
+                    playbackBtn.classList.remove('playing');
+                },
+            });
+
+            playbackControls.style.display = 'flex';
+            const total = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time : 0;
+            playbackTime.textContent = `${formatTime(0)} / ${formatTime(total)}`;
+        }
+
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
         startBtn.addEventListener('click', startRecording);
@@ -414,6 +505,31 @@
             const columns = ['time', 'position', 'velocity'];
             const filename = generateExportFilename('smart-cart-data');
             exportToCSV(dataPoints, columns, filename);
+        });
+
+        // Playback controls
+        playbackBtn.addEventListener('click', () => {
+            if (playback) playback.toggle();
+        });
+
+        playbackSlider.addEventListener('input', () => {
+            if (playback) playback.seekPercent(parseFloat(playbackSlider.value));
+        });
+
+        playbackSpeedSelect.addEventListener('change', () => {
+            if (playback) playback.setSpeed(parseFloat(playbackSpeedSelect.value));
+        });
+
+        // Load saved preferences
+        sampleRateInput.value = prefs.get('sampleRate');
+        showActualRateSelect.value = prefs.get('showActualRate');
+
+        sampleRateInput.addEventListener('change', () => {
+            prefs.set('sampleRate', parseInt(sampleRateInput.value));
+        });
+
+        showActualRateSelect.addEventListener('change', () => {
+            prefs.set('showActualRate', showActualRateSelect.value);
         });
 
         setupDisconnectOnUnload(() => device);
