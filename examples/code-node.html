@@ -156,7 +156,14 @@
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
-                showError(`Connection failed: ${error.message}`);
+
+                if (error.message.includes('User cancelled')) {
+                    showError('Connection cancelled by user');
+                } else if (error.message.includes('No device selected')) {
+                    showError('No device selected');
+                } else {
+                    showError(`Connection failed: ${error.message}`);
+                }
             }
         }
 

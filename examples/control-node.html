@@ -178,6 +178,7 @@
                 log('Scanning for Control.Node devices...');
                 setStatus('connecting', 'Select your Control.Node...');
                 connectBtn.disabled = true;
+                errorDiv.innerHTML = '';
 
                 controlNode = new ControlNodeDevice();
                 const devices = await controlNode.scan('//control.Node');
@@ -207,7 +208,14 @@
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
-                showError(`Connection failed: ${error.message}`);
+
+                if (error.message.includes('User cancelled')) {
+                    showError('Connection cancelled by user');
+                } else if (error.message.includes('No device selected')) {
+                    showError('No device selected');
+                } else {
+                    showError(`Connection failed: ${error.message}`);
+                }
             }
         }
 

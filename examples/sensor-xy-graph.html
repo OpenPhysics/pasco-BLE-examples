@@ -251,6 +251,7 @@
             try {
                 setStatus('connecting', 'Select your sensor...');
                 connectBtn.disabled = true;
+                errorDiv.innerHTML = '';
 
                 device = new PASCOBLEDevice();
                 const devices = await device.scan();
@@ -280,7 +281,15 @@
                 console.error('Connection error:', error);
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
-                showError(`Connection failed: ${error.message}`);
+                disconnectBtn.disabled = true;
+
+                if (error.message.includes('User cancelled')) {
+                    showError('Connection cancelled by user');
+                } else if (error.message.includes('No device selected')) {
+                    showError('No device selected');
+                } else {
+                    showError(`Connection failed: ${error.message}`);
+                }
             }
         }
 
