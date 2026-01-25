@@ -35,6 +35,7 @@ jobs:
     name: Publish to NPM
     needs: quality
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       id-token: write  # Required for trusted publishing
