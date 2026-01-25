@@ -7,41 +7,57 @@
     <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Wireless Motion Sensor</h1>
+    <main class="container">
+        <header>
+            <h1>Wireless Motion Sensor</h1>
+        </header>
 
-        <div class="card">
-            <div id="status" class="status disconnected">Disconnected</div>
-            <div class="button-row">
+        <section class="card" aria-label="Connection controls">
+            <p id="status" class="status disconnected">Disconnected</p>
+            <nav class="button-row">
                 <button id="connectBtn" class="btn-primary">Connect to Motion Sensor</button>
                 <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </div>
-        </div>
+            </nav>
+        </section>
 
-        <div class="card">
-            <div class="reading">
-                <div class="value" id="positionValue">--</div>
-                <div class="unit" id="positionUnit">m</div>
-                <div class="label">Position</div>
-            </div>
-        </div>
+        <section class="card" aria-label="Primary reading">
+            <figure class="reading">
+                <output class="value" id="positionValue">--</output>
+                <span class="unit" id="positionUnit">m</span>
+                <figcaption class="label">Position</figcaption>
+            </figure>
+        </section>
 
-        <div class="card" id="measurementsCard" style="display: none;">
-            <h3>All Measurements</h3>
-            <div id="measurementsList"></div>
-        </div>
+        <section class="card" id="measurementsCard" style="display: none;" aria-label="All measurements">
+            <h2>All Measurements</h2>
+            <dl id="measurementsList"></dl>
+        </section>
 
-        <div class="card">
-            <div class="info">
-                <strong>Requirements:</strong><br>
-                - Chrome or Edge browser (Web Bluetooth)<br>
-                - PASCO Wireless Motion Sensor<br>
-                - Sensor must be powered on
-            </div>
-        </div>
+        <section class="card" aria-label="Console output">
+            <h2>Console Log</h2>
+            <pre class="log" id="log" role="log" aria-live="polite"></pre>
+        </section>
 
-        <div id="errorDiv"></div>
-    </div>
+        <footer class="card">
+            <section class="info">
+                <h2>About this example</h2>
+                <p>Demonstrates PASCO Wireless Motion Sensor usage:</p>
+                <ul>
+                    <li>Large position display for easy reading</li>
+                    <li>All available measurements shown</li>
+                    <li>Real-time data streaming</li>
+                </ul>
+                <h2>Requirements</h2>
+                <ul>
+                    <li>Chrome or Edge browser (Web Bluetooth)</li>
+                    <li>PASCO Wireless Motion Sensor</li>
+                    <li>Sensor must be powered on</li>
+                </ul>
+            </section>
+        </footer>
+
+        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+    </main>
 
     <script type="importmap">
     {
@@ -56,6 +72,7 @@
         import {
             setStatus as setStatusUtil,
             showError as showErrorUtil,
+            createLogger,
             formatNumber,
             setupDisconnectOnUnload
         } from './common.js';
@@ -68,15 +85,18 @@
         const measurementsCard = document.getElementById('measurementsCard');
         const measurementsList = document.getElementById('measurementsList');
         const errorDiv = document.getElementById('errorDiv');
+        const logDiv = document.getElementById('log');
 
         let device = null;
         let readingInterval = null;
 
+        const log = createLogger(logDiv);
         const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
         const showError = (message) => showErrorUtil(errorDiv, message);
 
         async function connect() {
             try {
+                log('Scanning for Motion sensors...');
                 setStatus('connecting', 'Select your sensor...');
                 connectBtn.disabled = true;
                 errorDiv.innerHTML = '';
@@ -88,15 +108,18 @@
                     throw new Error('No device selected');
                 }
 
+                log(`Found device: ${devices[0].name}`);
                 setStatus('connecting', 'Connecting...');
+                log(`Connecting to ${devices[0].name}...`);
                 await device.connect(devices[0]);
 
+                log('Connected!');
                 setStatus('connected', `Connected: ${devices[0].name}`);
                 connectBtn.disabled = true;
                 disconnectBtn.disabled = false;
 
                 const measurements = device.getMeasurementList();
-                console.log('Available measurements:', measurements);
+                log(`Available measurements: ${measurements.join(', ')}`);
 
                 const unit = device.getMeasurementUnit('Position');
                 if (unit) {
@@ -108,6 +131,7 @@
 
             } catch (error) {
                 console.error('Connection error:', error);
+                log(`Error: ${error.message}`);
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
@@ -125,12 +149,14 @@
         async function disconnect() {
             try {
                 stopReading();
+                log('Disconnecting...');
 
                 if (device) {
                     await device.disconnect();
                     device = null;
                 }
 
+                log('Disconnected');
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
@@ -140,6 +166,7 @@
 
             } catch (error) {
                 console.error('Disconnect error:', error);
+                log(`Disconnect error: ${error.message}`);
                 showError(`Disconnect error: ${error.message}`);
             }
         }
@@ -166,8 +193,8 @@
                         const displayValue = formatNumber(value);
                         html += `
                             <div class="measurement-row">
-                                <span class="measurement-name">${name}</span>
-                                <span class="measurement-value">${displayValue} ${unit}</span>
+                                <dt class="measurement-name">${name}</dt>
+                                <dd class="measurement-value">${displayValue} ${unit}</dd>
                             </div>
                         `;
                     }
@@ -189,6 +216,8 @@
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
         setupDisconnectOnUnload(() => device);
+
+        log('Ready. Click "Connect" to scan for Motion sensors.');
     </script>
 </body>
 </html>

@@ -6,126 +6,126 @@
     <title>PASCO Smart Cart 3D Graph</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <link rel="stylesheet" href="common.css">
-    <style>
-        /* Smart Cart specific: 3D plot container */
-        .chart-container {
-            height: 450px;
-        }
-        @media (max-width: 768px) {
-            .chart-container { height: 350px; }
-        }
-        @media (max-width: 480px) {
-            .chart-container { height: 300px; }
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Smart Cart 3D Graph</h1>
+    <main class="container">
+        <header>
+            <h1>Smart Cart 3D Graph</h1>
+        </header>
 
-        <div class="card">
-            <div class="info">
+        <section class="card" aria-label="Introduction">
+            <p class="info">
                 <strong>About:</strong> This example visualizes PASCO Wireless Smart Cart data in 3D,
                 plotting Position (X-axis) vs Velocity (Y-axis) vs Time (Z-axis).
-                Based on the <a href="https://github.com/PASCOscientific/pasco_python_examples/tree/master/3D_smartcart" target="_blank">Python example</a>.
-            </div>
-        </div>
+                Based on the <a href="https://github.com/PASCOscientific/pasco_python_examples/tree/master/3D_smartcart" target="_blank" rel="noopener">Python example</a>.
+            </p>
+        </section>
 
-        <div class="card">
-            <div id="status" class="status disconnected">Disconnected</div>
-            <div class="button-row">
+        <section class="card" aria-label="Connection controls">
+            <p id="status" class="status disconnected">Disconnected</p>
+            <nav class="button-row">
                 <button id="connectBtn" class="btn-primary">Connect to Smart Cart</button>
                 <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </div>
-        </div>
+            </nav>
+        </section>
 
-        <div class="card" id="configCard" style="display: none;">
-            <h3>Recording Settings</h3>
-            <div class="settings-grid">
+        <section class="card" id="configCard" style="display: none;" aria-label="Recording configuration">
+            <h2>Recording Settings</h2>
+            <fieldset class="settings-grid">
                 <div class="control-group">
-                    <label>Sample Rate (Hz)</label>
+                    <label for="sampleRate">Sample Rate (Hz)</label>
                     <input type="number" id="sampleRate" value="10" min="1" max="100" step="1">
                 </div>
                 <div class="control-group">
-                    <label>Show Actual Rate</label>
+                    <label for="showActualRate">Show Actual Rate</label>
                     <select id="showActualRate">
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                     </select>
                 </div>
-            </div>
-            <div class="button-row" style="margin-top: 15px;">
+            </fieldset>
+            <nav class="button-row" style="margin-top: 15px;">
                 <button id="startBtn" class="btn-success" disabled>Start Recording</button>
                 <button id="stopBtn" class="btn-danger" disabled>Stop</button>
                 <button id="clearBtn" class="btn-secondary">Clear Data</button>
-                <span class="data-count" id="dataCount">0 points</span>
-            </div>
-            <div id="actualRateDisplay" class="sample-rate-display"></div>
-        </div>
+                <output class="data-count" id="dataCount">0 points</output>
+            </nav>
+            <output id="actualRateDisplay" class="sample-rate-display"></output>
+        </section>
 
-        <div class="card" id="chartCard" style="display: none;">
-            <h3>3D Position-Velocity-Time Plot</h3>
-            <div id="plot3d" class="chart-container"></div>
-            <div class="current-values">
+        <section class="card" id="chartCard" style="display: none;" aria-label="3D visualization">
+            <h2>3D Position-Velocity-Time Plot</h2>
+            <figure id="plot3d" class="chart-container" role="img" aria-label="3D scatter plot"></figure>
+            <dl class="current-values">
                 <div class="value-display">
-                    <div class="label">Position</div>
-                    <div class="value" id="positionValue">--</div>
-                    <div class="unit">m</div>
-                </div>
-                <div class="value-display">
-                    <div class="label">Velocity</div>
-                    <div class="value" id="velocityValue">--</div>
-                    <div class="unit">m/s</div>
+                    <dt class="label">Position</dt>
+                    <dd>
+                        <output class="value" id="positionValue">--</output>
+                        <span class="unit">m</span>
+                    </dd>
                 </div>
                 <div class="value-display">
-                    <div class="label">Time</div>
-                    <div class="value" id="timeValue">--</div>
-                    <div class="unit">s</div>
+                    <dt class="label">Velocity</dt>
+                    <dd>
+                        <output class="value" id="velocityValue">--</output>
+                        <span class="unit">m/s</span>
+                    </dd>
                 </div>
-            </div>
-            <div class="stats">
-                <div class="stat-box">
-                    <div class="label">Position Min</div>
-                    <div class="value" id="posMin">--</div>
+                <div class="value-display">
+                    <dt class="label">Time</dt>
+                    <dd>
+                        <output class="value" id="timeValue">--</output>
+                        <span class="unit">s</span>
+                    </dd>
                 </div>
+            </dl>
+            <dl class="stats" aria-label="Statistics">
                 <div class="stat-box">
-                    <div class="label">Position Max</div>
-                    <div class="value" id="posMax">--</div>
-                </div>
-                <div class="stat-box">
-                    <div class="label">Velocity Min</div>
-                    <div class="value" id="velMin">--</div>
-                </div>
-                <div class="stat-box">
-                    <div class="label">Velocity Max</div>
-                    <div class="value" id="velMax">--</div>
+                    <dt class="label">Position Min</dt>
+                    <dd class="value" id="posMin">--</dd>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Duration</div>
-                    <div class="value" id="duration">0.0s</div>
+                    <dt class="label">Position Max</dt>
+                    <dd class="value" id="posMax">--</dd>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Data Points</div>
-                    <div class="value" id="pointCount">0</div>
+                    <dt class="label">Velocity Min</dt>
+                    <dd class="value" id="velMin">--</dd>
                 </div>
-            </div>
-        </div>
+                <div class="stat-box">
+                    <dt class="label">Velocity Max</dt>
+                    <dd class="value" id="velMax">--</dd>
+                </div>
+                <div class="stat-box">
+                    <dt class="label">Duration</dt>
+                    <dd class="value" id="duration">0.0s</dd>
+                </div>
+                <div class="stat-box">
+                    <dt class="label">Data Points</dt>
+                    <dd class="value" id="pointCount">0</dd>
+                </div>
+            </dl>
+        </section>
 
-        <div class="card">
-            <div class="info">
-                <strong>Requirements:</strong><br>
-                - Chrome or Edge browser (Web Bluetooth)<br>
-                - PASCO Wireless Smart Cart<br>
-                - Smart Cart must be powered on<br><br>
-                <strong>Tips:</strong><br>
-                - Click and drag to rotate the 3D plot<br>
-                - Scroll to zoom in/out<br>
-                - Right-click and drag to pan
-            </div>
-        </div>
+        <footer class="card">
+            <section class="info">
+                <h2>Requirements</h2>
+                <ul>
+                    <li>Chrome or Edge browser (Web Bluetooth)</li>
+                    <li>PASCO Wireless Smart Cart</li>
+                    <li>Smart Cart must be powered on</li>
+                </ul>
+                <h2>Tips</h2>
+                <ul>
+                    <li>Click and drag to rotate the 3D plot</li>
+                    <li>Scroll to zoom in/out</li>
+                    <li>Right-click and drag to pan</li>
+                </ul>
+            </section>
+        </footer>
 
-        <div id="errorDiv"></div>
-    </div>
+        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+    </main>
 
     <script type="importmap">
     {
@@ -242,6 +242,7 @@
             try {
                 setStatus('connecting', 'Select your Smart Cart...');
                 connectBtn.disabled = true;
+                errorDiv.innerHTML = '';
 
                 device = new PASCOBLEDevice();
                 const devices = await device.scan('Smart Cart');
@@ -276,7 +277,15 @@
                 console.error('Connection error:', error);
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
-                showError(`Connection failed: ${error.message}`);
+                disconnectBtn.disabled = true;
+
+                if (error.message.includes('User cancelled')) {
+                    showError('Connection cancelled by user');
+                } else if (error.message.includes('No device selected')) {
+                    showError('No device selected');
+                } else {
+                    showError(`Connection failed: ${error.message}`);
+                }
             }
         }
 

@@ -8,92 +8,102 @@
     <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Sensor X-Y Graph</h1>
+    <main class="container">
+        <header>
+            <h1>Sensor X-Y Graph</h1>
+        </header>
 
-        <div class="card">
-            <div id="status" class="status disconnected">Disconnected</div>
-            <div class="button-row">
+        <section class="card" aria-label="Connection controls">
+            <p id="status" class="status disconnected">Disconnected</p>
+            <nav class="button-row">
                 <button id="connectBtn" class="btn-primary">Connect to Sensor</button>
                 <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </div>
-        </div>
+            </nav>
+        </section>
 
-        <div class="card" id="configCard" style="display: none;">
-            <h3>Axis Configuration</h3>
-            <div class="axis-config">
+        <section class="card" id="configCard" style="display: none;" aria-label="Graph configuration">
+            <h2>Axis Configuration</h2>
+            <fieldset class="axis-config">
                 <div class="control-group">
-                    <label>X-Axis</label>
+                    <label for="xAxisSelect">X-Axis</label>
                     <select id="xAxisSelect">
                         <option value="time">Time (seconds)</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label>Y-Axis</label>
+                    <label for="yAxisSelect">Y-Axis</label>
                     <select id="yAxisSelect">
                     </select>
                 </div>
-            </div>
-            <div class="button-row" style="margin-top: 15px;">
+            </fieldset>
+            <nav class="button-row" style="margin-top: 15px;">
                 <button id="startBtn" class="btn-success" disabled>Start Recording</button>
                 <button id="stopBtn" class="btn-danger" disabled>Stop</button>
                 <button id="clearBtn" class="btn-secondary">Clear Data</button>
-                <span class="data-count" id="dataCount">0 points</span>
-            </div>
-        </div>
+                <output class="data-count" id="dataCount">0 points</output>
+            </nav>
+        </section>
 
-        <div class="card" id="chartCard" style="display: none;">
-            <div class="chart-container">
-                <canvas id="xyChart"></canvas>
-            </div>
-            <div class="current-values">
+        <section class="card" id="chartCard" style="display: none;" aria-label="Data visualization">
+            <figure class="chart-container">
+                <canvas id="xyChart" role="img" aria-label="X-Y scatter plot"></canvas>
+            </figure>
+            <dl class="current-values">
                 <div class="value-display">
-                    <div class="label" id="xLabel">X</div>
-                    <div class="value" id="xValue">--</div>
-                    <div class="unit" id="xUnit"></div>
+                    <dt class="label" id="xLabel">X</dt>
+                    <dd>
+                        <output class="value" id="xValue">--</output>
+                        <span class="unit" id="xUnit"></span>
+                    </dd>
                 </div>
                 <div class="value-display">
-                    <div class="label" id="yLabel">Y</div>
-                    <div class="value" id="yValue">--</div>
-                    <div class="unit" id="yUnit"></div>
+                    <dt class="label" id="yLabel">Y</dt>
+                    <dd>
+                        <output class="value" id="yValue">--</output>
+                        <span class="unit" id="yUnit"></span>
+                    </dd>
                 </div>
-            </div>
-            <div class="stats">
+            </dl>
+            <dl class="stats" aria-label="Statistics">
                 <div class="stat-box">
-                    <div class="label">Y Min</div>
-                    <div class="value" id="yMin">--</div>
-                </div>
-                <div class="stat-box">
-                    <div class="label">Y Max</div>
-                    <div class="value" id="yMax">--</div>
+                    <dt class="label">Y Min</dt>
+                    <dd class="value" id="yMin">--</dd>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Y Mean</div>
-                    <div class="value" id="yMean">--</div>
+                    <dt class="label">Y Max</dt>
+                    <dd class="value" id="yMax">--</dd>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Duration</div>
-                    <div class="value" id="duration">0.0s</div>
+                    <dt class="label">Y Mean</dt>
+                    <dd class="value" id="yMean">--</dd>
                 </div>
-            </div>
-        </div>
+                <div class="stat-box">
+                    <dt class="label">Duration</dt>
+                    <dd class="value" id="duration">0.0s</dd>
+                </div>
+            </dl>
+        </section>
 
-        <div class="card">
-            <div class="info">
-                <strong>About this example:</strong><br>
-                Plot sensor data as an X-Y graph where:<br>
-                - Y-axis: Any sensor measurement<br>
-                - X-axis: Time or another sensor measurement<br><br>
-                This enables parametric plotting (e.g., Force vs. Position,
-                Acceleration X vs. Acceleration Y, Voltage vs. Current).<br><br>
-                <strong>Requirements:</strong><br>
-                - Chrome or Edge browser (Web Bluetooth)<br>
-                - Any PASCO BLE sensor device
-            </div>
-        </div>
+        <footer class="card">
+            <section class="info">
+                <h2>About this example</h2>
+                <p>Plot sensor data as an X-Y graph where:</p>
+                <ul>
+                    <li>Y-axis: Any sensor measurement</li>
+                    <li>X-axis: Time or another sensor measurement</li>
+                </ul>
+                <p>This enables parametric plotting (e.g., Force vs. Position,
+                Acceleration X vs. Acceleration Y, Voltage vs. Current).</p>
+                <h2>Requirements</h2>
+                <ul>
+                    <li>Chrome or Edge browser (Web Bluetooth)</li>
+                    <li>Any PASCO BLE sensor device</li>
+                </ul>
+            </section>
+        </footer>
 
-        <div id="errorDiv"></div>
-    </div>
+        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+    </main>
 
     <script type="importmap">
     {
@@ -251,6 +261,7 @@
             try {
                 setStatus('connecting', 'Select your sensor...');
                 connectBtn.disabled = true;
+                errorDiv.innerHTML = '';
 
                 device = new PASCOBLEDevice();
                 const devices = await device.scan();
@@ -280,7 +291,15 @@
                 console.error('Connection error:', error);
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
-                showError(`Connection failed: ${error.message}`);
+                disconnectBtn.disabled = true;
+
+                if (error.message.includes('User cancelled')) {
+                    showError('Connection cancelled by user');
+                } else if (error.message.includes('No device selected')) {
+                    showError('No device selected');
+                } else {
+                    showError(`Connection failed: ${error.message}`);
+                }
             }
         }
 
