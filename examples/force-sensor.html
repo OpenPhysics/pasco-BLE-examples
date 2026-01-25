@@ -7,51 +7,57 @@
     <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Wireless Force Sensor</h1>
+    <main class="container">
+        <header>
+            <h1>Wireless Force Sensor</h1>
+        </header>
 
-        <div class="card">
-            <div id="status" class="status disconnected">Disconnected</div>
-            <div class="button-row">
+        <section class="card" aria-label="Connection controls">
+            <p id="status" class="status disconnected">Disconnected</p>
+            <nav class="button-row">
                 <button id="connectBtn" class="btn-primary">Connect to Force Sensor</button>
                 <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </div>
-        </div>
+            </nav>
+        </section>
 
-        <div class="card">
-            <div class="reading">
-                <div class="value" id="forceValue">--</div>
-                <div class="unit" id="forceUnit">N</div>
-                <div class="label">Force</div>
-            </div>
-        </div>
+        <section class="card" aria-label="Primary reading">
+            <figure class="reading">
+                <output class="value" id="forceValue">--</output>
+                <span class="unit" id="forceUnit">N</span>
+                <figcaption class="label">Force</figcaption>
+            </figure>
+        </section>
 
-        <div class="card" id="measurementsCard" style="display: none;">
-            <h3>All Measurements</h3>
-            <div id="measurementsList"></div>
-        </div>
+        <section class="card" id="measurementsCard" style="display: none;" aria-label="All measurements">
+            <h2>All Measurements</h2>
+            <dl id="measurementsList"></dl>
+        </section>
 
-        <div class="card">
-            <h3>Console Log</h3>
-            <div class="log" id="log"></div>
-        </div>
+        <section class="card" aria-label="Console output">
+            <h2>Console Log</h2>
+            <pre class="log" id="log" role="log" aria-live="polite"></pre>
+        </section>
 
-        <div class="card">
-            <div class="info">
-                <strong>About this example:</strong><br>
-                Demonstrates PASCO Wireless Force Acceleration sensor usage:<br>
-                - Large force display for easy reading<br>
-                - All available measurements shown<br>
-                - Real-time data streaming<br><br>
-                <strong>Requirements:</strong><br>
-                - Chrome or Edge browser (Web Bluetooth)<br>
-                - PASCO Wireless Force Acceleration sensor<br>
-                - Sensor must be powered on
-            </div>
-        </div>
+        <footer class="card">
+            <section class="info">
+                <h2>About this example</h2>
+                <p>Demonstrates PASCO Wireless Force Acceleration sensor usage:</p>
+                <ul>
+                    <li>Large force display for easy reading</li>
+                    <li>All available measurements shown</li>
+                    <li>Real-time data streaming</li>
+                </ul>
+                <h2>Requirements</h2>
+                <ul>
+                    <li>Chrome or Edge browser (Web Bluetooth)</li>
+                    <li>PASCO Wireless Force Acceleration sensor</li>
+                    <li>Sensor must be powered on</li>
+                </ul>
+            </section>
+        </footer>
 
-        <div id="errorDiv"></div>
-    </div>
+        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+    </main>
 
     <script type="importmap">
     {
@@ -187,8 +193,8 @@
                         const displayValue = formatNumber(value);
                         html += `
                             <div class="measurement-row">
-                                <span class="measurement-name">${name}</span>
-                                <span class="measurement-value">${displayValue} ${unit}</span>
+                                <dt class="measurement-name">${name}</dt>
+                                <dd class="measurement-value">${displayValue} ${unit}</dd>
                             </div>
                         `;
                     }

@@ -8,106 +8,117 @@
     <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    <div class="container">
-        <h1>PASCO Multi-Sensor Graph</h1>
+    <main class="container">
+        <header>
+            <h1>PASCO Multi-Sensor Graph</h1>
+        </header>
 
-        <div class="card">
-            <div class="info">
+        <section class="card" aria-label="Instructions">
+            <p class="info">
                 <strong>Instructions:</strong> Enter a sensor ID range (e.g., 628-708) to filter devices in a classroom setting.
                 Connect each sensor type, select measurements, and view real-time data on the graph below.
-            </div>
-        </div>
+            </p>
+        </section>
 
-        <div class="card">
-            <h3>Sensor ID Filter</h3>
-            <div class="id-filter">
-                <label>ID Range:</label>
-                <input type="text" id="idMin" placeholder="628" value="628">
+        <section class="card" aria-label="ID filter configuration">
+            <h2>Sensor ID Filter</h2>
+            <fieldset class="id-filter">
+                <legend class="visually-hidden">ID Range</legend>
+                <label for="idMin">ID Range:</label>
+                <input type="text" id="idMin" placeholder="628" value="628" aria-label="Minimum ID">
                 <span>to</span>
-                <input type="text" id="idMax" placeholder="708" value="708">
-            </div>
-        </div>
+                <input type="text" id="idMax" placeholder="708" value="708" aria-label="Maximum ID">
+            </fieldset>
+        </section>
 
-        <div class="sensor-grid">
-            <div class="sensor-card">
-                <h3><span class="color-indicator" style="background: #e91e63;"></span>Wireless Rotary Motion</h3>
-                <div id="rotaryStatus" class="status disconnected">Disconnected</div>
-                <button id="rotaryConnectBtn" class="btn-connect">Connect</button>
-                <button id="rotaryDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+        <section class="sensor-grid" aria-label="Sensor connections">
+            <article class="sensor-card">
+                <h2><span class="color-indicator" style="background: #e91e63;" aria-hidden="true"></span>Wireless Rotary Motion</h2>
+                <p id="rotaryStatus" class="status disconnected">Disconnected</p>
+                <nav class="button-row">
+                    <button id="rotaryConnectBtn" class="btn-connect">Connect</button>
+                    <button id="rotaryDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+                </nav>
                 <div>
-                    <label>Measurement: </label>
+                    <label for="rotaryMeasurement">Measurement: </label>
                     <select id="rotaryMeasurement" class="measurement-select" disabled>
                         <option value="">Connect sensor first</option>
                     </select>
                 </div>
-                <div class="sensor-reading">
-                    <div class="value" id="rotaryValue">--</div>
-                    <div class="unit" id="rotaryUnit"></div>
-                    <div class="label">Rotary Motion</div>
-                </div>
-            </div>
+                <figure class="sensor-reading">
+                    <output class="value" id="rotaryValue">--</output>
+                    <span class="unit" id="rotaryUnit"></span>
+                    <figcaption class="label">Rotary Motion</figcaption>
+                </figure>
+            </article>
 
-            <div class="sensor-card">
-                <h3><span class="color-indicator" style="background: #2196f3;"></span>Wireless Motion</h3>
-                <div id="motionStatus" class="status disconnected">Disconnected</div>
-                <button id="motionConnectBtn" class="btn-connect">Connect</button>
-                <button id="motionDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+            <article class="sensor-card">
+                <h2><span class="color-indicator" style="background: #2196f3;" aria-hidden="true"></span>Wireless Motion</h2>
+                <p id="motionStatus" class="status disconnected">Disconnected</p>
+                <nav class="button-row">
+                    <button id="motionConnectBtn" class="btn-connect">Connect</button>
+                    <button id="motionDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+                </nav>
                 <div>
-                    <label>Measurement: </label>
+                    <label for="motionMeasurement">Measurement: </label>
                     <select id="motionMeasurement" class="measurement-select" disabled>
                         <option value="">Connect sensor first</option>
                     </select>
                 </div>
-                <div class="sensor-reading">
-                    <div class="value" id="motionValue">--</div>
-                    <div class="unit" id="motionUnit"></div>
-                    <div class="label">Motion</div>
-                </div>
-            </div>
+                <figure class="sensor-reading">
+                    <output class="value" id="motionValue">--</output>
+                    <span class="unit" id="motionUnit"></span>
+                    <figcaption class="label">Motion</figcaption>
+                </figure>
+            </article>
 
-            <div class="sensor-card">
-                <h3><span class="color-indicator" style="background: #4caf50;"></span>Wireless Force Acceleration</h3>
-                <div id="forceStatus" class="status disconnected">Disconnected</div>
-                <button id="forceConnectBtn" class="btn-connect">Connect</button>
-                <button id="forceDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+            <article class="sensor-card">
+                <h2><span class="color-indicator" style="background: #4caf50;" aria-hidden="true"></span>Wireless Force Acceleration</h2>
+                <p id="forceStatus" class="status disconnected">Disconnected</p>
+                <nav class="button-row">
+                    <button id="forceConnectBtn" class="btn-connect">Connect</button>
+                    <button id="forceDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+                </nav>
                 <div>
-                    <label>Measurement: </label>
+                    <label for="forceMeasurement">Measurement: </label>
                     <select id="forceMeasurement" class="measurement-select" disabled>
                         <option value="">Connect sensor first</option>
                     </select>
                 </div>
-                <div class="sensor-reading">
-                    <div class="value" id="forceValue">--</div>
-                    <div class="unit" id="forceUnit"></div>
-                    <div class="label">Force/Acceleration</div>
-                </div>
-            </div>
-        </div>
+                <figure class="sensor-reading">
+                    <output class="value" id="forceValue">--</output>
+                    <span class="unit" id="forceUnit"></span>
+                    <figcaption class="label">Force/Acceleration</figcaption>
+                </figure>
+            </article>
+        </section>
 
-        <div class="card">
-            <h3>Data Graph</h3>
-            <div class="controls">
+        <section class="card" aria-label="Data visualization">
+            <h2>Data Graph</h2>
+            <nav class="controls">
                 <button id="startBtn" class="btn-start">Start Recording</button>
                 <button id="stopBtn" class="btn-stop" disabled>Stop Recording</button>
                 <button id="clearBtn" class="btn-clear">Clear Graph</button>
-                <div class="time-display">Time: <span id="timeDisplay">0.00</span> s</div>
-            </div>
-            <div class="graph-container">
-                <canvas id="dataChart"></canvas>
-            </div>
-        </div>
+                <output class="time-display">Time: <span id="timeDisplay">0.00</span> s</output>
+            </nav>
+            <figure class="graph-container">
+                <canvas id="dataChart" role="img" aria-label="Real-time sensor data chart"></canvas>
+            </figure>
+        </section>
 
-        <div class="card">
-            <div class="info">
-                <strong>Requirements:</strong><br>
-                - Chrome or Edge browser (Web Bluetooth)<br>
-                - PASCO Wireless Sensors (Rotary Motion, Motion, or Force Acceleration)<br>
-                - Sensors must be powered on
-            </div>
-        </div>
+        <footer class="card">
+            <section class="info">
+                <h2>Requirements</h2>
+                <ul>
+                    <li>Chrome or Edge browser (Web Bluetooth)</li>
+                    <li>PASCO Wireless Sensors (Rotary Motion, Motion, or Force Acceleration)</li>
+                    <li>Sensors must be powered on</li>
+                </ul>
+            </section>
+        </footer>
 
-        <div id="errorDiv"></div>
-    </div>
+        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+    </main>
 
     <script type="importmap">
     {

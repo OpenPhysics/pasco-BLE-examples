@@ -7,20 +7,22 @@
     <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Code.Node Controller</h1>
+    <main class="container">
+        <header>
+            <h1>Code.Node Controller</h1>
+        </header>
 
-        <div class="card">
-            <div id="status" class="status disconnected">Disconnected</div>
-            <div class="button-row">
+        <section class="card" aria-label="Connection controls">
+            <p id="status" class="status disconnected">Disconnected</p>
+            <nav class="button-row">
                 <button id="connectBtn" class="btn-primary">Connect to Code.Node</button>
                 <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </div>
-        </div>
+            </nav>
+        </section>
 
-        <div class="card" id="controlsCard" style="display: none;">
-            <div class="control-group">
-                <label>LED Matrix Icons</label>
+        <section class="card" id="controlsCard" style="display: none;" aria-label="Device controls">
+            <fieldset class="control-group">
+                <legend>LED Matrix Icons</legend>
                 <div class="button-grid">
                     <button class="btn-icon" data-icon="smile">Smile</button>
                     <button class="btn-icon" data-icon="heart">Heart</button>
@@ -29,66 +31,70 @@
                     <button class="btn-icon" data-icon="check">Check</button>
                     <button class="btn-icon" data-icon="cross">Cross</button>
                 </div>
-            </div>
+            </fieldset>
 
-            <div class="control-group">
-                <label>Scroll Text</label>
+            <fieldset class="control-group">
+                <legend>Scroll Text</legend>
                 <div class="text-input">
-                    <input type="text" id="scrollText" placeholder="Enter text to scroll" value="PASCO">
+                    <input type="text" id="scrollText" placeholder="Enter text to scroll" value="PASCO" aria-label="Text to scroll">
                     <button id="scrollBtn" class="btn-secondary">Scroll</button>
                 </div>
-            </div>
+            </fieldset>
 
-            <div class="control-group">
-                <label>RGB LED Color</label>
+            <fieldset class="control-group">
+                <legend>RGB LED Color</legend>
                 <div class="color-picker">
-                    <input type="color" id="colorPicker" value="#ff0000">
+                    <input type="color" id="colorPicker" value="#ff0000" aria-label="LED color">
                     <button id="setColorBtn" class="btn-secondary">Set Color</button>
                     <button id="offColorBtn" class="btn-secondary">LED Off</button>
                 </div>
-            </div>
+            </fieldset>
 
-            <div class="control-group">
-                <label>Speaker Frequency</label>
+            <fieldset class="control-group">
+                <legend>Speaker Frequency</legend>
                 <div class="slider-group">
-                    <input type="range" id="frequencySlider" min="0" max="2000" value="440">
-                    <span class="slider-value" id="frequencyValue">440 Hz</span>
+                    <input type="range" id="frequencySlider" min="0" max="2000" value="440" aria-label="Frequency">
+                    <output class="slider-value" id="frequencyValue">440 Hz</output>
                 </div>
                 <div class="button-row" style="margin-top: 10px;">
                     <button id="playToneBtn" class="btn-secondary">Play Tone</button>
                     <button id="stopToneBtn" class="btn-secondary">Stop</button>
                 </div>
-            </div>
+            </fieldset>
 
-            <div class="control-group">
-                <label>Quick Actions</label>
+            <fieldset class="control-group">
+                <legend>Quick Actions</legend>
                 <div class="button-row">
                     <button id="demoBtn" class="btn-secondary">Run Demo</button>
                     <button id="resetBtn" class="btn-danger">Reset All</button>
                 </div>
-            </div>
-        </div>
+            </fieldset>
+        </section>
 
-        <div class="card">
-            <h3>Console Log</h3>
-            <div class="log" id="log"></div>
-        </div>
+        <section class="card" aria-label="Console output">
+            <h2>Console Log</h2>
+            <pre class="log" id="log" role="log" aria-live="polite"></pre>
+        </section>
 
-        <div class="card">
-            <div class="info">
-                <strong>About this example:</strong><br>
-                Demonstrates Code.Node features:<br>
-                - 5x5 LED matrix display with icons and scrolling text<br>
-                - RGB LED color control<br>
-                - Speaker/buzzer frequency control<br><br>
-                <strong>Requirements:</strong><br>
-                - Chrome or Edge browser (Web Bluetooth)<br>
-                - PASCO Code.Node device
-            </div>
-        </div>
+        <footer class="card">
+            <section class="info">
+                <h2>About this example</h2>
+                <p>Demonstrates Code.Node features:</p>
+                <ul>
+                    <li>5x5 LED matrix display with icons and scrolling text</li>
+                    <li>RGB LED color control</li>
+                    <li>Speaker/buzzer frequency control</li>
+                </ul>
+                <h2>Requirements</h2>
+                <ul>
+                    <li>Chrome or Edge browser (Web Bluetooth)</li>
+                    <li>PASCO Code.Node device</li>
+                </ul>
+            </section>
+        </footer>
 
-        <div id="errorDiv"></div>
-    </div>
+        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+    </main>
 
     <script type="importmap">
     {
