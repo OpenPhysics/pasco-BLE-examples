@@ -5,51 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PASCO Multi-Sensor Graph</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="common.css">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .status {
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            text-align: center;
-            font-size: 14px;
-        }
-        .status.disconnected {
-            background: #ffebee;
-            color: #c62828;
-        }
-        .status.connecting {
-            background: #fff3e0;
-            color: #e65100;
-        }
-        .status.connected {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
+        /* Multi-sensor specific styles */
         .sensor-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
+            margin-bottom: 20px;
         }
         .sensor-card {
             background: white;
@@ -66,7 +29,7 @@
             display: flex;
             gap: 10px;
             align-items: center;
-            margin-bottom: 10px;
+            flex-wrap: wrap;
         }
         .id-filter label {
             font-size: 14px;
@@ -74,76 +37,38 @@
         }
         .id-filter input {
             width: 80px;
-            padding: 6px 10px;
+            padding: 8px 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 14px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 8px;
-            margin-bottom: 8px;
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .btn-connect {
-            background: #1976d2;
-            color: white;
-        }
-        .btn-connect:hover:not(:disabled) {
-            background: #1565c0;
-        }
-        .btn-disconnect {
-            background: #d32f2f;
-            color: white;
-        }
-        .btn-disconnect:hover:not(:disabled) {
-            background: #c62828;
-        }
-        .btn-clear {
-            background: #757575;
-            color: white;
-        }
-        .btn-clear:hover:not(:disabled) {
-            background: #616161;
-        }
-        .btn-start {
-            background: #388e3c;
-            color: white;
-        }
-        .btn-start:hover:not(:disabled) {
-            background: #2e7d32;
-        }
-        .btn-stop {
-            background: #f57c00;
-            color: white;
-        }
-        .btn-stop:hover:not(:disabled) {
-            background: #ef6c00;
-        }
-        .reading {
+        .btn-connect { background: #1976d2; color: white; }
+        .btn-connect:hover:not(:disabled) { background: #1565c0; }
+        .btn-disconnect { background: #d32f2f; color: white; }
+        .btn-disconnect:hover:not(:disabled) { background: #c62828; }
+        .btn-clear { background: #757575; color: white; }
+        .btn-clear:hover:not(:disabled) { background: #616161; }
+        .btn-start { background: #388e3c; color: white; }
+        .btn-start:hover:not(:disabled) { background: #2e7d32; }
+        .btn-stop { background: #f57c00; color: white; }
+        .btn-stop:hover:not(:disabled) { background: #ef6c00; }
+        .sensor-reading {
             text-align: center;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 4px;
             margin-top: 10px;
         }
-        .reading .value {
-            font-size: 36px;
+        .sensor-reading .value {
+            font-size: clamp(24px, 6vw, 36px);
             font-weight: bold;
             color: #1976d2;
         }
-        .reading .unit {
+        .sensor-reading .unit {
             font-size: 16px;
             color: #666;
         }
-        .reading .label {
+        .sensor-reading .label {
             font-size: 12px;
             color: #999;
             margin-top: 5px;
@@ -165,26 +90,14 @@
             color: #666;
             margin-left: auto;
         }
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-        .info {
-            background: #e3f2fd;
-            color: #1565c0;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
         .measurement-select {
-            padding: 6px 10px;
+            padding: 8px 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
             min-width: 150px;
+            width: 100%;
+            max-width: 250px;
         }
         .color-indicator {
             display: inline-block;
@@ -193,110 +106,122 @@
             border-radius: 50%;
             margin-right: 8px;
         }
+        @media (max-width: 768px) {
+            .sensor-grid { grid-template-columns: 1fr; }
+            .graph-container { height: 300px; }
+            .controls { justify-content: center; }
+            .time-display { width: 100%; text-align: center; margin-left: 0; }
+        }
+        @media (max-width: 480px) {
+            .sensor-card { padding: 12px; }
+            button { width: 100%; margin-right: 0; }
+            .id-filter { flex-direction: column; align-items: stretch; }
+            .id-filter input { width: 100%; }
+            .measurement-select { max-width: none; }
+        }
     </style>
 </head>
 <body>
-    <h1>PASCO Multi-Sensor Graph</h1>
+    <div class="container">
+        <h1>PASCO Multi-Sensor Graph</h1>
 
-    <div class="card">
-        <div class="info">
-            <strong>Instructions:</strong> Enter a sensor ID range (e.g., 628-708) to filter devices in a classroom setting.
-            Connect each sensor type, select measurements, and view real-time data on the graph below.
+        <div class="card">
+            <div class="info">
+                <strong>Instructions:</strong> Enter a sensor ID range (e.g., 628-708) to filter devices in a classroom setting.
+                Connect each sensor type, select measurements, and view real-time data on the graph below.
+            </div>
         </div>
+
+        <div class="card">
+            <h3>Sensor ID Filter</h3>
+            <div class="id-filter">
+                <label>ID Range:</label>
+                <input type="text" id="idMin" placeholder="628" value="628">
+                <span>to</span>
+                <input type="text" id="idMax" placeholder="708" value="708">
+            </div>
+        </div>
+
+        <div class="sensor-grid">
+            <div class="sensor-card">
+                <h3><span class="color-indicator" style="background: #e91e63;"></span>Wireless Rotary Motion</h3>
+                <div id="rotaryStatus" class="status disconnected">Disconnected</div>
+                <button id="rotaryConnectBtn" class="btn-connect">Connect</button>
+                <button id="rotaryDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+                <div>
+                    <label>Measurement: </label>
+                    <select id="rotaryMeasurement" class="measurement-select" disabled>
+                        <option value="">Connect sensor first</option>
+                    </select>
+                </div>
+                <div class="sensor-reading">
+                    <div class="value" id="rotaryValue">--</div>
+                    <div class="unit" id="rotaryUnit"></div>
+                    <div class="label">Rotary Motion</div>
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <h3><span class="color-indicator" style="background: #2196f3;"></span>Wireless Motion</h3>
+                <div id="motionStatus" class="status disconnected">Disconnected</div>
+                <button id="motionConnectBtn" class="btn-connect">Connect</button>
+                <button id="motionDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+                <div>
+                    <label>Measurement: </label>
+                    <select id="motionMeasurement" class="measurement-select" disabled>
+                        <option value="">Connect sensor first</option>
+                    </select>
+                </div>
+                <div class="sensor-reading">
+                    <div class="value" id="motionValue">--</div>
+                    <div class="unit" id="motionUnit"></div>
+                    <div class="label">Motion</div>
+                </div>
+            </div>
+
+            <div class="sensor-card">
+                <h3><span class="color-indicator" style="background: #4caf50;"></span>Wireless Force Acceleration</h3>
+                <div id="forceStatus" class="status disconnected">Disconnected</div>
+                <button id="forceConnectBtn" class="btn-connect">Connect</button>
+                <button id="forceDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+                <div>
+                    <label>Measurement: </label>
+                    <select id="forceMeasurement" class="measurement-select" disabled>
+                        <option value="">Connect sensor first</option>
+                    </select>
+                </div>
+                <div class="sensor-reading">
+                    <div class="value" id="forceValue">--</div>
+                    <div class="unit" id="forceUnit"></div>
+                    <div class="label">Force/Acceleration</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Data Graph</h3>
+            <div class="controls">
+                <button id="startBtn" class="btn-start">Start Recording</button>
+                <button id="stopBtn" class="btn-stop" disabled>Stop Recording</button>
+                <button id="clearBtn" class="btn-clear">Clear Graph</button>
+                <div class="time-display">Time: <span id="timeDisplay">0.00</span> s</div>
+            </div>
+            <div class="graph-container">
+                <canvas id="dataChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="info">
+                <strong>Requirements:</strong><br>
+                - Chrome or Edge browser (Web Bluetooth)<br>
+                - PASCO Wireless Sensors (Rotary Motion, Motion, or Force Acceleration)<br>
+                - Sensors must be powered on
+            </div>
+        </div>
+
+        <div id="errorDiv"></div>
     </div>
-
-    <div class="card">
-        <h3>Sensor ID Filter</h3>
-        <div class="id-filter">
-            <label>ID Range:</label>
-            <input type="text" id="idMin" placeholder="628" value="628">
-            <span>to</span>
-            <input type="text" id="idMax" placeholder="708" value="708">
-        </div>
-    </div>
-
-    <div class="sensor-grid">
-        <!-- Rotary Motion Sensor -->
-        <div class="sensor-card">
-            <h3><span class="color-indicator" style="background: #e91e63;"></span>Wireless Rotary Motion</h3>
-            <div id="rotaryStatus" class="status disconnected">Disconnected</div>
-            <button id="rotaryConnectBtn" class="btn-connect">Connect</button>
-            <button id="rotaryDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
-            <div>
-                <label>Measurement: </label>
-                <select id="rotaryMeasurement" class="measurement-select" disabled>
-                    <option value="">Connect sensor first</option>
-                </select>
-            </div>
-            <div class="reading">
-                <div class="value" id="rotaryValue">--</div>
-                <div class="unit" id="rotaryUnit"></div>
-                <div class="label">Rotary Motion</div>
-            </div>
-        </div>
-
-        <!-- Motion Sensor -->
-        <div class="sensor-card">
-            <h3><span class="color-indicator" style="background: #2196f3;"></span>Wireless Motion</h3>
-            <div id="motionStatus" class="status disconnected">Disconnected</div>
-            <button id="motionConnectBtn" class="btn-connect">Connect</button>
-            <button id="motionDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
-            <div>
-                <label>Measurement: </label>
-                <select id="motionMeasurement" class="measurement-select" disabled>
-                    <option value="">Connect sensor first</option>
-                </select>
-            </div>
-            <div class="reading">
-                <div class="value" id="motionValue">--</div>
-                <div class="unit" id="motionUnit"></div>
-                <div class="label">Motion</div>
-            </div>
-        </div>
-
-        <!-- Force Acceleration Sensor -->
-        <div class="sensor-card">
-            <h3><span class="color-indicator" style="background: #4caf50;"></span>Wireless Force Acceleration</h3>
-            <div id="forceStatus" class="status disconnected">Disconnected</div>
-            <button id="forceConnectBtn" class="btn-connect">Connect</button>
-            <button id="forceDisconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
-            <div>
-                <label>Measurement: </label>
-                <select id="forceMeasurement" class="measurement-select" disabled>
-                    <option value="">Connect sensor first</option>
-                </select>
-            </div>
-            <div class="reading">
-                <div class="value" id="forceValue">--</div>
-                <div class="unit" id="forceUnit"></div>
-                <div class="label">Force/Acceleration</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>Data Graph</h3>
-        <div class="controls">
-            <button id="startBtn" class="btn-start">Start Recording</button>
-            <button id="stopBtn" class="btn-stop" disabled>Stop Recording</button>
-            <button id="clearBtn" class="btn-clear">Clear Graph</button>
-            <div class="time-display">Time: <span id="timeDisplay">0.00</span> s</div>
-        </div>
-        <div class="graph-container">
-            <canvas id="dataChart"></canvas>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <strong>Requirements:</strong><br>
-            - Chrome or Edge browser (Web Bluetooth)<br>
-            - PASCO Wireless Sensors (Rotary Motion, Motion, or Force Acceleration)<br>
-            - Sensors must be powered on
-        </div>
-    </div>
-
-    <div id="errorDiv"></div>
 
     <script type="importmap">
     {
@@ -308,8 +233,8 @@
 
     <script type="module">
         import { PASCOBLEDevice } from '../dist/index.js';
+        import { showError as showErrorUtil, formatNumber } from './common.js';
 
-        // Sensor configurations
         const sensors = {
             rotary: {
                 name: 'Rotary Motion',
@@ -355,39 +280,14 @@
             }
         };
 
-        // Chart setup
         const ctx = document.getElementById('dataChart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: [
-                    {
-                        label: 'Rotary Motion',
-                        data: [],
-                        borderColor: '#e91e63',
-                        backgroundColor: 'rgba(233, 30, 99, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.1
-                    },
-                    {
-                        label: 'Motion',
-                        data: [],
-                        borderColor: '#2196f3',
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.1
-                    },
-                    {
-                        label: 'Force Accel',
-                        data: [],
-                        borderColor: '#4caf50',
-                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.1
-                    }
+                    { label: 'Rotary Motion', data: [], borderColor: '#e91e63', backgroundColor: 'rgba(233, 30, 99, 0.1)', borderWidth: 2, pointRadius: 0, tension: 0.1 },
+                    { label: 'Motion', data: [], borderColor: '#2196f3', backgroundColor: 'rgba(33, 150, 243, 0.1)', borderWidth: 2, pointRadius: 0, tension: 0.1 },
+                    { label: 'Force Accel', data: [], borderColor: '#4caf50', backgroundColor: 'rgba(76, 175, 80, 0.1)', borderWidth: 2, pointRadius: 0, tension: 0.1 }
                 ]
             },
             options: {
@@ -395,31 +295,13 @@
                 maintainAspectRatio: false,
                 animation: false,
                 scales: {
-                    x: {
-                        type: 'linear',
-                        title: {
-                            display: true,
-                            text: 'Time (s)'
-                        },
-                        min: 0
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Value'
-                        }
-                    }
+                    x: { type: 'linear', title: { display: true, text: 'Time (s)' }, min: 0 },
+                    y: { title: { display: true, text: 'Value' } }
                 },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                }
+                plugins: { legend: { display: true, position: 'top' } }
             }
         });
 
-        // State
         let isRecording = false;
         let startTime = null;
         let readingInterval = null;
@@ -433,56 +315,41 @@
         const timeDisplay = document.getElementById('timeDisplay');
         const errorDiv = document.getElementById('errorDiv');
 
+        const showError = (message) => showErrorUtil(errorDiv, message);
+
         function setStatus(sensor, status, text) {
             sensor.elements.status.className = 'status ' + status;
             sensor.elements.status.textContent = text;
         }
 
-        function showError(message) {
-            errorDiv.innerHTML = `<div class="error">${message}</div>`;
-            setTimeout(() => errorDiv.innerHTML = '', 5000);
-        }
-
         function getIdFilter() {
             const min = idMin.value.trim();
             const max = idMax.value.trim();
-            if (min && max) {
-                return { min: parseInt(min), max: parseInt(max) };
-            }
+            if (min && max) return { min: parseInt(min), max: parseInt(max) };
             return null;
         }
 
         function deviceMatchesIdFilter(deviceName, filter) {
             if (!filter) return true;
-
-            // Extract ID from device name (e.g., "Force Accel 628-708" -> "628-708")
             const match = deviceName.match(/(\d+)-(\d+)$/);
-            if (!match) return true; // If no ID pattern found, allow device
-
+            if (!match) return true;
             const deviceId = parseInt(match[1]);
             return deviceId >= filter.min && deviceId <= filter.max;
         }
 
         async function connectSensor(sensorKey) {
             const sensor = sensors[sensorKey];
-
             try {
                 setStatus(sensor, 'connecting', 'Select your sensor...');
                 sensor.elements.connectBtn.disabled = true;
                 errorDiv.innerHTML = '';
 
                 sensor.device = new PASCOBLEDevice();
-
-                // Scan for devices
                 const devices = await sensor.device.scan(sensor.filter);
 
-                if (devices.length === 0) {
-                    throw new Error('No device selected');
-                }
+                if (devices.length === 0) throw new Error('No device selected');
 
                 const selectedDevice = devices[0];
-
-                // Check ID filter
                 const idFilter = getIdFilter();
                 if (idFilter && !deviceMatchesIdFilter(selectedDevice.name, idFilter)) {
                     throw new Error(`Device ID not in range ${idFilter.min}-${idFilter.max}`);
@@ -495,7 +362,6 @@
                 sensor.elements.connectBtn.disabled = true;
                 sensor.elements.disconnectBtn.disabled = false;
 
-                // Populate measurement dropdown
                 const measurements = sensor.device.getMeasurementList();
                 sensor.elements.measurement.innerHTML = '';
                 measurements.forEach(m => {
@@ -505,8 +371,6 @@
                     sensor.elements.measurement.appendChild(option);
                 });
                 sensor.elements.measurement.disabled = false;
-
-                // Set initial unit
                 updateUnit(sensorKey);
 
             } catch (error) {
@@ -515,26 +379,17 @@
                 sensor.elements.connectBtn.disabled = false;
                 sensor.elements.disconnectBtn.disabled = true;
                 sensor.device = null;
-
-                if (error.message.includes('User cancelled')) {
-                    showError('Connection cancelled by user');
-                } else if (error.message.includes('No device selected')) {
-                    showError('No device selected');
-                } else {
-                    showError(`Connection failed: ${error.message}`);
-                }
+                showError(`Connection failed: ${error.message}`);
             }
         }
 
         async function disconnectSensor(sensorKey) {
             const sensor = sensors[sensorKey];
-
             try {
                 if (sensor.device) {
                     await sensor.device.disconnect();
                     sensor.device = null;
                 }
-
                 setStatus(sensor, 'disconnected', 'Disconnected');
                 sensor.elements.connectBtn.disabled = false;
                 sensor.elements.disconnectBtn.disabled = true;
@@ -542,9 +397,7 @@
                 sensor.elements.unit.textContent = '';
                 sensor.elements.measurement.innerHTML = '<option value="">Connect sensor first</option>';
                 sensor.elements.measurement.disabled = true;
-
             } catch (error) {
-                console.error('Disconnect error:', error);
                 showError(`Disconnect error: ${error.message}`);
             }
         }
@@ -569,20 +422,11 @@
                     if (measurementName) {
                         try {
                             const data = await sensor.device.readData(measurementName);
-
                             if (data !== null && data !== undefined) {
-                                // Update display
-                                sensor.elements.value.textContent = data.toFixed(3);
-
-                                // Add to chart if recording
+                                sensor.elements.value.textContent = formatNumber(data);
                                 if (isRecording) {
                                     const datasetIndex = datasetIndices[key];
-                                    chart.data.datasets[datasetIndex].data.push({
-                                        x: currentTime,
-                                        y: data
-                                    });
-
-                                    // Limit data points
+                                    chart.data.datasets[datasetIndex].data.push({ x: currentTime, y: data });
                                     if (chart.data.datasets[datasetIndex].data.length > maxDataPoints) {
                                         chart.data.datasets[datasetIndex].data.shift();
                                     }
@@ -594,10 +438,7 @@
                     }
                 }
             }
-
-            if (isRecording) {
-                chart.update('none');
-            }
+            if (isRecording) chart.update('none');
         }
 
         function startRecording() {
@@ -605,8 +446,6 @@
             startTime = Date.now();
             startBtn.disabled = true;
             stopBtn.disabled = false;
-
-            // Start reading at 20 Hz
             readingInterval = setInterval(readSensorData, 50);
         }
 
@@ -614,7 +453,6 @@
             isRecording = false;
             startBtn.disabled = false;
             stopBtn.disabled = true;
-
             if (readingInterval) {
                 clearInterval(readingInterval);
                 readingInterval = null;
@@ -622,33 +460,26 @@
         }
 
         function clearGraph() {
-            chart.data.datasets.forEach(dataset => {
-                dataset.data = [];
-            });
+            chart.data.datasets.forEach(dataset => { dataset.data = []; });
             chart.update();
             timeDisplay.textContent = '0.00';
             startTime = null;
         }
 
-        // Event listeners for sensor connections
         for (const [key, sensor] of Object.entries(sensors)) {
             sensor.elements.connectBtn.addEventListener('click', () => connectSensor(key));
             sensor.elements.disconnectBtn.addEventListener('click', () => disconnectSensor(key));
             sensor.elements.measurement.addEventListener('change', () => updateUnit(key));
         }
 
-        // Control buttons
         startBtn.addEventListener('click', startRecording);
         stopBtn.addEventListener('click', stopRecording);
         clearBtn.addEventListener('click', clearGraph);
 
-        // Handle page unload
         window.addEventListener('beforeunload', () => {
             stopRecording();
             for (const sensor of Object.values(sensors)) {
-                if (sensor.device && sensor.device.isConnected()) {
-                    sensor.device.disconnect();
-                }
+                if (sensor.device && sensor.device.isConnected()) sensor.device.disconnect();
             }
         });
     </script>

@@ -4,158 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PASCO Wireless Motion Sensor</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .status {
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .status.disconnected {
-            background: #ffebee;
-            color: #c62828;
-        }
-        .status.connecting {
-            background: #fff3e0;
-            color: #e65100;
-        }
-        .status.connected {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-        button {
-            width: 100%;
-            padding: 12px 24px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        #connectBtn {
-            background: #1976d2;
-            color: white;
-        }
-        #connectBtn:hover:not(:disabled) {
-            background: #1565c0;
-        }
-        #disconnectBtn {
-            background: #d32f2f;
-            color: white;
-        }
-        #disconnectBtn:hover:not(:disabled) {
-            background: #c62828;
-        }
-        .reading {
-            text-align: center;
-            padding: 30px;
-        }
-        .reading .value {
-            font-size: 72px;
-            font-weight: bold;
-            color: #1976d2;
-        }
-        .reading .unit {
-            font-size: 24px;
-            color: #666;
-        }
-        .reading .label {
-            font-size: 14px;
-            color: #999;
-            margin-top: 10px;
-        }
-        .measurements {
-            margin-top: 20px;
-        }
-        .measurement-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .measurement-row:last-child {
-            border-bottom: none;
-        }
-        .measurement-name {
-            color: #666;
-        }
-        .measurement-value {
-            font-weight: bold;
-            color: #333;
-        }
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-        .info {
-            background: #e3f2fd;
-            color: #1565c0;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    <h1>Wireless Motion Sensor</h1>
+    <div class="container">
+        <h1>Wireless Motion Sensor</h1>
 
-    <div class="card">
-        <div id="status" class="status disconnected">Disconnected</div>
-        <button id="connectBtn">Connect to Motion Sensor</button>
-        <button id="disconnectBtn" disabled>Disconnect</button>
-    </div>
-
-    <div class="card">
-        <div class="reading">
-            <div class="value" id="positionValue">--</div>
-            <div class="unit" id="positionUnit">m</div>
-            <div class="label">Position</div>
+        <div class="card">
+            <div id="status" class="status disconnected">Disconnected</div>
+            <div class="button-row">
+                <button id="connectBtn" class="btn-primary">Connect to Motion Sensor</button>
+                <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
+            </div>
         </div>
-    </div>
 
-    <div class="card measurements" id="measurementsCard" style="display: none;">
-        <h3>All Measurements</h3>
-        <div id="measurementsList"></div>
-    </div>
-
-    <div class="card">
-        <div class="info">
-            <strong>Requirements:</strong><br>
-            - Chrome or Edge browser (Web Bluetooth)<br>
-            - PASCO Wireless Motion Sensor<br>
-            - Sensor must be powered on
+        <div class="card">
+            <div class="reading">
+                <div class="value" id="positionValue">--</div>
+                <div class="unit" id="positionUnit">m</div>
+                <div class="label">Position</div>
+            </div>
         </div>
-    </div>
 
-    <div id="errorDiv"></div>
+        <div class="card" id="measurementsCard" style="display: none;">
+            <h3>All Measurements</h3>
+            <div id="measurementsList"></div>
+        </div>
+
+        <div class="card">
+            <div class="info">
+                <strong>Requirements:</strong><br>
+                - Chrome or Edge browser (Web Bluetooth)<br>
+                - PASCO Wireless Motion Sensor<br>
+                - Sensor must be powered on
+            </div>
+        </div>
+
+        <div id="errorDiv"></div>
+    </div>
 
     <script type="importmap">
     {
@@ -167,6 +53,12 @@
 
     <script type="module">
         import { PASCOBLEDevice } from '../dist/index.js';
+        import {
+            setStatus as setStatusUtil,
+            showError as showErrorUtil,
+            formatNumber,
+            setupDisconnectOnUnload
+        } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -180,15 +72,8 @@
         let device = null;
         let readingInterval = null;
 
-        function setStatus(status, text) {
-            statusDiv.className = 'status ' + status;
-            statusDiv.textContent = text;
-        }
-
-        function showError(message) {
-            errorDiv.innerHTML = `<div class="error">${message}</div>`;
-            setTimeout(() => errorDiv.innerHTML = '', 5000);
-        }
+        const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
+        const showError = (message) => showErrorUtil(errorDiv, message);
 
         async function connect() {
             try {
@@ -197,8 +82,6 @@
                 errorDiv.innerHTML = '';
 
                 device = new PASCOBLEDevice();
-
-                // Scan for Motion sensor devices (shows browser picker)
                 const devices = await device.scan('Motion');
 
                 if (devices.length === 0) {
@@ -212,20 +95,15 @@
                 connectBtn.disabled = true;
                 disconnectBtn.disabled = false;
 
-                // Get available measurements
                 const measurements = device.getMeasurementList();
                 console.log('Available measurements:', measurements);
 
-                // Get position unit
                 const unit = device.getMeasurementUnit('Position');
                 if (unit) {
                     positionUnit.textContent = unit;
                 }
 
-                // Show measurements card
                 measurementsCard.style.display = 'block';
-
-                // Start reading data
                 startReading();
 
             } catch (error) {
@@ -274,21 +152,18 @@
                 }
 
                 try {
-                    // Read all available measurements
                     const measurements = device.getMeasurementList();
                     const data = await device.readDataList(measurements);
 
-                    // Update position display
                     if (data['Position'] !== null && data['Position'] !== undefined) {
                         positionValue.textContent = data['Position'].toFixed(3);
                     }
 
-                    // Update all measurements list
                     let html = '';
                     for (const name of measurements) {
                         const value = data[name];
                         const unit = device.getMeasurementUnit(name) || '';
-                        const displayValue = value !== null ? value.toFixed(3) : '--';
+                        const displayValue = formatNumber(value);
                         html += `
                             <div class="measurement-row">
                                 <span class="measurement-name">${name}</span>
@@ -301,7 +176,7 @@
                 } catch (error) {
                     console.error('Read error:', error);
                 }
-            }, 100); // Read at 10 Hz
+            }, 100);
         }
 
         function stopReading() {
@@ -311,16 +186,9 @@
             }
         }
 
-        // Event listeners
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
-
-        // Handle page unload
-        window.addEventListener('beforeunload', () => {
-            if (device && device.isConnected()) {
-                device.disconnect();
-            }
-        });
+        setupDisconnectOnUnload(() => device);
     </script>
 </body>
 </html>
