@@ -18,6 +18,8 @@
             <h1>PASCO Multi-Sensor Graph</h1>
         </header>
 
+        <div id="browser-warning" style="display: none;"></div>
+
         <section class="card" aria-label="Instructions">
             <p class="info">
                 <strong>Instructions:</strong> Enter a sensor ID range (e.g., 628-708) to filter devices in a classroom setting.
@@ -138,7 +140,19 @@
 
     <script type="module">
         import { PASCOBLEDevice } from 'pasco-ble';
-        import { showError as showErrorUtil, formatNumber, exportToCSV, generateExportFilename } from './common.js';
+        import {
+            showError as showErrorUtil,
+            formatNumber,
+            exportToCSV,
+            generateExportFilename,
+            checkBrowserSupport,
+            createAutoReconnect
+        } from './common.js';
+
+        // Check browser support first
+        if (!checkBrowserSupport()) {
+            document.querySelectorAll('.btn-connect').forEach(btn => btn.disabled = true);
+        }
 
         const sensors = {
             rotary: {
@@ -146,6 +160,8 @@
                 filter: 'Rotary Motion',
                 color: '#e91e63',
                 device: null,
+                reconnect: null,
+                lastConnectedDevice: null,
                 elements: {
                     status: document.getElementById('rotaryStatus'),
                     connectBtn: document.getElementById('rotaryConnectBtn'),
@@ -160,6 +176,8 @@
                 filter: 'Motion',
                 color: '#2196f3',
                 device: null,
+                reconnect: null,
+                lastConnectedDevice: null,
                 elements: {
                     status: document.getElementById('motionStatus'),
                     connectBtn: document.getElementById('motionConnectBtn'),
@@ -174,6 +192,8 @@
                 filter: 'Force Accel',
                 color: '#4caf50',
                 device: null,
+                reconnect: null,
+                lastConnectedDevice: null,
                 elements: {
                     status: document.getElementById('forceStatus'),
                     connectBtn: document.getElementById('forceConnectBtn'),
@@ -242,28 +262,39 @@
             return deviceId >= filter.min && deviceId <= filter.max;
         }
 
-        async function connectSensor(sensorKey) {
+        async function connectSensor(sensorKey, isReconnect = false) {
             const sensor = sensors[sensorKey];
             try {
-                setStatus(sensor, 'connecting', 'Select your sensor...');
-                sensor.elements.connectBtn.disabled = true;
-                errorDiv.innerHTML = '';
+                if (!isReconnect) {
+                    setStatus(sensor, 'connecting', 'Select your sensor...');
+                    sensor.elements.connectBtn.disabled = true;
+                    errorDiv.innerHTML = '';
 
-                sensor.device = new PASCOBLEDevice();
-                const devices = await sensor.device.scan(sensor.filter);
+                    sensor.device = new PASCOBLEDevice();
+                    const devices = await sensor.device.scan(sensor.filter);
 
-                if (devices.length === 0) throw new Error('No device selected');
+                    if (devices.length === 0) throw new Error('No device selected');
 
-                const selectedDevice = devices[0];
-                const idFilter = getIdFilter();
-                if (idFilter && !deviceMatchesIdFilter(selectedDevice.name, idFilter)) {
-                    throw new Error(`Device ID not in range ${idFilter.min}-${idFilter.max}`);
+                    const selectedDevice = devices[0];
+                    const idFilter = getIdFilter();
+                    if (idFilter && !deviceMatchesIdFilter(selectedDevice.name, idFilter)) {
+                        throw new Error(`Device ID not in range ${idFilter.min}-${idFilter.max}`);
+                    }
+
+                    sensor.lastConnectedDevice = selectedDevice;
+                    setStatus(sensor, 'connecting', 'Connecting...');
+                    await sensor.device.connect(selectedDevice);
+                } else {
+                    // Reconnect to last known device
+                    setStatus(sensor, 'connecting', 'Reconnecting...');
+                    sensor.device = new PASCOBLEDevice();
+                    const devices = await sensor.device.scan(sensor.filter);
+                    const targetDevice = devices.find(d => d.name === sensor.lastConnectedDevice?.name) || devices[0];
+                    if (!targetDevice) throw new Error('Device not found');
+                    await sensor.device.connect(targetDevice);
                 }
 
-                setStatus(sensor, 'connecting', 'Connecting...');
-                await sensor.device.connect(selectedDevice);
-
-                setStatus(sensor, 'connected', `Connected: ${selectedDevice.name}`);
+                setStatus(sensor, 'connected', `Connected: ${sensor.lastConnectedDevice?.name || 'Unknown'}`);
                 sensor.elements.connectBtn.disabled = true;
                 sensor.elements.disconnectBtn.disabled = false;
 
@@ -278,23 +309,57 @@
                 sensor.elements.measurement.disabled = false;
                 updateUnit(sensorKey);
 
+                // Set up auto-reconnect
+                if (!sensor.reconnect) {
+                    sensor.reconnect = createAutoReconnect({
+                        connect: () => connectSensor(sensorKey, true),
+                        onReconnecting: (attempt, max) => {
+                            setStatus(sensor, 'connecting', `Reconnecting (${attempt}/${max})...`);
+                        },
+                        onReconnected: () => {
+                            console.log(`${sensor.name} reconnected successfully`);
+                        },
+                        onReconnectFailed: () => {
+                            setStatus(sensor, 'disconnected', 'Reconnect failed');
+                            sensor.elements.connectBtn.disabled = false;
+                            sensor.elements.disconnectBtn.disabled = true;
+                        }
+                    });
+                }
+
             } catch (error) {
                 console.error('Connection error:', error);
                 setStatus(sensor, 'disconnected', 'Disconnected');
                 sensor.elements.connectBtn.disabled = false;
                 sensor.elements.disconnectBtn.disabled = true;
                 sensor.device = null;
-                showError(`Connection failed: ${error.message}`);
+                if (!isReconnect) {
+                    showError(`Connection failed: ${error.message}`);
+                }
+                throw error; // Re-throw for auto-reconnect to handle
             }
         }
 
-        async function disconnectSensor(sensorKey) {
+        async function disconnectSensor(sensorKey, unexpected = false) {
             const sensor = sensors[sensorKey];
             try {
+                // Stop auto-reconnect if manually disconnecting
+                if (!unexpected && sensor.reconnect) {
+                    sensor.reconnect.stop();
+                }
+
                 if (sensor.device) {
                     await sensor.device.disconnect();
                     sensor.device = null;
                 }
+
+                // If unexpected disconnect and we have auto-reconnect, try to reconnect
+                if (unexpected && sensor.reconnect && sensor.lastConnectedDevice) {
+                    sensor.reconnect.reset();
+                    sensor.reconnect.start();
+                    return;
+                }
+
                 setStatus(sensor, 'disconnected', 'Disconnected');
                 sensor.elements.connectBtn.disabled = false;
                 sensor.elements.disconnectBtn.disabled = true;
@@ -302,6 +367,7 @@
                 sensor.elements.unit.textContent = '';
                 sensor.elements.measurement.innerHTML = '<option value="">Connect sensor first</option>';
                 sensor.elements.measurement.disabled = true;
+                sensor.lastConnectedDevice = null;
             } catch (error) {
                 showError(`Disconnect error: ${error.message}`);
             }
@@ -322,23 +388,32 @@
             const datasetIndices = { rotary: 0, motion: 1, force: 2 };
 
             for (const [key, sensor] of Object.entries(sensors)) {
-                if (sensor.device && sensor.device.isConnected()) {
-                    const measurementName = sensor.elements.measurement.value;
-                    if (measurementName) {
-                        try {
-                            const data = await sensor.device.readData(measurementName);
-                            if (data !== null && data !== undefined) {
-                                sensor.elements.value.textContent = formatNumber(data);
-                                if (isRecording) {
-                                    const datasetIndex = datasetIndices[key];
-                                    chart.data.datasets[datasetIndex].data.push({ x: currentTime, y: data });
-                                    if (chart.data.datasets[datasetIndex].data.length > maxDataPoints) {
-                                        chart.data.datasets[datasetIndex].data.shift();
+                if (sensor.device) {
+                    // Check for unexpected disconnection
+                    if (!sensor.device.isConnected() && sensor.lastConnectedDevice) {
+                        console.log(`${sensor.name} unexpectedly disconnected, attempting reconnect...`);
+                        disconnectSensor(key, true); // Trigger auto-reconnect
+                        continue;
+                    }
+
+                    if (sensor.device.isConnected()) {
+                        const measurementName = sensor.elements.measurement.value;
+                        if (measurementName) {
+                            try {
+                                const data = await sensor.device.readData(measurementName);
+                                if (data !== null && data !== undefined) {
+                                    sensor.elements.value.textContent = formatNumber(data);
+                                    if (isRecording) {
+                                        const datasetIndex = datasetIndices[key];
+                                        chart.data.datasets[datasetIndex].data.push({ x: currentTime, y: data });
+                                        if (chart.data.datasets[datasetIndex].data.length > maxDataPoints) {
+                                            chart.data.datasets[datasetIndex].data.shift();
+                                        }
                                     }
                                 }
+                            } catch (error) {
+                                console.error(`Read error for ${key}:`, error);
                             }
-                        } catch (error) {
-                            console.error(`Read error for ${key}:`, error);
                         }
                     }
                 }
