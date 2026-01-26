@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "serve": "npx serve .",
-    "start": "npx serve ."
+    "start": "npx serve .",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
   },
   "keywords": [
     "pasco",
@@ -27,5 +31,8 @@
   "homepage": "https://github.com/veillette/pasco-BLE-examples#readme",
   "dependencies": {
     "pasco-ble": "^0.3.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.0"
   }
 }
