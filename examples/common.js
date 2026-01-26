@@ -37,8 +37,8 @@ export const RECONNECT_BASE_DELAY_MS = 1000;
  * @param {string} text - Status text to display
  */
 export function setStatus(element, status, text) {
-	element.className = 'status ' + status;
-	element.textContent = text;
+  element.className = `status ${status}`;
+  element.textContent = text;
 }
 
 /**
@@ -48,26 +48,26 @@ export function setStatus(element, status, text) {
  * @param {number} duration - Duration in ms (default 5000, 0 for persistent)
  */
 export function showError(container, message, duration = 5000) {
-	const errorDiv = document.createElement('div');
-	errorDiv.className = 'error';
-	errorDiv.innerHTML = `
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error';
+  errorDiv.innerHTML = `
 		<span class="error-message">${escapeHtml(message)}</span>
 		<button class="error-close" aria-label="Close error message" type="button">&times;</button>
 	`;
 
-	const closeBtn = errorDiv.querySelector('.error-close');
-	closeBtn.addEventListener('click', () => errorDiv.remove());
+  const closeBtn = errorDiv.querySelector('.error-close');
+  closeBtn.addEventListener('click', () => errorDiv.remove());
 
-	container.innerHTML = '';
-	container.appendChild(errorDiv);
+  container.innerHTML = '';
+  container.appendChild(errorDiv);
 
-	if (duration > 0) {
-		setTimeout(() => {
-			if (container.contains(errorDiv)) {
-				errorDiv.remove();
-			}
-		}, duration);
-	}
+  if (duration > 0) {
+    setTimeout(() => {
+      if (container.contains(errorDiv)) {
+        errorDiv.remove();
+      }
+    }, duration);
+  }
 }
 
 /**
@@ -76,9 +76,9 @@ export function showError(container, message, duration = 5000) {
  * @returns {string} Escaped text
  */
 export function escapeHtml(text) {
-	const div = document.createElement('div');
-	div.textContent = text;
-	return div.innerHTML;
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 /**
@@ -87,14 +87,14 @@ export function escapeHtml(text) {
  * @returns {function} Log function
  */
 export function createLogger(logElement) {
-	return function log(message) {
-		const entry = document.createElement('div');
-		entry.className = 'log-entry';
-		entry.textContent = `> ${message}`;
-		logElement.appendChild(entry);
-		logElement.scrollTop = logElement.scrollHeight;
-		console.log(message);
-	};
+  return function log(message) {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.textContent = `> ${message}`;
+    logElement.appendChild(entry);
+    logElement.scrollTop = logElement.scrollHeight;
+    console.log(message);
+  };
 }
 
 /**
@@ -103,7 +103,7 @@ export function createLogger(logElement) {
  * @returns {Promise<void>}
  */
 export function delay(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -112,14 +112,14 @@ export function delay(ms) {
  * @returns {{r: number, g: number, b: number}} RGB values
  */
 export function hexToRgb(hex) {
-	const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-	return result
-		? {
-				r: parseInt(result[1], 16),
-				g: parseInt(result[2], 16),
-				b: parseInt(result[3], 16),
-			}
-		: { r: 0, g: 0, b: 0 };
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : { r: 0, g: 0, b: 0 };
 }
 
 /**
@@ -130,10 +130,10 @@ export function hexToRgb(hex) {
  * @returns {string} Formatted value
  */
 export function formatNumber(value, decimals = 3, fallback = '--') {
-	if (value === null || value === undefined || Number.isNaN(value)) {
-		return fallback;
-	}
-	return Number(value).toFixed(decimals);
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return fallback;
+  }
+  return Number(value).toFixed(decimals);
 }
 
 /**
@@ -142,16 +142,14 @@ export function formatNumber(value, decimals = 3, fallback = '--') {
  * @returns {{min: number, max: number, mean: number, count: number}|null}
  */
 export function calculateStats(values) {
-	const filtered = values.filter(
-		(v) => v !== null && v !== undefined && !Number.isNaN(v),
-	);
-	if (filtered.length === 0) return null;
+  const filtered = values.filter((v) => v !== null && v !== undefined && !Number.isNaN(v));
+  if (filtered.length === 0) return null;
 
-	const min = Math.min(...filtered);
-	const max = Math.max(...filtered);
-	const mean = filtered.reduce((a, b) => a + b, 0) / filtered.length;
+  const min = Math.min(...filtered);
+  const max = Math.max(...filtered);
+  const mean = filtered.reduce((a, b) => a + b, 0) / filtered.length;
 
-	return { min, max, mean, count: filtered.length };
+  return { min, max, mean, count: filtered.length };
 }
 
 /**
@@ -159,12 +157,12 @@ export function calculateStats(values) {
  * @param {function} getDevice - Function that returns the current device
  */
 export function setupDisconnectOnUnload(getDevice) {
-	window.addEventListener('beforeunload', () => {
-		const device = getDevice();
-		if (device && device.isConnected()) {
-			device.disconnect();
-		}
-	});
+  window.addEventListener('beforeunload', () => {
+    const device = getDevice();
+    if (device?.isConnected()) {
+      device.disconnect();
+    }
+  });
 }
 
 /**
@@ -174,15 +172,15 @@ export function setupDisconnectOnUnload(getDevice) {
  * @returns {function} Debounced function
  */
 export function debounce(func, wait) {
-	let timeout;
-	return function executedFunction(...args) {
-		const later = () => {
-			clearTimeout(timeout);
-			func(...args);
-		};
-		clearTimeout(timeout);
-		timeout = setTimeout(later, wait);
-	};
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
 /**
@@ -192,16 +190,16 @@ export function debounce(func, wait) {
  * @returns {function} Throttled function
  */
 export function throttle(func, limit) {
-	let inThrottle;
-	return function executedFunction(...args) {
-		if (!inThrottle) {
-			func(...args);
-			inThrottle = true;
-			setTimeout(() => {
-				inThrottle = false;
-			}, limit);
-		}
-	};
+  let inThrottle;
+  return function executedFunction(...args) {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => {
+        inThrottle = false;
+      }, limit);
+    }
+  };
 }
 
 /**
@@ -212,7 +210,7 @@ export function throttle(func, limit) {
  * @returns {number} Clamped value
  */
 export function clamp(value, min, max) {
-	return Math.min(Math.max(value, min), max);
+  return Math.min(Math.max(value, min), max);
 }
 
 // ============================================================================
@@ -231,43 +229,43 @@ export function clamp(value, min, max) {
  * @throws {Error} If connection fails or is cancelled
  */
 export async function connectDevice(DeviceClass, options = {}) {
-	const { filter, onStatus, onLog, onError } = options;
+  const { filter, onStatus, onLog, onError } = options;
 
-	const device = new DeviceClass();
+  const device = new DeviceClass();
 
-	try {
-		onLog?.('Scanning for devices...');
-		onStatus?.('connecting', 'Select your device...');
+  try {
+    onLog?.('Scanning for devices...');
+    onStatus?.('connecting', 'Select your device...');
 
-		const devices = await device.scan(filter);
+    const devices = await device.scan(filter);
 
-		if (devices.length === 0) {
-			throw new Error('No device selected');
-		}
+    if (devices.length === 0) {
+      throw new Error('No device selected');
+    }
 
-		const selectedDevice = devices[0];
-		onLog?.(`Found: ${selectedDevice.name}`);
-		onStatus?.('connecting', 'Connecting...');
+    const selectedDevice = devices[0];
+    onLog?.(`Found: ${selectedDevice.name}`);
+    onStatus?.('connecting', 'Connecting...');
 
-		await device.connect(selectedDevice);
+    await device.connect(selectedDevice);
 
-		onLog?.('Connected!');
-		onStatus?.('connected', `Connected: ${selectedDevice.name}`);
+    onLog?.('Connected!');
+    onStatus?.('connected', `Connected: ${selectedDevice.name}`);
 
-		return device;
-	} catch (error) {
-		onStatus?.('disconnected', 'Disconnected');
+    return device;
+  } catch (error) {
+    onStatus?.('disconnected', 'Disconnected');
 
-		if (error.message.includes('User cancelled')) {
-			onError?.('Connection cancelled by user');
-		} else if (error.message.includes('No device selected')) {
-			onError?.('No device selected');
-		} else {
-			onError?.(`Connection failed: ${error.message}`);
-		}
+    if (error.message.includes('User cancelled')) {
+      onError?.('Connection cancelled by user');
+    } else if (error.message.includes('No device selected')) {
+      onError?.('No device selected');
+    } else {
+      onError?.(`Connection failed: ${error.message}`);
+    }
 
-		throw error;
-	}
+    throw error;
+  }
 }
 
 /**
@@ -278,18 +276,18 @@ export async function connectDevice(DeviceClass, options = {}) {
  * @param {function} [options.onLog] - Log message callback
  */
 export async function disconnectDevice(device, options = {}) {
-	const { onStatus, onLog } = options;
+  const { onStatus, onLog } = options;
 
-	if (!device) return;
+  if (!device) return;
 
-	try {
-		onLog?.('Disconnecting...');
-		await device.disconnect();
-		onLog?.('Disconnected');
-		onStatus?.('disconnected', 'Disconnected');
-	} catch (error) {
-		onLog?.(`Disconnect error: ${error.message}`);
-	}
+  try {
+    onLog?.('Disconnecting...');
+    await device.disconnect();
+    onLog?.('Disconnected');
+    onStatus?.('disconnected', 'Disconnected');
+  } catch (error) {
+    onLog?.(`Disconnect error: ${error.message}`);
+  }
 }
 
 // ============================================================================
@@ -303,37 +301,39 @@ export async function disconnectDevice(device, options = {}) {
  * @param {string} [filename='data.csv'] - Download filename
  */
 export function exportToCSV(dataPoints, columns, filename = 'data.csv') {
-	if (!dataPoints || dataPoints.length === 0) {
-		console.warn('No data to export');
-		return;
-	}
+  if (!dataPoints || dataPoints.length === 0) {
+    console.warn('No data to export');
+    return;
+  }
 
-	// Build CSV content
-	const header = columns.join(',');
-	const rows = dataPoints.map((point) =>
-		columns.map((col) => {
-			const value = point[col];
-			// Handle values that might contain commas or quotes
-			if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-				return `"${value.replace(/"/g, '""')}"`;
-			}
-			return value ?? '';
-		}).join(',')
-	);
+  // Build CSV content
+  const header = columns.join(',');
+  const rows = dataPoints.map((point) =>
+    columns
+      .map((col) => {
+        const value = point[col];
+        // Handle values that might contain commas or quotes
+        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value ?? '';
+      })
+      .join(',')
+  );
 
-	const csvContent = [header, ...rows].join('\n');
+  const csvContent = [header, ...rows].join('\n');
 
-	// Create and trigger download
-	const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement('a');
-	link.href = url;
-	link.download = filename;
-	link.style.display = 'none';
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
-	URL.revokeObjectURL(url);
+  // Create and trigger download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 /**
@@ -343,9 +343,9 @@ export function exportToCSV(dataPoints, columns, filename = 'data.csv') {
  * @returns {string} Timestamped filename
  */
 export function generateExportFilename(prefix, extension = 'csv') {
-	const now = new Date();
-	const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-	return `${prefix}_${timestamp}.${extension}`;
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  return `${prefix}_${timestamp}.${extension}`;
 }
 
 // ============================================================================
@@ -364,59 +364,59 @@ export function generateExportFilename(prefix, extension = 'csv') {
  * @returns {Object} Reconnect controller with start() and stop() methods
  */
 export function createAutoReconnect(options) {
-	const {
-		connect,
-		onReconnecting,
-		onReconnected,
-		onReconnectFailed,
-		maxAttempts = RECONNECT_MAX_ATTEMPTS,
-		baseDelay = RECONNECT_BASE_DELAY_MS,
-	} = options;
+  const {
+    connect,
+    onReconnecting,
+    onReconnected,
+    onReconnectFailed,
+    maxAttempts = RECONNECT_MAX_ATTEMPTS,
+    baseDelay = RECONNECT_BASE_DELAY_MS,
+  } = options;
 
-	let isReconnecting = false;
-	let shouldReconnect = true;
-	let currentAttempt = 0;
+  let isReconnecting = false;
+  let shouldReconnect = true;
+  let currentAttempt = 0;
 
-	async function attemptReconnect() {
-		if (!shouldReconnect || isReconnecting) return;
+  async function attemptReconnect() {
+    if (!shouldReconnect || isReconnecting) return;
 
-		isReconnecting = true;
-		currentAttempt = 0;
+    isReconnecting = true;
+    currentAttempt = 0;
 
-		while (currentAttempt < maxAttempts && shouldReconnect) {
-			currentAttempt++;
-			onReconnecting?.(currentAttempt, maxAttempts);
+    while (currentAttempt < maxAttempts && shouldReconnect) {
+      currentAttempt++;
+      onReconnecting?.(currentAttempt, maxAttempts);
 
-			try {
-				await connect();
-				isReconnecting = false;
-				currentAttempt = 0;
-				onReconnected?.();
-				return true;
-			} catch (error) {
-				if (currentAttempt < maxAttempts && shouldReconnect) {
-					const delayMs = baseDelay * Math.pow(2, currentAttempt - 1);
-					await delay(delayMs);
-				}
-			}
-		}
+      try {
+        await connect();
+        isReconnecting = false;
+        currentAttempt = 0;
+        onReconnected?.();
+        return true;
+      } catch (_error) {
+        if (currentAttempt < maxAttempts && shouldReconnect) {
+          const delayMs = baseDelay * 2 ** (currentAttempt - 1);
+          await delay(delayMs);
+        }
+      }
+    }
 
-		isReconnecting = false;
-		onReconnectFailed?.();
-		return false;
-	}
+    isReconnecting = false;
+    onReconnectFailed?.();
+    return false;
+  }
 
-	return {
-		start: attemptReconnect,
-		stop: () => {
-			shouldReconnect = false;
-		},
-		reset: () => {
-			shouldReconnect = true;
-			currentAttempt = 0;
-		},
-		isReconnecting: () => isReconnecting,
-	};
+  return {
+    start: attemptReconnect,
+    stop: () => {
+      shouldReconnect = false;
+    },
+    reset: () => {
+      shouldReconnect = true;
+      currentAttempt = 0;
+    },
+    isReconnecting: () => isReconnecting,
+  };
 }
 
 // ============================================================================
@@ -430,56 +430,56 @@ export function createAutoReconnect(options) {
  * @returns {Object} Controller with update(), flush(), and destroy() methods
  */
 export function createThrottledChartUpdater(chart, minInterval = CHART_UPDATE_INTERVAL_MS) {
-	let pendingUpdate = false;
-	let lastUpdateTime = 0;
-	let rafId = null;
+  let pendingUpdate = false;
+  let lastUpdateTime = 0;
+  let rafId = null;
 
-	function scheduleUpdate() {
-		if (rafId !== null) return;
+  function scheduleUpdate() {
+    if (rafId !== null) return;
 
-		rafId = requestAnimationFrame(() => {
-			rafId = null;
-			const now = performance.now();
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const now = performance.now();
 
-			if (now - lastUpdateTime >= minInterval) {
-				if (pendingUpdate) {
-					chart.update('none');
-					pendingUpdate = false;
-					lastUpdateTime = now;
-				}
-			} else {
-				// Schedule another check
-				scheduleUpdate();
-			}
-		});
-	}
+      if (now - lastUpdateTime >= minInterval) {
+        if (pendingUpdate) {
+          chart.update('none');
+          pendingUpdate = false;
+          lastUpdateTime = now;
+        }
+      } else {
+        // Schedule another check
+        scheduleUpdate();
+      }
+    });
+  }
 
-	return {
-		/** Mark chart as needing update (batched) */
-		update() {
-			pendingUpdate = true;
-			scheduleUpdate();
-		},
-		/** Force immediate update */
-		flush() {
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
-			}
-			if (pendingUpdate) {
-				chart.update('none');
-				pendingUpdate = false;
-				lastUpdateTime = performance.now();
-			}
-		},
-		/** Clean up resources */
-		destroy() {
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
-			}
-		},
-	};
+  return {
+    /** Mark chart as needing update (batched) */
+    update() {
+      pendingUpdate = true;
+      scheduleUpdate();
+    },
+    /** Force immediate update */
+    flush() {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (pendingUpdate) {
+        chart.update('none');
+        pendingUpdate = false;
+        lastUpdateTime = performance.now();
+      }
+    },
+    /** Clean up resources */
+    destroy() {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    },
+  };
 }
 
 // ============================================================================
@@ -493,65 +493,65 @@ export function createThrottledChartUpdater(chart, minInterval = CHART_UPDATE_IN
  * @returns {Object} Preferences manager
  */
 export function createPreferences(storageKey, defaults = {}) {
-	let cache = null;
+  let cache = null;
 
-	function load() {
-		if (cache !== null) return cache;
+  function load() {
+    if (cache !== null) return cache;
 
-		try {
-			const stored = localStorage.getItem(storageKey);
-			cache = stored ? { ...defaults, ...JSON.parse(stored) } : { ...defaults };
-		} catch (e) {
-			console.warn('Failed to load preferences:', e);
-			cache = { ...defaults };
-		}
-		return cache;
-	}
+    try {
+      const stored = localStorage.getItem(storageKey);
+      cache = stored ? { ...defaults, ...JSON.parse(stored) } : { ...defaults };
+    } catch (e) {
+      console.warn('Failed to load preferences:', e);
+      cache = { ...defaults };
+    }
+    return cache;
+  }
 
-	function save() {
-		try {
-			localStorage.setItem(storageKey, JSON.stringify(cache));
-		} catch (e) {
-			console.warn('Failed to save preferences:', e);
-		}
-	}
+  function save() {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(cache));
+    } catch (e) {
+      console.warn('Failed to save preferences:', e);
+    }
+  }
 
-	return {
-		/** Get a preference value */
-		get(key) {
-			return load()[key];
-		},
-		/** Set a preference value */
-		set(key, value) {
-			load();
-			cache[key] = value;
-			save();
-		},
-		/** Get all preferences */
-		getAll() {
-			return { ...load() };
-		},
-		/** Set multiple preferences at once */
-		setAll(values) {
-			load();
-			Object.assign(cache, values);
-			save();
-		},
-		/** Reset to defaults */
-		reset() {
-			cache = { ...defaults };
-			save();
-		},
-		/** Clear all stored preferences */
-		clear() {
-			cache = { ...defaults };
-			try {
-				localStorage.removeItem(storageKey);
-			} catch (e) {
-				console.warn('Failed to clear preferences:', e);
-			}
-		},
-	};
+  return {
+    /** Get a preference value */
+    get(key) {
+      return load()[key];
+    },
+    /** Set a preference value */
+    set(key, value) {
+      load();
+      cache[key] = value;
+      save();
+    },
+    /** Get all preferences */
+    getAll() {
+      return { ...load() };
+    },
+    /** Set multiple preferences at once */
+    setAll(values) {
+      load();
+      Object.assign(cache, values);
+      save();
+    },
+    /** Reset to defaults */
+    reset() {
+      cache = { ...defaults };
+      save();
+    },
+    /** Clear all stored preferences */
+    clear() {
+      cache = { ...defaults };
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (e) {
+        console.warn('Failed to clear preferences:', e);
+      }
+    },
+  };
 }
 
 // ============================================================================
@@ -571,152 +571,144 @@ export function createPreferences(storageKey, defaults = {}) {
  * @returns {Object} Playback controller
  */
 export function createDataPlayback(options) {
-	const {
-		getData,
-		onFrame,
-		onPlay,
-		onPause,
-		onSeek,
-		onEnd,
-		fps = 30,
-	} = options;
+  const { getData, onFrame, onPlay, onPause, onSeek, onEnd, fps = 30 } = options;
 
-	let isPlaying = false;
-	let currentIndex = 0;
-	let playbackSpeed = 1;
-	let intervalId = null;
-	let startTime = null;
-	let pausedAtTime = 0;
+  let isPlaying = false;
+  let currentIndex = 0;
+  let playbackSpeed = 1;
+  let intervalId = null;
+  let startTime = null;
+  let pausedAtTime = 0;
 
-	function getDataPoints() {
-		return getData() || [];
-	}
+  function getDataPoints() {
+    return getData() || [];
+  }
 
-	function emitFrame() {
-		const data = getDataPoints();
-		if (currentIndex >= data.length) {
-			pause();
-			onEnd?.();
-			return;
-		}
+  function emitFrame() {
+    const data = getDataPoints();
+    if (currentIndex >= data.length) {
+      pause();
+      onEnd?.();
+      return;
+    }
 
-		const point = data[currentIndex];
-		onFrame?.(point, currentIndex, point?.time ?? currentIndex);
-	}
+    const point = data[currentIndex];
+    onFrame?.(point, currentIndex, point?.time ?? currentIndex);
+  }
 
-	function play() {
-		const data = getDataPoints();
-		if (data.length === 0 || isPlaying) return;
+  function play() {
+    const data = getDataPoints();
+    if (data.length === 0 || isPlaying) return;
 
-		isPlaying = true;
-		startTime = performance.now() - pausedAtTime;
-		onPlay?.();
+    isPlaying = true;
+    startTime = performance.now() - pausedAtTime;
+    onPlay?.();
 
-		const frameInterval = 1000 / fps;
-		intervalId = setInterval(() => {
-			if (!isPlaying) return;
+    const frameInterval = 1000 / fps;
+    intervalId = setInterval(() => {
+      if (!isPlaying) return;
 
-			const data = getDataPoints();
-			if (currentIndex >= data.length - 1) {
-				pause();
-				onEnd?.();
-				return;
-			}
+      const data = getDataPoints();
+      if (currentIndex >= data.length - 1) {
+        pause();
+        onEnd?.();
+        return;
+      }
 
-			// Calculate which frame we should be on based on elapsed time
-			const elapsed = (performance.now() - startTime) * playbackSpeed;
-			const targetTime = data[0]?.time ?? 0;
+      // Calculate which frame we should be on based on elapsed time
+      const elapsed = (performance.now() - startTime) * playbackSpeed;
+      const targetTime = data[0]?.time ?? 0;
 
-			// Find the frame closest to current playback time
-			while (currentIndex < data.length - 1) {
-				const nextPoint = data[currentIndex + 1];
-				const nextTime = (nextPoint?.time ?? currentIndex + 1) - targetTime;
-				if (nextTime * 1000 <= elapsed) {
-					currentIndex++;
-				} else {
-					break;
-				}
-			}
+      // Find the frame closest to current playback time
+      while (currentIndex < data.length - 1) {
+        const nextPoint = data[currentIndex + 1];
+        const nextTime = (nextPoint?.time ?? currentIndex + 1) - targetTime;
+        if (nextTime * 1000 <= elapsed) {
+          currentIndex++;
+        } else {
+          break;
+        }
+      }
 
-			emitFrame();
-		}, frameInterval);
-	}
+      emitFrame();
+    }, frameInterval);
+  }
 
-	function pause() {
-		if (!isPlaying) return;
+  function pause() {
+    if (!isPlaying) return;
 
-		isPlaying = false;
-		pausedAtTime = performance.now() - startTime;
+    isPlaying = false;
+    pausedAtTime = performance.now() - startTime;
 
-		if (intervalId !== null) {
-			clearInterval(intervalId);
-			intervalId = null;
-		}
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
 
-		onPause?.();
-	}
+    onPause?.();
+  }
 
-	function seek(index) {
-		const data = getDataPoints();
-		currentIndex = clamp(index, 0, Math.max(0, data.length - 1));
+  function seek(index) {
+    const data = getDataPoints();
+    currentIndex = clamp(index, 0, Math.max(0, data.length - 1));
 
-		// Reset timing for playback
-		const point = data[currentIndex];
-		const startPoint = data[0];
-		if (point && startPoint) {
-			pausedAtTime = ((point.time ?? currentIndex) - (startPoint.time ?? 0)) * 1000;
-		} else {
-			pausedAtTime = 0;
-		}
+    // Reset timing for playback
+    const point = data[currentIndex];
+    const startPoint = data[0];
+    if (point && startPoint) {
+      pausedAtTime = ((point.time ?? currentIndex) - (startPoint.time ?? 0)) * 1000;
+    } else {
+      pausedAtTime = 0;
+    }
 
-		if (isPlaying) {
-			startTime = performance.now() - pausedAtTime;
-		}
+    if (isPlaying) {
+      startTime = performance.now() - pausedAtTime;
+    }
 
-		onSeek?.(currentIndex);
-		emitFrame();
-	}
+    onSeek?.(currentIndex);
+    emitFrame();
+  }
 
-	function seekPercent(percent) {
-		const data = getDataPoints();
-		const index = Math.floor((percent / 100) * (data.length - 1));
-		seek(index);
-	}
+  function seekPercent(percent) {
+    const data = getDataPoints();
+    const index = Math.floor((percent / 100) * (data.length - 1));
+    seek(index);
+  }
 
-	function setSpeed(speed) {
-		playbackSpeed = speed;
-		if (isPlaying) {
-			// Adjust start time to maintain position at new speed
-			pausedAtTime = performance.now() - startTime;
-			startTime = performance.now() - pausedAtTime / speed * playbackSpeed;
-		}
-	}
+  function setSpeed(speed) {
+    playbackSpeed = speed;
+    if (isPlaying) {
+      // Adjust start time to maintain position at new speed
+      pausedAtTime = performance.now() - startTime;
+      startTime = performance.now() - (pausedAtTime / speed) * playbackSpeed;
+    }
+  }
 
-	return {
-		play,
-		pause,
-		toggle() {
-			if (isPlaying) pause();
-			else play();
-		},
-		seek,
-		seekPercent,
-		setSpeed,
-		reset() {
-			pause();
-			currentIndex = 0;
-			pausedAtTime = 0;
-			emitFrame();
-		},
-		isPlaying: () => isPlaying,
-		getCurrentIndex: () => currentIndex,
-		getProgress() {
-			const data = getDataPoints();
-			if (data.length === 0) return 0;
-			return (currentIndex / (data.length - 1)) * 100;
-		},
-		destroy() {
-			pause();
-		},
-	};
+  return {
+    play,
+    pause,
+    toggle() {
+      if (isPlaying) pause();
+      else play();
+    },
+    seek,
+    seekPercent,
+    setSpeed,
+    reset() {
+      pause();
+      currentIndex = 0;
+      pausedAtTime = 0;
+      emitFrame();
+    },
+    isPlaying: () => isPlaying,
+    getCurrentIndex: () => currentIndex,
+    getProgress() {
+      const data = getDataPoints();
+      if (data.length === 0) return 0;
+      return (currentIndex / (data.length - 1)) * 100;
+    },
+    destroy() {
+      pause();
+    },
+  };
 }
