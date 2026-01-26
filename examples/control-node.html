@@ -162,6 +162,7 @@
             showError as showErrorUtil,
             createLogger,
             formatNumber,
+            escapeHtml,
             setupDisconnectOnUnload,
             checkBrowserSupport
         } from './common.js';
@@ -278,8 +279,8 @@
                         const displayValue = formatNumber(value);
                         html += `
                             <div class="measurement-row">
-                                <dt class="measurement-name">${name}</dt>
-                                <dd class="measurement-value">${displayValue} ${unit}</dd>
+                                <dt class="measurement-name">${escapeHtml(name)}</dt>
+                                <dd class="measurement-value">${escapeHtml(displayValue)} ${escapeHtml(unit)}</dd>
                             </div>
                         `;
                     }

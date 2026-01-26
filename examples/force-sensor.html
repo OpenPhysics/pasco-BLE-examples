@@ -16,55 +16,37 @@
             <h1>Wireless Force Sensor</h1>
         </header>
 
-        <div id="browser-warning" style="display: none;"></div>
+        <pasco-browser-warning></pasco-browser-warning>
 
-        <section class="card" aria-label="Connection controls">
-            <p id="status" class="status disconnected">Disconnected</p>
-            <nav class="button-row">
-                <button id="connectBtn" class="btn-primary">Connect to Force Sensor</button>
-                <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </nav>
-            <div id="qualityIndicator" style="margin-top: 10px; display: none;"></div>
-        </section>
+        <pasco-connection-panel
+            device-name="Force Sensor"
+            show-quality>
+        </pasco-connection-panel>
 
-        <section class="card" aria-label="Primary reading">
-            <div class="reading" role="status" aria-label="Force reading">
-                <output class="value" id="forceValue">--</output>
-                <span class="unit" id="forceUnit">N</span>
-                <p class="label">Force</p>
-            </div>
-        </section>
+        <pasco-primary-reading
+            label="Force"
+            unit="N">
+        </pasco-primary-reading>
 
-        <section class="card" id="measurementsCard" style="display: none;" aria-label="All measurements">
-            <h2>All Measurements</h2>
-            <dl id="measurementsList"></dl>
-        </section>
+        <pasco-measurements-list title="All Measurements"></pasco-measurements-list>
 
-        <section class="card" aria-label="Console output">
-            <h2>Console Log</h2>
-            <pre class="log" id="log" role="log" aria-live="polite"></pre>
-        </section>
+        <pasco-console-log></pasco-console-log>
 
-        <footer class="card">
-            <section class="info">
-                <h2>About this example</h2>
-                <p>Demonstrates PASCO Wireless Force Acceleration sensor usage:</p>
-                <ul>
-                    <li>Large force display for easy reading</li>
-                    <li>All available measurements shown</li>
-                    <li>Real-time data streaming</li>
-                </ul>
-                <h2>Requirements</h2>
-                <ul>
-                    <li>Chrome or Edge browser (Web Bluetooth)</li>
-                    <li>PASCO Wireless Force Acceleration sensor</li>
-                    <li>Sensor must be powered on</li>
-                </ul>
-                <div id="shortcutsHelp"></div>
-            </section>
-        </footer>
+        <pasco-page-footer>
+            <span slot="description">Demonstrates PASCO Wireless Force Acceleration sensor usage:</span>
+            <ul slot="features">
+                <li>Large force display for easy reading</li>
+                <li>All available measurements shown</li>
+                <li>Real-time data streaming</li>
+            </ul>
+            <ul slot="requirements">
+                <li>Chrome or Edge browser (Web Bluetooth)</li>
+                <li>PASCO Wireless Force Acceleration sensor</li>
+                <li>Sensor must be powered on</li>
+            </ul>
+        </pasco-page-footer>
 
-        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+        <pasco-error-display></pasco-error-display>
     </main>
 
     <script type="importmap">
@@ -79,49 +61,43 @@
     <script type="module">
         import { PASCOBLEDevice } from 'pasco-ble';
         import {
-            setStatus as setStatusUtil,
-            showError as showErrorUtil,
-            createLogger,
             formatNumber,
             setupDisconnectOnUnload,
-            checkBrowserSupport,
             createConnectionQualityIndicator,
             createKeyboardShortcuts,
             createShortcutsHelp
         } from './common.js';
+        import './components.js';
 
-        // Check browser support first
-        if (!checkBrowserSupport()) {
-            document.getElementById('connectBtn').disabled = true;
+        // Get component references
+        const browserWarning = document.querySelector('pasco-browser-warning');
+        const connectionPanel = document.querySelector('pasco-connection-panel');
+        const primaryReading = document.querySelector('pasco-primary-reading');
+        const measurementsList = document.querySelector('pasco-measurements-list');
+        const consoleLog = document.querySelector('pasco-console-log');
+        const errorDisplay = document.querySelector('pasco-error-display');
+        const pageFooter = document.querySelector('pasco-page-footer');
+
+        // Check browser support
+        if (!browserWarning.check()) {
+            connectionPanel.disableConnect();
         }
 
-        const connectBtn = document.getElementById('connectBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const statusDiv = document.getElementById('status');
-        const forceValue = document.getElementById('forceValue');
-        const forceUnit = document.getElementById('forceUnit');
-        const measurementsCard = document.getElementById('measurementsCard');
-        const measurementsList = document.getElementById('measurementsList');
-        const errorDiv = document.getElementById('errorDiv');
-        const logDiv = document.getElementById('log');
-        const qualityContainer = document.getElementById('qualityIndicator');
+        // Initialize quality indicator
+        const qualityIndicator = createConnectionQualityIndicator(connectionPanel.qualityContainer);
+
+        // Create convenience functions
+        const log = consoleLog.createLogger();
+        const showError = errorDisplay.createShowError();
 
         let device = null;
         let readingInterval = null;
 
-        // Initialize connection quality indicator
-        const qualityIndicator = createConnectionQualityIndicator(qualityContainer);
-
-        const log = createLogger(logDiv);
-        const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
-        const showError = (message) => showErrorUtil(errorDiv, message);
-
         async function connect() {
             try {
                 log('Scanning for Force Acceleration sensors...');
-                setStatus('connecting', 'Select your sensor...');
-                connectBtn.disabled = true;
-                errorDiv.innerHTML = '';
+                connectionPanel.setStatus('connecting', 'Select your sensor...');
+                errorDisplay.clear();
 
                 device = new PASCOBLEDevice();
                 const devices = await device.scan('Force Accel');
@@ -131,34 +107,31 @@
                 }
 
                 log(`Found device: ${devices[0].name}`);
-                setStatus('connecting', 'Connecting...');
+                connectionPanel.setStatus('connecting', 'Connecting...');
                 log(`Connecting to ${devices[0].name}...`);
                 await device.connect(devices[0]);
 
                 log('Connected!');
-                setStatus('connected', `Connected: ${devices[0].name}`);
-                connectBtn.disabled = true;
-                disconnectBtn.disabled = false;
+                connectionPanel.setStatus('connected', `Connected: ${devices[0].name}`);
 
                 const measurements = device.getMeasurementList();
                 log(`Available measurements: ${measurements.join(', ')}`);
 
+                // Update unit from device
                 const unit = device.getMeasurementUnit('Force');
                 if (unit) {
-                    forceUnit.textContent = unit;
+                    primaryReading.setUnit(unit);
                 }
 
-                measurementsCard.style.display = 'block';
-                qualityContainer.style.display = 'block';
+                measurementsList.show();
+                connectionPanel.showQualityIndicator();
                 qualityIndicator.start();
                 startReading();
 
             } catch (error) {
                 console.error('Connection error:', error);
                 log(`Error: ${error.message}`);
-                setStatus('disconnected', 'Disconnected');
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
+                connectionPanel.setStatus('disconnected', 'Disconnected');
 
                 if (error.message.includes('User cancelled')) {
                     showError('Connection cancelled by user');
@@ -181,14 +154,12 @@
                 }
 
                 log('Disconnected');
-                setStatus('disconnected', 'Disconnected');
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
-                forceValue.textContent = '--';
-                measurementsCard.style.display = 'none';
-                measurementsList.innerHTML = '';
+                connectionPanel.setStatus('disconnected', 'Disconnected');
+                primaryReading.reset();
+                measurementsList.hide();
+                measurementsList.clear();
                 qualityIndicator.stop();
-                qualityContainer.style.display = 'none';
+                connectionPanel.hideQualityIndicator();
 
             } catch (error) {
                 console.error('Disconnect error:', error);
@@ -211,23 +182,19 @@
                     // Record successful sample for quality tracking
                     qualityIndicator.recordSample();
 
+                    // Update primary display
                     if (data['Force'] !== null && data['Force'] !== undefined) {
-                        forceValue.textContent = data['Force'].toFixed(2);
+                        primaryReading.setValue(data['Force'].toFixed(2));
                     }
 
-                    let html = '';
-                    for (const name of measurements) {
-                        const value = data[name];
-                        const unit = device.getMeasurementUnit(name) || '';
-                        const displayValue = formatNumber(value);
-                        html += `
-                            <div class="measurement-row">
-                                <dt class="measurement-name">${name}</dt>
-                                <dd class="measurement-value">${displayValue} ${unit}</dd>
-                            </div>
-                        `;
-                    }
-                    measurementsList.innerHTML = html;
+                    // Format measurements for display
+                    const formattedMeasurements = measurements.map(name => ({
+                        name,
+                        value: formatNumber(data[name]),
+                        unit: device.getMeasurementUnit(name) || ''
+                    }));
+
+                    measurementsList.update(formattedMeasurements);
 
                 } catch (error) {
                     console.error('Read error:', error);
@@ -242,8 +209,9 @@
             }
         }
 
-        connectBtn.addEventListener('click', connect);
-        disconnectBtn.addEventListener('click', disconnect);
+        // Event listeners for connection panel
+        connectionPanel.addEventListener('connect', connect);
+        connectionPanel.addEventListener('disconnect', disconnect);
         setupDisconnectOnUnload(() => device);
 
         // Set up keyboard shortcuts
@@ -252,7 +220,7 @@
         shortcuts.register(' ', () => {
             if (device?.isConnected()) {
                 disconnect();
-            } else if (!connectBtn.disabled) {
+            } else if (!connectionPanel.connectBtn.disabled) {
                 connect();
             }
         }, 'Connect / Disconnect');
@@ -264,12 +232,12 @@
         }, 'Disconnect');
 
         shortcuts.register('l', () => {
-            logDiv.innerHTML = '';
+            consoleLog.clear();
             log('Log cleared');
         }, 'Clear log');
 
         // Render shortcuts help panel
-        createShortcutsHelp(shortcuts, document.getElementById('shortcutsHelp'));
+        createShortcutsHelp(shortcuts, pageFooter.shortcutsContainer);
 
         log('Ready. Click "Connect" to scan for Force sensors.');
     </script>
