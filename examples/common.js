@@ -755,6 +755,147 @@ export function createDataPlayback(options) {
 }
 
 // ============================================================================
+// Keyboard Shortcuts
+// ============================================================================
+
+/**
+ * Check if an element is an input field where shortcuts should be ignored
+ * @param {HTMLElement} element - Element to check
+ * @returns {boolean} True if element is an input field
+ */
+function isInputElement(element) {
+  const tagName = element.tagName.toLowerCase();
+  const inputTags = ['input', 'textarea', 'select'];
+  return inputTags.includes(tagName) || element.isContentEditable;
+}
+
+/**
+ * Build a key identifier from a keyboard event
+ * @param {KeyboardEvent} event - Keyboard event
+ * @returns {string} Key identifier (e.g., 'ctrl+s', 'escape')
+ */
+function buildKeyId(event) {
+  const parts = [];
+  if (event.ctrlKey || event.metaKey) parts.push('ctrl');
+  if (event.altKey) parts.push('alt');
+  if (event.shiftKey) parts.push('shift');
+  parts.push(event.key.toLowerCase());
+  return parts.join('+');
+}
+
+/**
+ * Create a keyboard shortcut manager
+ * @param {Object} options - Manager options
+ * @param {boolean} [options.ignoreInInputs=true] - Ignore shortcuts when typing in inputs
+ * @returns {Object} Shortcut manager with register/unregister methods
+ */
+export function createKeyboardShortcuts(options = {}) {
+  const { ignoreInInputs = true } = options;
+  const shortcuts = new Map();
+
+  function handleKeydown(event) {
+    if (ignoreInInputs && isInputElement(event.target)) {
+      return;
+    }
+
+    const keyId = buildKeyId(event);
+    const shortcut = shortcuts.get(keyId);
+
+    if (shortcut && !shortcut.disabled) {
+      event.preventDefault();
+      shortcut.callback(event);
+    }
+  }
+
+  // Attach listener
+  document.addEventListener('keydown', handleKeydown);
+
+  return {
+    /**
+     * Register a keyboard shortcut
+     * @param {string} key - Key combination (e.g., 'c', 'escape', 'ctrl+s')
+     * @param {function} callback - Function to call when shortcut is triggered
+     * @param {string} [description] - Human-readable description
+     */
+    register(key, callback, description = '') {
+      const keyId = key.toLowerCase().replace(/\s/g, '');
+      shortcuts.set(keyId, { callback, description, disabled: false });
+    },
+
+    /**
+     * Unregister a keyboard shortcut
+     * @param {string} key - Key combination to remove
+     */
+    unregister(key) {
+      shortcuts.delete(key.toLowerCase().replace(/\s/g, ''));
+    },
+
+    /**
+     * Enable or disable a shortcut
+     * @param {string} key - Key combination
+     * @param {boolean} enabled - Whether to enable
+     */
+    setEnabled(key, enabled) {
+      const shortcut = shortcuts.get(key.toLowerCase().replace(/\s/g, ''));
+      if (shortcut) {
+        shortcut.disabled = !enabled;
+      }
+    },
+
+    /**
+     * Get all registered shortcuts with descriptions
+     * @returns {Array<{key: string, description: string}>}
+     */
+    getShortcuts() {
+      return Array.from(shortcuts.entries())
+        .filter(([, s]) => s.description)
+        .map(([key, s]) => ({
+          key: key.replace(/\+/g, ' + ').toUpperCase(),
+          description: s.description,
+        }));
+    },
+
+    /**
+     * Destroy the manager and remove event listener
+     */
+    destroy() {
+      document.removeEventListener('keydown', handleKeydown);
+      shortcuts.clear();
+    },
+  };
+}
+
+/**
+ * Create a keyboard shortcuts help panel
+ * @param {Object} shortcutManager - Keyboard shortcut manager instance
+ * @param {HTMLElement} container - Container element for the help panel
+ */
+export function createShortcutsHelp(shortcutManager, container) {
+  function render() {
+    const shortcuts = shortcutManager.getShortcuts();
+    if (shortcuts.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const items = shortcuts
+      .map((s) => `<li><kbd>${escapeHtml(s.key)}</kbd> ${escapeHtml(s.description)}</li>`)
+      .join('');
+
+    container.innerHTML = `
+      <details class="shortcuts-help">
+        <summary>Keyboard Shortcuts</summary>
+        <ul>${items}</ul>
+      </details>
+    `;
+  }
+
+  render();
+
+  return { render };
+}
+
+// ============================================================================
 // Connection Quality / Sample Rate Tracking
 // ============================================================================
 

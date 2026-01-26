@@ -52,6 +52,7 @@
                     <li>Chrome or Edge browser (Web Bluetooth)</li>
                     <li>Any PASCO BLE sensor device</li>
                 </ul>
+                <div id="shortcutsHelp"></div>
             </section>
         </footer>
 
@@ -75,7 +76,9 @@
             createLogger,
             formatNumber,
             setupDisconnectOnUnload,
-            createConnectionQualityIndicator
+            createConnectionQualityIndicator,
+            createKeyboardShortcuts,
+            createShortcutsHelp
         } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
@@ -217,6 +220,31 @@
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
         setupDisconnectOnUnload(() => device);
+
+        // Set up keyboard shortcuts
+        const shortcuts = createKeyboardShortcuts();
+
+        shortcuts.register(' ', () => {
+            if (device?.isConnected()) {
+                disconnect();
+            } else if (!connectBtn.disabled) {
+                connect();
+            }
+        }, 'Connect / Disconnect');
+
+        shortcuts.register('escape', () => {
+            if (device?.isConnected()) {
+                disconnect();
+            }
+        }, 'Disconnect');
+
+        shortcuts.register('l', () => {
+            logDiv.innerHTML = '';
+            log('Log cleared');
+        }, 'Clear log');
+
+        // Render shortcuts help panel
+        createShortcutsHelp(shortcuts, document.getElementById('shortcutsHelp'));
 
         log('Ready. Click "Connect" to scan for devices.');
     </script>
