@@ -13,28 +13,66 @@ This repository contains **browser examples** demonstrating how to use the [pasc
 ```bash
 npm run serve      # Start local server to view examples
 npm run start      # Alias for serve
+npm run check      # Run Biome linting and formatting checks
+npm run check:fix  # Auto-fix linting and formatting issues
+npm run lint       # Run linting only
+npm run format     # Run formatting only (with auto-fix)
 ```
 
 ## Repository Structure
 
 ```
 pasco-BLE-examples/
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # CI pipeline (lint, validate, deploy)
 ├── examples/
-│   ├── common.css          # Shared styles
-│   ├── common.js           # Shared utility functions
-│   ├── basic-usage.html    # Entry-level example
-│   ├── force-sensor.html   # Force sensor demo
-│   ├── motion-sensor.html  # Motion sensor demo
-│   ├── code-node.html      # Code.Node controller
-│   ├── control-node.html   # Control.Node controller
+│   ├── common.css              # Shared styles
+│   ├── common.js               # Shared utility functions
+│   ├── basic-usage.html        # Entry-level example
+│   ├── force-sensor.html       # Force sensor demo
+│   ├── motion-sensor.html      # Motion sensor demo
+│   ├── code-node.html          # Code.Node controller
+│   ├── control-node.html       # Control.Node controller
 │   ├── sensor-xy-graph.html    # X-Y parametric plotting
 │   ├── multi-sensor-graph.html # Multi-device graphing
-│   └── smart-cart.html     # 3D visualization
-├── package.json            # Examples package config
-├── README.md               # User documentation
-├── documentation.md        # Detailed examples guide
-└── CLAUDE.md               # This file
+│   └── smart-cart.html         # 3D visualization
+├── biome.json                  # Biome linter/formatter config
+├── package.json                # Examples package config
+├── README.md                   # User documentation
+├── documentation.md            # Detailed examples guide
+└── CLAUDE.md                   # This file
 ```
+
+## Linting and Formatting
+
+This project uses [Biome](https://biomejs.dev/) for linting and formatting JavaScript, JSON, and CSS files.
+
+### Running Checks
+
+```bash
+npm install        # Install dependencies (including Biome)
+npm run check      # Check for issues (CI runs this)
+npm run check:fix  # Auto-fix all fixable issues
+```
+
+### Biome Configuration
+
+The `biome.json` configures strict linting with all recommended rules enabled:
+
+- **JavaScript**: Single quotes, semicolons, 2-space indent, trailing commas
+- **CSS**: 2-space indent, double quotes
+- **JSON**: 2-space indent, no trailing commas
+- **Line endings**: LF enforced
+
+Key rule customizations:
+- `noConsole`: off (examples need console output)
+- `useNamingConvention`: warns but allows acronyms (e.g., `exportToCSV`)
+- `noExcessiveCognitiveComplexity`: warns at complexity > 15
+
+### Before Committing
+
+Always run `npm run check` before committing to ensure code passes CI.
 
 ## Working with Examples
 
@@ -76,9 +114,20 @@ Examples use ES module imports via importmap to load `pasco-ble` from CDN:
 3. **Use CDN imports** - Don't add build steps; examples should work by opening HTML files directly
 4. **Follow existing patterns** - Use common.css and common.js utilities
 5. **Test in Chrome/Edge** - Web Bluetooth only works in Chromium browsers
+6. **Run linting before committing** - Use `npm run check` to verify code quality
+7. **Keep functions simple** - Avoid cognitive complexity > 15
+
+## CI Pipeline
+
+The GitHub Actions CI pipeline runs on PRs and pushes to main:
+
+1. **Lint** - Runs Biome checks (`npm run check`)
+2. **Validate** - Verifies required files exist
+3. **Deploy** - Deploys to GitHub Pages (main branch only)
 
 ## Resources
 
 - **pasco-ble npm**: https://www.npmjs.com/package/pasco-ble
 - **pasco-ble source**: https://github.com/veillette/pascoTS
 - **CDN**: https://esm.sh/pasco-ble or https://unpkg.com/pasco-ble/dist/index.js
+- **Biome docs**: https://biomejs.dev/
