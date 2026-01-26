@@ -10,6 +10,7 @@ Detailed guide to the PASCO BLE examples and how to use the [pasco-ble](https://
 - [Common Patterns](#common-patterns)
 - [API Quick Reference](#api-quick-reference)
 - [Creating Your Own Examples](#creating-your-own-examples)
+- [Contributing](#contributing)
 
 ---
 
@@ -36,6 +37,16 @@ npm run serve
 ```
 
 Open `http://localhost:3000/examples/` in your browser.
+
+### Development Commands
+
+```bash
+npm run serve      # Start local server
+npm run check      # Run linting and formatting checks
+npm run check:fix  # Auto-fix linting/formatting issues
+npm run lint       # Run linting only
+npm run format     # Run formatting only
+```
 
 ### Running Examples Directly
 
@@ -509,6 +520,39 @@ import {
 
 ---
 
+## Contributing
+
+### Code Quality
+
+This project uses [Biome](https://biomejs.dev/) for linting and formatting JavaScript, JSON, and CSS files.
+
+```bash
+# Check for issues (run before committing)
+npm run check
+
+# Auto-fix all fixable issues
+npm run check:fix
+```
+
+### Code Style
+
+The project enforces consistent code style:
+
+- **JavaScript**: Single quotes, semicolons, 2-space indentation, trailing commas
+- **CSS**: 2-space indentation, double quotes
+- **JSON**: 2-space indentation
+- **Line endings**: LF (Unix-style)
+
+### CI Pipeline
+
+Pull requests are automatically checked by the CI pipeline:
+
+1. **Lint** - Runs Biome checks
+2. **Validate** - Verifies required files exist
+3. **Deploy** - Deploys to GitHub Pages (main branch only)
+
+---
+
 ## Resources
 
 - **pasco-ble npm**: [npmjs.com/package/pasco-ble](https://www.npmjs.com/package/pasco-ble)
@@ -516,3 +560,4 @@ import {
 - **Web Bluetooth**: [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API)
 - **Chart.js**: [chartjs.org](https://www.chartjs.org/)
 - **Plotly.js**: [plotly.com/javascript](https://plotly.com/javascript/)
+- **Biome**: [biomejs.dev](https://biomejs.dev/)
