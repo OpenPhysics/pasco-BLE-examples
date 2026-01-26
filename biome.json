@@ -6,12 +6,38 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "all": true,
+      "correctness": {
+        "noNodejsModules": "off",
+        "noUndeclaredDependencies": "off",
+        "useImportExtensions": "off"
+      },
       "style": {
-        "noUnusedTemplateLiteral": "off"
+        "noDefaultExport": "off",
+        "useNamingConvention": "warn",
+        "useFilenamingConvention": "off",
+        "useExplicitLengthCheck": "warn",
+        "noUnusedTemplateLiteral": "warn"
       },
       "suspicious": {
+        "noConsole": "off",
         "noExplicitAny": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn",
+        "noExcessiveNestedTestSuites": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off",
+        "noReExportAll": "off"
+      },
+      "nursery": {
+        "all": true,
+        "noCommonJs": "off",
+        "noExportedImports": "off",
+        "noHeadElement": "off",
+        "noImgElement": "off",
+        "useValidAutocomplete": "off"
       }
     }
   },
@@ -19,21 +45,45 @@
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 100
+    "lineWidth": 100,
+    "lineEnding": "lf"
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
-      "semicolons": "always"
+      "semicolons": "always",
+      "trailingCommas": "es5",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false
+    },
+    "linter": {
+      "enabled": true
     }
   },
   "json": {
     "formatter": {
-      "indentWidth": 2
+      "indentWidth": 2,
+      "trailingCommas": "none"
+    },
+    "linter": {
+      "enabled": true
+    }
+  },
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineWidth": 100,
+      "quoteStyle": "double"
+    },
+    "linter": {
+      "enabled": true
     }
   },
   "files": {
-    "include": ["*.js", "*.json", "*.css", "examples/**/*.js"],
+    "include": ["*.js", "*.json", "*.css", "examples/**/*.js", "examples/**/*.css"],
     "ignore": ["node_modules", "dist", ".git"]
   }
 }
