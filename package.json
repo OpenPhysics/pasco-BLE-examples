@@ -26,9 +26,9 @@
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/veillette/pasco-BLE-examples.git"
+    "url": "git+https://github.com/phasematching/pasco-BLE-examples.git"
   },
-  "homepage": "https://github.com/veillette/pasco-BLE-examples#readme",
+  "homepage": "https://github.com/phasematching/pasco-BLE-examples#readme",
   "dependencies": {
     "pasco-ble": "^0.3.0"
   },
