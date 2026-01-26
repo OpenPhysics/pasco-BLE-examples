@@ -14,7 +14,12 @@
       "style": {
         "recommended": true,
         "noDefaultExport": "off",
-        "useNamingConvention": "warn",
+        "useNamingConvention": {
+          "level": "warn",
+          "options": {
+            "strictCase": false
+          }
+        },
         "useFilenamingConvention": "off",
         "useExplicitLengthCheck": "warn",
         "noUnusedTemplateLiteral": "warn",
