@@ -16,15 +16,9 @@
             <h1>Code.Node Controller</h1>
         </header>
 
-        <div id="browser-warning" style="display: none;"></div>
+        <pasco-browser-warning></pasco-browser-warning>
 
-        <section class="card" aria-label="Connection controls">
-            <p id="status" class="status disconnected">Disconnected</p>
-            <nav class="button-row">
-                <button id="connectBtn" class="btn-primary">Connect to Code.Node</button>
-                <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </nav>
-        </section>
+        <pasco-connection-panel device-name="Code.Node"></pasco-connection-panel>
 
         <section class="card" id="controlsCard" style="display: none;" aria-label="Device controls">
             <fieldset class="control-group">
@@ -80,29 +74,22 @@
             </fieldset>
         </section>
 
-        <section class="card" aria-label="Console output">
-            <h2>Console Log</h2>
-            <pre class="log" id="log" role="log" aria-live="polite"></pre>
-        </section>
+        <pasco-console-log></pasco-console-log>
 
-        <footer class="card">
-            <section class="info">
-                <h2>About this example</h2>
-                <p>Demonstrates Code.Node features:</p>
-                <ul>
-                    <li>5x5 LED matrix display with icons and scrolling text</li>
-                    <li>RGB LED color control</li>
-                    <li>Speaker/buzzer frequency control</li>
-                </ul>
-                <h2>Requirements</h2>
-                <ul>
-                    <li>Chrome or Edge browser (Web Bluetooth)</li>
-                    <li>PASCO Code.Node device</li>
-                </ul>
-            </section>
-        </footer>
+        <pasco-page-footer>
+            <span slot="description">Demonstrates Code.Node features:</span>
+            <ul slot="features">
+                <li>5x5 LED matrix display with icons and scrolling text</li>
+                <li>RGB LED color control</li>
+                <li>Speaker/buzzer frequency control</li>
+            </ul>
+            <ul slot="requirements">
+                <li>Chrome or Edge browser (Web Bluetooth)</li>
+                <li>PASCO Code.Node device</li>
+            </ul>
+        </pasco-page-footer>
 
-        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+        <pasco-error-display></pasco-error-display>
     </main>
 
     <script type="importmap">
@@ -116,27 +103,26 @@
 
     <script type="module">
         import { CodeNodeDevice, Icons } from 'pasco-ble';
-        import {
-            setStatus as setStatusUtil,
-            showError as showErrorUtil,
-            createLogger,
-            delay,
-            hexToRgb,
-            setupDisconnectOnUnload,
-            checkBrowserSupport
-        } from './common.js';
+        import { delay, hexToRgb, setupDisconnectOnUnload } from './common.js';
+        import './components.js';
 
-        // Check browser support first
-        if (!checkBrowserSupport()) {
-            document.getElementById('connectBtn').disabled = true;
+        // Get component references
+        const browserWarning = document.querySelector('pasco-browser-warning');
+        const connectionPanel = document.querySelector('pasco-connection-panel');
+        const consoleLog = document.querySelector('pasco-console-log');
+        const errorDisplay = document.querySelector('pasco-error-display');
+
+        // Check browser support
+        if (!browserWarning.check()) {
+            connectionPanel.disableConnect();
         }
 
-        const connectBtn = document.getElementById('connectBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const statusDiv = document.getElementById('status');
+        // Create convenience functions
+        const log = consoleLog.createLogger();
+        const showError = errorDisplay.createShowError();
+
+        // Get control elements
         const controlsCard = document.getElementById('controlsCard');
-        const errorDiv = document.getElementById('errorDiv');
-        const logDiv = document.getElementById('log');
         const colorPicker = document.getElementById('colorPicker');
         const frequencySlider = document.getElementById('frequencySlider');
         const frequencyValue = document.getElementById('frequencyValue');
@@ -144,16 +130,11 @@
 
         let codeNode = null;
 
-        const log = createLogger(logDiv);
-        const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
-        const showError = (message) => showErrorUtil(errorDiv, message);
-
         async function connect() {
             try {
                 log('Scanning for Code.Node devices...');
-                setStatus('connecting', 'Select your Code.Node...');
-                connectBtn.disabled = true;
-                errorDiv.innerHTML = '';
+                connectionPanel.setStatus('connecting', 'Select your Code.Node...');
+                errorDisplay.clear();
 
                 codeNode = new CodeNodeDevice();
                 const devices = await codeNode.scan('//code.Node');
@@ -163,21 +144,17 @@
                 }
 
                 log(`Found: ${devices[0].name}`);
-                setStatus('connecting', 'Connecting...');
+                connectionPanel.setStatus('connecting', 'Connecting...');
                 await codeNode.connect(devices[0]);
 
                 log('Connected!');
-                setStatus('connected', `Connected: ${devices[0].name}`);
-                connectBtn.disabled = true;
-                disconnectBtn.disabled = false;
+                connectionPanel.setStatus('connected', `Connected: ${devices[0].name}`);
                 controlsCard.style.display = 'block';
 
             } catch (error) {
                 console.error('Connection error:', error);
                 log(`Error: ${error.message}`);
-                setStatus('disconnected', 'Disconnected');
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
+                connectionPanel.setStatus('disconnected', 'Disconnected');
 
                 if (error.message.includes('User cancelled')) {
                     showError('Connection cancelled by user');
@@ -197,9 +174,7 @@
                     codeNode = null;
                 }
                 log('Disconnected');
-                setStatus('disconnected', 'Disconnected');
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
+                connectionPanel.setStatus('disconnected', 'Disconnected');
                 controlsCard.style.display = 'none';
             } catch (error) {
                 log(`Disconnect error: ${error.message}`);
@@ -323,9 +298,9 @@
             }
         }
 
-        // Event listeners
-        connectBtn.addEventListener('click', connect);
-        disconnectBtn.addEventListener('click', disconnect);
+        // Event listeners for connection panel
+        connectionPanel.addEventListener('connect', connect);
+        connectionPanel.addEventListener('disconnect', disconnect);
 
         document.querySelectorAll('[data-icon]').forEach(btn => {
             btn.addEventListener('click', () => showIcon(btn.dataset.icon));
