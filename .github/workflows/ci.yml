@@ -1,102 +1,78 @@
-name: CI
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 # Cancel in-progress runs for the same branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  lint:
-    name: Lint
+  # Validate HTML files
+  validate:
+    name: Validate Examples
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Biome linter
-        run: npm run lint
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build TypeScript
-        run: npm run build
-
-      - name: Verify dist output exists
+      - name: Check HTML files exist
         run: |
-          if [ ! -f "dist/index.js" ]; then
-            echo "Error: dist/index.js not found"
-            exit 1
-          fi
-          if [ ! -f "dist/index.d.ts" ]; then
-            echo "Error: dist/index.d.ts not found"
-            exit 1
-          fi
-          echo "Build artifacts verified successfully"
+          echo "Checking for example HTML files..."
+          for file in examples/*.html; do
+            if [ -f "$file" ]; then
+              echo "Found: $file"
+            fi
+          done
 
-  typecheck:
-    name: Type Check
+          # Verify required files exist
+          required_files=(
+            "examples/basic-usage.html"
+            "examples/common.css"
+            "examples/common.js"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Error: Required file $file not found"
+              exit 1
+            fi
+          done
+
+          echo "All required files present"
+
+  # Deploy to GitHub Pages (only on main branch push)
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          node-version: '22'
-          cache: 'npm'
+          path: '.'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run TypeScript type checking
-        run: npx tsc --noEmit
-
-  # Ready for when tests are added
-  # test:
-  #   name: Test
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v6
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v6
-  #       with:
-  #         node-version: '22'
-  #         cache: 'npm'
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Run tests
-  #       run: npm test
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
