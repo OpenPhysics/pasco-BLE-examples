@@ -596,6 +596,36 @@ export function createDataPlayback(options) {
     onFrame?.(point, currentIndex, point?.time ?? currentIndex);
   }
 
+  function advanceToElapsedTime(data, elapsed) {
+    const targetTime = data[0]?.time ?? 0;
+
+    // Find the frame closest to current playback time
+    while (currentIndex < data.length - 1) {
+      const nextPoint = data[currentIndex + 1];
+      const nextTime = (nextPoint?.time ?? currentIndex + 1) - targetTime;
+      if (nextTime * 1000 <= elapsed) {
+        currentIndex++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  function processPlaybackFrame() {
+    if (!isPlaying) return;
+
+    const data = getDataPoints();
+    if (currentIndex >= data.length - 1) {
+      pause();
+      onEnd?.();
+      return;
+    }
+
+    const elapsed = (performance.now() - startTime) * playbackSpeed;
+    advanceToElapsedTime(data, elapsed);
+    emitFrame();
+  }
+
   function play() {
     const data = getDataPoints();
     if (data.length === 0 || isPlaying) return;
@@ -605,33 +635,7 @@ export function createDataPlayback(options) {
     onPlay?.();
 
     const frameInterval = 1000 / fps;
-    intervalId = setInterval(() => {
-      if (!isPlaying) return;
-
-      const data = getDataPoints();
-      if (currentIndex >= data.length - 1) {
-        pause();
-        onEnd?.();
-        return;
-      }
-
-      // Calculate which frame we should be on based on elapsed time
-      const elapsed = (performance.now() - startTime) * playbackSpeed;
-      const targetTime = data[0]?.time ?? 0;
-
-      // Find the frame closest to current playback time
-      while (currentIndex < data.length - 1) {
-        const nextPoint = data[currentIndex + 1];
-        const nextTime = (nextPoint?.time ?? currentIndex + 1) - targetTime;
-        if (nextTime * 1000 <= elapsed) {
-          currentIndex++;
-        } else {
-          break;
-        }
-      }
-
-      emitFrame();
-    }, frameInterval);
+    intervalId = setInterval(processPlaybackFrame, frameInterval);
   }
 
   function pause() {
