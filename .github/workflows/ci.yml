@@ -48,6 +48,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
       - name: Check HTML files exist
         run: |
           echo "Checking for example HTML files..."
@@ -73,11 +79,65 @@ jobs:
 
           echo "All required files present"
 
+      - name: Validate HTML
+        run: |
+          npm install --no-save html-validate
+          npx html-validate "examples/*.html" --formatter stylish || echo "::warning::HTML validation found issues"
+
+      - name: Check internal links
+        run: |
+          npm install --no-save linkinator
+          npx linkinator examples/index.html --recurse --skip "^https?://" --format markdown || echo "::warning::Some internal links may be broken"
+
+  # Accessibility audit (non-blocking)
+  accessibility:
+    name: Accessibility Audit
+    runs-on: ubuntu-latest
+    needs: lint
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-save pa11y-ci http-server
+
+      - name: Start local server
+        run: npx http-server -p 8080 &
+
+      - name: Wait for server
+        run: sleep 3
+
+      - name: Run accessibility audit
+        run: |
+          # Create pa11y config
+          cat > .pa11yci.json << 'PAEOF'
+          {
+            "defaults": {
+              "timeout": 30000,
+              "wait": 1000,
+              "standard": "WCAG2AA"
+            },
+            "urls": [
+              "http://localhost:8080/examples/index.html",
+              "http://localhost:8080/examples/basic-usage.html",
+              "http://localhost:8080/examples/force-sensor.html"
+            ]
+          }
+          PAEOF
+          npx pa11y-ci --config .pa11yci.json || echo "::warning::Accessibility audit found potential issues"
+
   # Deploy to GitHub Pages (only on main branch push)
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, accessibility]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     environment:
       name: github-pages
