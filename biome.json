@@ -1,43 +1,52 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.0/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.3.12/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
-      "all": true,
+      "recommended": true,
       "correctness": {
+        "recommended": true,
         "noNodejsModules": "off",
         "noUndeclaredDependencies": "off",
         "useImportExtensions": "off"
       },
       "style": {
+        "recommended": true,
         "noDefaultExport": "off",
         "useNamingConvention": "warn",
         "useFilenamingConvention": "off",
         "useExplicitLengthCheck": "warn",
-        "noUnusedTemplateLiteral": "warn"
+        "noUnusedTemplateLiteral": "warn",
+        "noCommonJs": "off",
+        "noExportedImports": "off",
+        "noHeadElement": "off"
       },
       "suspicious": {
+        "recommended": true,
         "noConsole": "off",
         "noExplicitAny": "off"
       },
       "complexity": {
+        "recommended": true,
         "noExcessiveCognitiveComplexity": "warn",
         "noExcessiveNestedTestSuites": "off"
       },
       "performance": {
+        "recommended": true,
         "noBarrelFile": "off",
-        "noReExportAll": "off"
+        "noReExportAll": "off",
+        "noImgElement": "off"
       },
       "nursery": {
-        "all": true,
-        "noCommonJs": "off",
-        "noExportedImports": "off",
-        "noHeadElement": "off",
-        "noImgElement": "off",
+        "recommended": true
+      },
+      "a11y": {
+        "recommended": true,
         "useValidAutocomplete": "off"
+      },
+      "security": {
+        "recommended": true
       }
     }
   },
@@ -83,7 +92,15 @@
     }
   },
   "files": {
-    "include": ["*.js", "*.json", "*.css", "examples/**/*.js", "examples/**/*.css"],
-    "ignore": ["node_modules", "dist", ".git"]
+    "includes": [
+      "**/*.js",
+      "**/*.json",
+      "**/*.css",
+      "**/examples/**/*.js",
+      "**/examples/**/*.css",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/.git"
+    ]
   }
 }
