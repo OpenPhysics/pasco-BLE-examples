@@ -18,12 +18,15 @@
             <h1>Sensor X-Y Graph</h1>
         </header>
 
+        <div id="browser-warning" style="display: none;"></div>
+
         <section class="card" aria-label="Connection controls">
             <p id="status" class="status disconnected">Disconnected</p>
             <nav class="button-row">
                 <button id="connectBtn" class="btn-primary">Connect to Sensor</button>
                 <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
             </nav>
+            <div id="qualityIndicator" style="margin-top: 10px; display: none;"></div>
         </section>
 
         <section class="card" id="configCard" style="display: none;" aria-label="Graph configuration">
@@ -121,6 +124,7 @@
                     <li>Chrome or Edge browser (Web Bluetooth)</li>
                     <li>Any PASCO BLE sensor device</li>
                 </ul>
+                <div id="shortcutsHelp"></div>
             </section>
         </footer>
 
@@ -148,8 +152,17 @@
             generateExportFilename,
             createPreferences,
             createThrottledChartUpdater,
-            createDataPlayback
+            createDataPlayback,
+            checkBrowserSupport,
+            createKeyboardShortcuts,
+            createShortcutsHelp,
+            createConnectionQualityIndicator
         } from './common.js';
+
+        // Check browser support first
+        if (!checkBrowserSupport()) {
+            document.getElementById('connectBtn').disabled = true;
+        }
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -171,6 +184,10 @@
         const playbackSlider = document.getElementById('playbackSlider');
         const playbackTime = document.getElementById('playbackTime');
         const playbackSpeed = document.getElementById('playbackSpeed');
+
+        // Quality indicator
+        const qualityContainer = document.getElementById('qualityIndicator');
+        const qualityIndicator = createConnectionQualityIndicator(qualityContainer);
 
         let device = null;
         let chart = null;
@@ -334,6 +351,8 @@
                 configCard.style.display = 'block';
                 chartCard.style.display = 'block';
                 startBtn.disabled = false;
+                qualityContainer.style.display = 'block';
+                qualityIndicator.start();
 
                 if (!chart) initChart();
                 updateChart();
@@ -366,6 +385,8 @@
                 disconnectBtn.disabled = true;
                 configCard.style.display = 'none';
                 chartCard.style.display = 'none';
+                qualityIndicator.stop();
+                qualityContainer.style.display = 'none';
             } catch (error) {
                 showError(`Disconnect error: ${error.message}`);
             }
@@ -391,6 +412,9 @@
                     const measurements = device.getMeasurementList();
                     const data = await device.readDataList(measurements);
                     const time = (Date.now() - startTime) / 1000;
+
+                    // Record successful sample for quality tracking
+                    qualityIndicator.recordSample();
 
                     const point = { time, ...data };
                     dataPoints.push(point);
@@ -537,6 +561,44 @@
         });
 
         setupDisconnectOnUnload(() => device);
+
+        // Set up keyboard shortcuts
+        const shortcuts = createKeyboardShortcuts();
+
+        shortcuts.register(' ', () => {
+            if (device?.isConnected()) {
+                if (isRecording) {
+                    stopRecording();
+                } else {
+                    startRecording();
+                }
+            } else if (!connectBtn.disabled) {
+                connect();
+            }
+        }, 'Start/Stop Recording or Connect');
+
+        shortcuts.register('escape', () => {
+            if (device?.isConnected()) {
+                disconnect();
+            }
+        }, 'Disconnect');
+
+        shortcuts.register('c', () => {
+            clearData();
+        }, 'Clear data');
+
+        shortcuts.register('e', () => {
+            if (dataPoints.length > 0) {
+                const xMeasurement = xAxisSelect.value;
+                const yMeasurement = yAxisSelect.value;
+                const columns = ['time', xMeasurement, yMeasurement];
+                const filename = generateExportFilename('sensor-xy-data');
+                exportToCSV(dataPoints, columns, filename);
+            }
+        }, 'Export CSV');
+
+        // Render shortcuts help panel
+        createShortcutsHelp(shortcuts, document.getElementById('shortcutsHelp'));
     </script>
 </body>
 </html>

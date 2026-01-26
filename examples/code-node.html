@@ -16,6 +16,8 @@
             <h1>Code.Node Controller</h1>
         </header>
 
+        <div id="browser-warning" style="display: none;"></div>
+
         <section class="card" aria-label="Connection controls">
             <p id="status" class="status disconnected">Disconnected</p>
             <nav class="button-row">
@@ -120,8 +122,14 @@
             createLogger,
             delay,
             hexToRgb,
-            setupDisconnectOnUnload
+            setupDisconnectOnUnload,
+            checkBrowserSupport
         } from './common.js';
+
+        // Check browser support first
+        if (!checkBrowserSupport()) {
+            document.getElementById('connectBtn').disabled = true;
+        }
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
