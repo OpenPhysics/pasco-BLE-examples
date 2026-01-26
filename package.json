@@ -1,38 +1,11 @@
 {
-  "name": "pasco-ble",
-  "version": "0.3.65",
-  "description": "Browser library for PASCO wireless BLE sensors using Web Bluetooth",
+  "name": "pasco-ble-examples",
+  "version": "1.0.0",
+  "description": "Browser examples for the pasco-ble library - demonstrating PASCO wireless BLE sensors using Web Bluetooth",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./internal": {
-      "import": "./dist/internal.js",
-      "types": "./dist/internal.d.ts"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "engines": {
-    "node": ">=22.0.0"
-  },
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf dist",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
-    "check": "biome check --write .",
-    "prepublishOnly": "npm run build",
-    "prepare": "simple-git-hooks"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "npx biome check --staged --no-errors-on-unmatched"
+    "serve": "npx serve .",
+    "start": "npx serve ."
   },
   "keywords": [
     "pasco",
@@ -42,17 +15,17 @@
     "sensor",
     "science",
     "education",
+    "examples",
     "browser"
   ],
   "author": "Martin Veillette",
   "license": "SEE LICENSE IN LICENSE",
-  "dependencies": {
-    "mathjs": "^15.1.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veillette/pasco-BLE-examples.git"
   },
-  "devDependencies": {
-    "@biomejs/biome": "^2.3.12",
-    "@types/web-bluetooth": "^0.0.21",
-    "simple-git-hooks": "^2.13.1",
-    "typescript": "^5.9.3"
+  "homepage": "https://github.com/veillette/pasco-BLE-examples#readme",
+  "dependencies": {
+    "pasco-ble": "^0.3.0"
   }
 }

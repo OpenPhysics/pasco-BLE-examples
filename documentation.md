@@ -1,690 +1,518 @@
-# Technical Documentation
+# Examples Documentation
 
-### A detailed description of how the PASCO BLE library works
-
-> **Note:** This is an independent TypeScript implementation inspired by [PASCO Scientific's official Python library](https://github.com/PASCOscientific/pasco_python). The architecture and implementation details described here are specific to this TypeScript version.
+Detailed guide to the PASCO BLE examples and how to use the [pasco-ble](https://www.npmjs.com/package/pasco-ble) library in your own projects.
 
 ## Contents
 
-- [Architecture Overview](#architecture-overview)
-- [Module Exports](#module-exports)
-- [Browser Support](#browser-support)
-- [BLE Communication](#ble-communication)
-- [Device Initialization](#device-initialization)
-- [Data Decoding Pipeline](#data-decoding-pipeline)
-- [Platform Adapters](#platform-adapters)
-- [Control Node Specifics](#control-node-specifics)
-- [Recent Improvements](#recent-improvements)
+- [Getting Started](#getting-started)
+- [Example Descriptions](#example-descriptions)
+- [Using the Library](#using-the-library)
+- [Common Patterns](#common-patterns)
+- [API Quick Reference](#api-quick-reference)
+- [Creating Your Own Examples](#creating-your-own-examples)
 
 ---
 
-## Architecture Overview
+## Getting Started
 
-The PASCO BLE library provides a TypeScript interface for communicating with PASCO wireless sensors over Bluetooth Low Energy (BLE). The library is designed to work in web browsers using the Web Bluetooth API.
+### Prerequisites
 
-### Library Layers
+1. **Browser**: Chrome 56+, Edge 79+, or Opera 43+ (Web Bluetooth required)
+2. **HTTPS**: Examples must be served over HTTPS (localhost is exempt)
+3. **Hardware**: PASCO Wireless BLE sensor(s)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      User Application                        │
-├─────────────────────────────────────────────────────────────┤
-│   PascoBot          CodeNodeDevice      ControlNodeDevice   │
-│   (robotics)        (LED/sound)         (motors/servos)     │
-├─────────────────────────────────────────────────────────────┤
-│                      PASCOBLEDevice                          │
-│           (connection & protocol management)                 │
-├────────────────────────┬────────────────────────────────────┤
-│    SensorManager       │      ProtocolHandler               │
-│  (sensor operations)   │   (BLE communication)              │
-├────────────────────────┼────────────────────────────────────┤
-│  SensorInitializer     │  MeasurementDecoder                │
-│  (sensor setup)        │  (data decoding)                   │
-├────────────────────────┴────────────────────────────────────┤
-│              BLE Adapter Abstraction Layer                   │
-│         (BLEAdapterBase / BLEClientBase)                    │
-├─────────────────────────────────────────────────────────────┤
-│               WebBluetoothAdapter                            │
-│            (Web Bluetooth API - Browser)                     │
-└─────────────────────────────────────────────────────────────┘
+### Running Examples Locally
+
+```bash
+# Clone the repository
+git clone https://github.com/veillette/pasco-BLE-examples.git
+cd pasco-BLE-examples
+
+# Install dependencies
+npm install
+
+# Start local server
+npm run serve
 ```
 
-### Module Structure
+Open `http://localhost:3000/examples/` in your browser.
 
-```
-src/
-├── index.ts                 # Public API exports (stable)
-├── internal.ts              # Internal/advanced API exports
-├── browser-support.ts       # Browser compatibility detection
-├── code-node-device.ts      # Code.Node controls
-├── control-node-device.ts   # Control.Node controls
-├── pasco-bot.ts             # Robotics interface
-├── character-library.ts     # LED matrix characters/icons
-├── datasheets.ts            # Sensor definitions
-├── device/
-│   ├── pasco-ble-device.ts      # Base device class (connection/protocol)
-│   ├── sensor-manager.ts        # Sensor state and operations
-│   ├── sensor-initializer.ts    # Sensor initialization from datasheets
-│   ├── measurement-decoder.ts   # Data decoding pipeline
-│   ├── protocol-handler.ts      # BLE communication protocol
-│   ├── connection-state.ts      # Connection state machine
-│   ├── device-options.ts        # Configuration options
-│   └── index.ts                 # Device module exports
-├── ble/
-│   ├── ble-adapter.ts       # Abstract BLE interface
-│   ├── web-bluetooth-adapter.ts  # Web Bluetooth implementation
-│   └── index.ts             # BLE adapter factory
-├── types/
-│   ├── ble.ts               # BLE type definitions
-│   ├── measurement.ts       # Measurement types
-│   └── device.ts            # Device/sensor types
-└── utils/
-    ├── binary.ts            # Binary data utilities
-    ├── math.ts              # Mathematical functions
-    ├── equation-parser.ts   # Safe equation evaluation
-    ├── event-emitter.ts     # Typed event emitter
-    └── retry.ts             # Retry logic utilities
-```
+### Running Examples Directly
 
-### Device Hierarchy
-
-PASCO devices have three conceptual layers:
-
-1. **Interface**: The physical device (e.g., Control Node, Temperature Sensor)
-2. **Sensors**: Components within the device that provide data channels
-3. **Measurements**: Individual data points from each sensor
-
-**Example**: Wireless Weather Sensor
-- Interface ID: 1036
-- Sensors: WirelessWeatherSensor, WirelessGPSSensor, WirelessLightSensor, WirelessCompass
-- Measurements: Temperature, RelativeHumidity, Latitude, UVIndex, WindDirection, etc.
+Examples can also be opened directly in Chrome/Edge from your file system - no server needed! Just double-click any `.html` file.
 
 ---
 
-## Module Exports
+## Example Descriptions
 
-The library uses a tiered export structure to separate stable public APIs from internal utilities:
+### basic-usage.html
 
-### Main API (`pasco-ble`)
+**Purpose**: Entry-level example showing how to connect to any PASCO sensor and read all available measurements.
 
-The main entry point exports stable, user-facing APIs:
+**Features**:
+- Connect/disconnect button
+- Automatic detection of all available measurements
+- Real-time display of all sensor values
+- Connection status indicator
 
-```typescript
+**Key Concepts**:
+- `PASCOBLEDevice` instantiation
+- Scanning and connecting
+- `getMeasurementList()` to discover measurements
+- `readData()` for reading values
+
+---
+
+### force-sensor.html
+
+**Purpose**: Dedicated interface for the Wireless Force Acceleration sensor.
+
+**Features**:
+- Large, easy-to-read force display
+- All measurements from the sensor
+- Real-time updates
+
+**Hardware**: Wireless Force Acceleration sensor
+
+---
+
+### motion-sensor.html
+
+**Purpose**: Position and velocity tracking with the Wireless Motion Sensor.
+
+**Features**:
+- Position display
+- Velocity calculation
+- Real-time updates
+
+**Hardware**: Wireless Motion Sensor
+
+---
+
+### code-node.html
+
+**Purpose**: Control the Code.Node's outputs (LED matrix, RGB LED, speaker).
+
+**Features**:
+- 5x5 LED matrix control with click-to-toggle
+- RGB LED color picker
+- Sound frequency control
+- Read onboard sensors (brightness, buttons)
+
+**Hardware**: Code.Node
+
+**Key APIs**:
+```javascript
+import { CodeNodeDevice, Icons } from 'pasco-ble';
+
+const device = new CodeNodeDevice();
+await device.connectById('481-782');
+
+// LED Matrix
+await device.setLedInArray(2, 2, 255);           // Single LED
+await device.showImageInArray(Icons.smile);      // Show icon
+await device.scrollTextInArray('HELLO');         // Scroll text
+
+// RGB LED
+await device.setRgbLed(255, 0, 0);               // Red
+
+// Speaker
+await device.setSoundFrequency(440);             // 440 Hz tone
+```
+
+---
+
+### control-node.html
+
+**Purpose**: Control the Control.Node's motors, servos, and outputs.
+
+**Features**:
+- Stepper motor control (speed, direction, position)
+- Servo control (standard and continuous)
+- Speaker frequency control
+- Plugin sensor reading
+
+**Hardware**: Control.Node
+
+**Key APIs**:
+```javascript
+import { ControlNodeDevice } from 'pasco-ble';
+
+const device = new ControlNodeDevice();
+await device.connectById('664-591');
+
+// Stepper motors
+await device.rotateStepperContinuously('A', 360, 360);
+await device.stopSteppers(360, 360);
+
+// Servos
+await device.setServo(1, 'standard', 45);        // Standard: -90 to 90 degrees
+await device.setServo(2, 'continuous', 50);      // Continuous: -100 to 100 speed
+
+// Speaker
+await device.setSoundFrequency(440);
+```
+
+---
+
+### sensor-xy-graph.html
+
+**Purpose**: Parametric X-Y plotting using Chart.js with custom equations.
+
+**Features**:
+- Select X and Y axis measurements
+- Custom equation support using expr-eval
+- Real-time scatter plot
+- Data export
+
+**External Libraries**: Chart.js, expr-eval
+
+---
+
+### multi-sensor-graph.html
+
+**Purpose**: Connect multiple sensors and display their data on a single graph.
+
+**Features**:
+- Connect multiple PASCO devices simultaneously
+- Combined time-series graph
+- Color-coded data series
+- Synchronized timing
+
+**External Libraries**: Chart.js
+
+---
+
+### smart-cart.html
+
+**Purpose**: 3D visualization of Smart Cart data using Plotly.
+
+**Features**:
+- Position-velocity-time 3D scatter plot
+- Interactive rotation and zoom
+- Real-time data accumulation
+
+**Hardware**: Wireless Smart Cart
+
+**External Libraries**: Plotly.js
+
+---
+
+## Using the Library
+
+### Loading via CDN
+
+The recommended way to use `pasco-ble` in browser examples:
+
+```html
+<script type="importmap">
+{
+  "imports": {
+    "pasco-ble": "https://esm.sh/pasco-ble"
+  }
+}
+</script>
+
+<script type="module">
+  import { PASCOBLEDevice } from 'pasco-ble';
+  // Your code here
+</script>
+```
+
+### Alternative: Direct URL Import
+
+```html
+<script type="module">
+  import { PASCOBLEDevice } from 'https://unpkg.com/pasco-ble/dist/index.js';
+</script>
+```
+
+### Available Exports
+
+```javascript
 import {
   // Device classes
-  PASCOBLEDevice,
-  CodeNodeDevice,
-  ControlNodeDevice,
-  PascoBot,
+  PASCOBLEDevice,      // Generic sensor device
+  CodeNodeDevice,       // Code.Node with LED/speaker
+  ControlNodeDevice,    // Control.Node with motors/servos
+  PascoBot,            // Robotics interface
 
   // Browser support
   checkBrowserSupport,
   isWebBluetoothSupported,
 
-  // Configuration
-  DeviceOptions,
-  DEFAULT_DEVICE_OPTIONS,
+  // LED icons for Code.Node
+  Icons,
+  LEDIcons,
 
   // Error classes
   BLEConnectionError,
   DeviceNotConnected,
   MeasurementNotFound,
-  // ... other errors
-
-  // Unit conversions
-  convertUnit,
-  getDefaultUnit,
-
-  // Event system
-  TypedEventEmitter,
-
-  // LED icons
-  Icons,
-  LEDIcons,
 } from 'pasco-ble';
 ```
 
-### Internal API (`pasco-ble/internal`)
-
-Advanced utilities for extension developers. These APIs may change between minor versions:
-
-```typescript
-import {
-  // BLE protocol internals
-  BLEAdapterBase,
-  BLEClientBase,
-  ProtocolHandler,
-  PROTOCOL,
-  createPascoUuid,
-
-  // Device internals
-  ConnectionStateMachine,
-  MeasurementDecoder,
-  SensorInitializer,
-
-  // Datasheet access
-  SENSORS,
-  WIRELESS_INTERFACES,
-  getSensor,
-  getInterface,
-
-  // Binary utilities
-  packInt16LE,
-  unpackFloat32LE,
-  twosComplement,
-  binaryFraction,
-
-  // Math utilities
-  linearInterpolate,
-  dewpoint,
-  windchill,
-  heatindex,
-
-  // Retry utilities
-  withRetry,
-  delay,
-} from 'pasco-ble/internal';
-```
-
 ---
 
-## Browser Support
+## Common Patterns
 
-### Runtime Detection
+### Basic Connection Flow
 
-The library provides utilities to check browser compatibility before attempting BLE operations:
+```javascript
+const device = new PASCOBLEDevice();
 
-```typescript
+// 1. Scan for devices (opens browser picker)
+const devices = await device.scan();
+
+// 2. Connect to selected device
+if (devices.length > 0) {
+  await device.connect(devices[0]);
+}
+
+// 3. Read data
+const value = await device.readData('Temperature');
+
+// 4. Disconnect when done
+await device.disconnect();
+```
+
+### Continuous Reading Loop
+
+```javascript
+let isReading = true;
+
+async function readLoop() {
+  while (isReading && device.isConnected()) {
+    const value = await device.readData('Force');
+    updateDisplay(value);
+    await new Promise(r => setTimeout(r, 50)); // 20 Hz
+  }
+}
+
+// Start reading
+readLoop();
+
+// Stop reading
+isReading = false;
+```
+
+### Connect by Device ID
+
+If you know your device's ID (shown on the device or in previous connections):
+
+```javascript
+await device.connectById('055-808');
+```
+
+### Check Browser Support
+
+```javascript
 import { checkBrowserSupport, isWebBluetoothSupported } from 'pasco-ble';
 
-// Simple boolean check
+// Simple check
 if (!isWebBluetoothSupported()) {
-  console.error('Web Bluetooth not available');
+  alert('Please use Chrome or Edge');
 }
 
-// Detailed check with diagnostic info
+// Detailed check
 const support = checkBrowserSupport();
-console.log(support);
-// {
-//   supported: false,
-//   secureContext: true,
-//   message: "Web Bluetooth API is not available. Firefox does not support Web Bluetooth...",
-//   browser: "Firefox"
-// }
-```
-
-### BrowserSupport Interface
-
-```typescript
-interface BrowserSupport {
-  supported: boolean;      // Whether Web Bluetooth is available
-  secureContext: boolean;  // Whether page is served over HTTPS
-  message: string;         // Human-readable status message
-  browser: string | undefined;  // Detected browser name
+if (!support.supported) {
+  console.log(support.message);  // Helpful error message
+  console.log(support.browser);  // Detected browser name
 }
 ```
 
-### Supported Browsers
+### Discover Available Measurements
 
-| Browser | Minimum Version | Platforms |
-|---------|-----------------|-----------|
-| Chrome | 56+ | Windows, macOS, Linux, Android |
-| Edge | 79+ | Windows, macOS |
-| Opera | 43+ | Windows, macOS, Linux |
+```javascript
+// Get all measurements
+const measurements = device.getMeasurementList();
+console.log(measurements);  // ['Temperature', 'Force', 'Acceleration-x', ...]
 
-**Not Supported:** Firefox, Safari, Internet Explorer
-
----
-
-## BLE Communication
-
-### PASCO UUID Structure
-
-PASCO devices use custom BLE UUIDs with this format:
-```
-4a5c000{serviceId}-000{charId}-0000-0000-5c1e741f1c00
+// Get unit for a measurement
+const unit = device.getMeasurementUnit('Temperature');
+console.log(unit);  // '°C'
 ```
 
-- **Service ID (0-9)**: Identifies the sensor channel
-  - Service 0: Main device commands
-  - Services 1+: Individual sensor channels
-- **Characteristic ID (2, 3, 5)**:
-  - Char 2 (`SEND_CMD_CHAR_ID`): Send commands to device
-  - Char 3 (`RECV_CMD_CHAR_ID`): Receive responses/notifications
-  - Char 5 (`SEND_ACK_CHAR_ID`): Send acknowledgments
+### Read Multiple Measurements
 
-### Communication Flow
-
-```
-┌──────────┐                           ┌──────────────┐
-│ Computer │                           │ PASCO Device │
-└────┬─────┘                           └──────┬───────┘
-     │                                        │
-     │  1. Write command to Char 2            │
-     │ ─────────────────────────────────────> │
-     │                                        │
-     │  2. Device sends notification on Char 3│
-     │ <───────────────────────────────────── │
-     │                                        │
-     │  3. Send ACK on Char 5 (if needed)     │
-     │ ─────────────────────────────────────> │
-     │                                        │
+```javascript
+const values = await device.readDataList(['Force', 'Acceleration-x', 'Acceleration-y']);
+console.log(values);  // [12.5, 0.98, -0.02]
 ```
 
-### Command Protocol
+### Handle Disconnection
 
-**Request Format:**
-```typescript
-[COMMAND_ID, ...parameters]
-```
-
-**Response Format:**
-```typescript
-[0xC0, status, originalCommand, ...data]  // Generic response
-[packetNum, ...data]                       // Measurement data (packetNum <= 0x1F)
-```
-
-### Key Commands
-
-| Command | ID | Purpose |
-|---------|-----|---------|
-| `GCMD_READ_ONE_SAMPLE` | 0x05 | Read single measurement |
-| `GCMD_CUSTOM_CMD` | 0x37 | Custom/device-specific command |
-| `GCMD_XFER_BURST_RAM` | 0x0E | Burst RAM transfer |
-
-### Synchronization with writeAwaitCallback
-
-BLE communication is asynchronous. The `writeAwaitCallback()` method ensures proper synchronization:
-
-```typescript
-async writeAwaitCallback(serviceId: number, command: number[]): Promise<void> {
-  // 1. Set up promise to wait for callback
-  const callbackPromise = new Promise((resolve, reject) => {
-    this._callbackResolve = resolve;
-    this._callbackReject = reject;
-  });
-
-  // 2. Write command to device
-  await this.write(serviceId, command);
-
-  // 3. Wait for notification callback
-  await callbackPromise;
-}
-```
-
-When a notification arrives, `_notifyCallback()` resolves the promise, allowing execution to continue.
-
----
-
-## Device Initialization
-
-### Connection Sequence
-
-```typescript
-// 1. Create device and scan
-const device = new PASCOBLEDevice();
-const found = await device.scan();
-
-// 2. Connect to device
-await device.connect(found[0]);
-
-// Internally:
-// - Establish GATT connection
-// - Discover services and characteristics
-// - Start notifications on all channels
-// - Parse device name to extract interface ID
-// - Load interface definition from datasheets
-// - Initialize sensors and measurements
-```
-
-### Device Name Parsing
-
-PASCO device names follow this format:
-```
-{DeviceType} {SerialId}-{InterfaceId}
-```
-
-Example: `Temperature 055-808-1025`
-- Device Type: Temperature
-- Serial ID: 055-808
-- Interface ID: 1025
-
-### Datasheet Lookup
-
-The `datasheets.ts` file contains definitions for all PASCO interfaces and sensors:
-
-```typescript
-interface ParsedInterface {
-  ID: number;
-  channels: InterfaceChannel[];
-}
-
-interface ParsedSensor {
-  ID: number;
-  Tag: string;
-  measurements: Measurement[];
-}
-```
-
-During initialization:
-1. Look up interface by ID
-2. For each channel, look up sensor definition
-3. Build measurement lookup tables
-
----
-
-## Data Decoding Pipeline
-
-When sensor data is received, it goes through a multi-stage decoding process:
-
-```
-Raw BLE Bytes
-      │
-      ▼
-┌─────────────────┐
-│ Build byte value│  Little-endian assembly
-│ from data stack │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Apply base type │  RawDigital, Direct, Constant
-│ conversion      │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Apply derived   │  LinearConv, FactoryCal, Derivative,
-│ calculations    │  ThreeInputVector, RotaryPos, etc.
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Apply equation  │  table(), usound(), dewpoint(),
-│ (if present)    │  windchill(), heatindex(), custom
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Apply precision │  Round to specified decimal places
-│ and limits      │
-└────────┬────────┘
-         │
-         ▼
-   Final Value
-```
-
-### Measurement Types
-
-| Type | Description |
-|------|-------------|
-| `RawDigital` | Raw sensor value, optionally two's complement |
-| `Direct` | Direct conversion with binary fraction |
-| `Constant` | Fixed predefined value |
-| `LinearConv` | Linear transformation: `y = m*x + b` |
-| `FactoryCal` | 4-parameter factory calibration |
-| `UserCal` | 4-parameter user calibration |
-| `ThreeInputVector` | Vector magnitude: `√(x² + y² + z²)` |
-| `Derivative` | Rate of change from previous value |
-| `RotaryPos` | Accumulated rotary position |
-| `Select` | Pass-through from input measurement |
-
-### Equation Evaluation
-
-The library uses the `expr-eval` library for safe equation evaluation (avoiding `eval()`):
-
-```typescript
-// Example equation from datasheet
-"table((880*[1])+336.9,7122,45,14100,20,17245,15,51725,0)"
-
-// Parsed and evaluated:
-// 1. Replace [1] with measurement ID 1's value
-// 2. Evaluate inner expression
-// 3. Look up result in interpolation table
-```
-
-Supported functions: `sqrt`, `log`, `sin`, `cos`, `tan`, `abs`, `pow`, `exp`, `floor`, `ceil`, `round`, plus custom functions like `dewpoint()`, `windchill()`, `heatindex()`, `usound()`.
-
----
-
-## Web Bluetooth Adapter
-
-### BLE Adapter Interface
-
-```typescript
-abstract class BLEAdapterBase {
-  abstract scan(nameFilters?: string[], timeout?: number): Promise<BLEDevice[]>;
-  abstract stopScan(): Promise<void>;
-  abstract createClient(device: BLEDevice): BLEClientBase;
-  abstract isAvailable(): boolean;
-}
-
-abstract class BLEClientBase {
-  abstract connect(): Promise<void>;
-  abstract disconnect(): Promise<void>;
-  abstract writeGattChar(uuid: string, data: Uint8Array): Promise<void>;
-  abstract readGattChar(uuid: string): Promise<Uint8Array>;
-  abstract startNotify(uuid: string, callback: NotifyCallback): Promise<void>;
-  abstract stopNotify(uuid: string): Promise<void>;
-  abstract discoverServicesAndCharacteristics(): Promise<void>;
-}
-```
-
-### Web Bluetooth Implementation
-
-The library uses the **Web Bluetooth API** available in modern browsers:
-
-**Features:**
-- Uses `navigator.bluetooth.requestDevice()` for device selection
-- Shows native browser device picker dialog
-- Requires HTTPS context (or localhost for development)
-- Requires user gesture to initiate scan/connect operations
-- Zero native dependencies - pure JavaScript/TypeScript
-
-**Browser Support:**
-- ✅ Chrome 56+ (Windows, macOS, Linux, Android)
-- ✅ Edge 79+ (Windows, macOS)
-- ✅ Opera 43+
-- ❌ Firefox (Web Bluetooth not supported)
-- ❌ Safari (Web Bluetooth not supported)
-
-**Adapter Factory:**
-
-```typescript
-function createBLEAdapter(): BLEAdapterBase {
-  if (typeof navigator !== 'undefined' && navigator.bluetooth !== undefined) {
-    return new WebBluetoothAdapter();
+```javascript
+// Clean disconnect on page unload
+window.addEventListener('beforeunload', async () => {
+  if (device.isConnected()) {
+    await device.disconnect();
   }
-  throw new Error('Web Bluetooth API is not available in this environment');
-}
-```
-
-### Security Requirements
-
-Web Bluetooth has strict security requirements:
-
-1. **HTTPS Only**: Must be served over HTTPS (localhost exempted)
-2. **User Gesture**: Bluetooth operations must be initiated by user action
-3. **Permission Prompt**: Browser shows permission dialog before accessing Bluetooth
-4. **Secure Context**: Page must be in a secure context (not in iframe without proper permissions)
-
----
-
-## Control Node Specifics
-
-### Port-Based Measurement Reading
-
-The Control Node supports multiple sensors on different ports (A, B, Sensor). The `readData()` method is overridden to handle port-specific readings:
-
-```typescript
-// Read angle from stepper on port A
-const angleA = await controlNode.readData('Angle', 'A');
-
-// Read angle from stepper on port B
-const angleB = await controlNode.readData('Angle', 'B');
-```
-
-### Plugin Sensor Detection
-
-When sensors are plugged into the Control Node, it sends a callback with updated sensor information:
-
-```typescript
-// Callback format: [0x82, sensorIdA_lo, sensorIdA_hi, sensorIdB_lo, sensorIdB_hi, ...]
-```
-
-The `update_controlnode_plugin_sensor()` method processes this and reinitializes the sensor list.
-
-### Stepper Motor Commands
-
-Stepper commands use this format:
-```typescript
-[0x37, 0x04, channel,
- speedA_lo, speedA_hi, accelA_lo, accelA_hi, distA_0, distA_1, distA_2, distA_3,
- speedB_lo, speedB_hi, accelB_lo, accelB_hi, distB_0, distB_1, distB_2, distB_3]
-```
-
-- Speed: deci-steps per second (960 steps = 360 degrees)
-- Acceleration: deci-steps per second squared
-- Distance: deci-steps (0 = continuous rotation)
-
-### Servo PWM Calculation
-
-```typescript
-// Standard servo: angle (-90 to 90) → PWM on-time
-onTime = angle + 150;  // microseconds
-
-// Continuous servo: speed (-100 to 100) → PWM on-time
-onTime = 0.2 * speed + 150;  // microseconds
+});
 ```
 
 ---
 
-## Utility Functions
+## API Quick Reference
 
-### Binary Utilities (`utils/binary.ts`)
+### PASCOBLEDevice
 
-| Function | Purpose |
-|----------|---------|
-| `decode64(char)` | PASCO-specific Base-64 decoding |
-| `twosComplement(value, byteLen)` | Two's complement conversion |
-| `binaryFraction(value)` | Fixed-point fraction conversion |
-| `binaryFloat(value, byteLen)` | IEEE 754 float conversion |
-| `unpackFloat32LE(data)` | Little-endian float unpacking |
-| `packInt16LE(value)` | Little-endian int packing |
+| Method | Description |
+|--------|-------------|
+| `scan(filter?)` | Scan for devices, optionally filter by name |
+| `connect(bleDevice)` | Connect to a scanned device |
+| `connectById(id)` | Connect by 6-digit device ID |
+| `disconnect()` | Disconnect from device |
+| `isConnected()` | Check connection status |
+| `getMeasurementList()` | Get available measurements |
+| `getMeasurementUnit(name)` | Get unit for measurement |
+| `readData(name)` | Read single measurement |
+| `readDataList(names)` | Read multiple measurements |
 
-### Math Utilities (`utils/math.ts`)
+### CodeNodeDevice (extends PASCOBLEDevice)
 
-| Function | Purpose |
-|----------|---------|
-| `linearInterpolate(x, points)` | Linear interpolation |
-| `calc4Params(raw, x1, y1, x2, y2)` | 4-parameter calibration |
-| `calcLinearParams(raw, m, b)` | Linear conversion |
-| `calcRotaryPos(count, x, r)` | Rotary position |
-| `threeInputVector(x, y, z)` | 3D vector magnitude |
-| `dewpoint(temp, humidity)` | Dew point calculation |
-| `windchill(temp, wind)` | Wind chill calculation |
-| `heatindex(temp, humidity)` | Heat index calculation |
+| Method | Description |
+|--------|-------------|
+| `setLedInArray(x, y, intensity)` | Set single LED (0-4, 0-4, 0-255) |
+| `setLedsInArray(coords, intensity)` | Set multiple LEDs |
+| `showImageInArray(icon)` | Display preset icon |
+| `scrollTextInArray(text)` | Scroll text across matrix |
+| `setRgbLed(r, g, b)` | Set RGB LED color (0-255 each) |
+| `setSoundFrequency(hz)` | Play tone (0 to stop) |
+| `reset()` | Turn off all outputs |
 
----
+### ControlNodeDevice (extends PASCOBLEDevice)
 
-## Error Handling
-
-The library defines specific error classes for different failure modes:
-
-| Error | Cause |
-|-------|-------|
-| `BLEScanFailed` | Bluetooth scan failed |
-| `BLEConnectionError` | Connection to device failed |
-| `BLEAlreadyConnectedError` | Attempted to connect when already connected |
-| `DeviceNotConnected` | Operation attempted without connection |
-| `MeasurementNotFound` | Requested measurement doesn't exist |
-| `InvalidParameter` | Invalid parameter passed to method |
-| `SensorNotFound` | Requested sensor doesn't exist |
-| `InvalidEquation` | Equation evaluation failed |
-| `CouldNotDecodeData` | Data decoding failed |
-| `CommunicationError` | BLE communication failed |
-| `SensorSetupError` | Sensor initialization failed |
+| Method | Description |
+|--------|-------------|
+| `rotateStepperContinuously(port, speed, accel)` | Continuous rotation |
+| `rotateSteppersThrough(...)` | Rotate specific angle |
+| `stopSteppers(decelA, decelB)` | Stop with deceleration |
+| `setServo(port, type, value)` | Control servo |
+| `setSoundFrequency(hz)` | Play tone |
+| `readData(name, port?)` | Read with optional port |
 
 ---
 
-## Recent Improvements
+## Creating Your Own Examples
 
-### Sensor Manager Refactoring (2024)
+### Template
 
-The library was refactored to improve separation of concerns and maintainability:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My PASCO Example</title>
+  <link rel="stylesheet" href="common.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "pasco-ble": "https://esm.sh/pasco-ble"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>My PASCO Example</h1>
+    <div id="status" class="status disconnected">Disconnected</div>
+  </header>
 
-**Before:**
-- `PASCOBLEDevice` handled connection, protocol, AND sensor management (~788 lines)
-- 12+ sensor state maps mixed with connection logic
-- Difficult to test sensor logic independently
+  <main>
+    <section class="card">
+      <h2>Controls</h2>
+      <button id="connectBtn">Connect</button>
+      <button id="disconnectBtn" disabled>Disconnect</button>
+    </section>
 
-**After:**
-- `PASCOBLEDevice`: Connection and protocol management (~440 lines, 44% reduction)
-- `SensorManager`: All sensor-related state and operations (~354 lines)
-- Clear separation of concerns with better encapsulation
+    <section class="card">
+      <h2>Data</h2>
+      <div id="output">--</div>
+    </section>
+  </main>
 
-**Benefits:**
-- **Modularity**: Sensor logic is now isolated and reusable
-- **Testability**: Can test sensor operations independently from BLE connection
-- **Maintainability**: Changes to sensor logic don't affect connection code
-- **Clarity**: Each class has a single, well-defined responsibility
+  <script type="module">
+    import { PASCOBLEDevice, isWebBluetoothSupported } from 'pasco-ble';
+    import { setStatus, showError, setupDisconnectOnUnload } from './common.js';
 
-### Architecture Improvements
+    // Check browser support
+    if (!isWebBluetoothSupported()) {
+      showError('Web Bluetooth not supported. Use Chrome or Edge.');
+    }
 
-1. **Connection State Machine** (`ConnectionStateMachine`)
-   - Explicit state transitions with validation
-   - Better error handling and state tracking
-   - Support for auto-reconnect scenarios
+    const device = new PASCOBLEDevice();
+    let isReading = false;
 
-2. **Protocol Handler** (`ProtocolHandler`)
-   - Centralized BLE communication logic
-   - Retry support for unreliable connections
-   - Cleaner notification handling
+    document.getElementById('connectBtn').onclick = async () => {
+      try {
+        const devices = await device.scan();
+        if (devices.length > 0) {
+          await device.connect(devices[0]);
+          setStatus('connected', 'Connected');
+          document.getElementById('connectBtn').disabled = true;
+          document.getElementById('disconnectBtn').disabled = false;
+          startReading();
+        }
+      } catch (err) {
+        showError(err.message);
+      }
+    };
 
-3. **Configuration Options** (`DeviceOptions`)
-   - Configurable timeouts and retry logic
-   - Optional event emission for debugging
-   - Custom logger support
+    document.getElementById('disconnectBtn').onclick = async () => {
+      isReading = false;
+      await device.disconnect();
+      setStatus('disconnected', 'Disconnected');
+      document.getElementById('connectBtn').disabled = false;
+      document.getElementById('disconnectBtn').disabled = true;
+    };
 
-4. **Type Safety**
-   - Full TypeScript type definitions throughout
-   - No `any` types in public API
-   - Strict null checking enabled
+    async function startReading() {
+      isReading = true;
+      while (isReading && device.isConnected()) {
+        try {
+          const value = await device.readData('Temperature');
+          const unit = device.getMeasurementUnit('Temperature');
+          document.getElementById('output').textContent = `${value.toFixed(2)} ${unit}`;
+        } catch (err) {
+          // Handle read errors
+        }
+        await new Promise(r => setTimeout(r, 100));
+      }
+    }
 
-### Performance Optimizations
+    // Clean disconnect on page close
+    setupDisconnectOnUnload(device);
+  </script>
+</body>
+</html>
+```
 
-- Efficient binary data parsing
-- Minimal memory allocations in hot paths
-- Reusable buffer pools for BLE communication
-- Lazy initialization of sensor state
+### Using common.js Utilities
 
-### Code Quality
+```javascript
+import {
+  setStatus,           // Update status indicator
+  showError,           // Show error notification
+  createLogger,        // Create logging function
+  formatNumber,        // Format numbers
+  calculateStats,      // Compute statistics
+  setupDisconnectOnUnload,  // Auto-disconnect on close
+  hexToRgb,            // Color conversion
+  debounce,            // Debounce function
+  throttle,            // Throttle function
+  clamp,               // Clamp value to range
+} from './common.js';
+```
 
-- Upgraded to TypeScript 5.9.3
-- Biome for linting and formatting
-- Pre-commit hooks for code quality
-- Comprehensive error handling
+---
 
-### API Structure Improvements (2025)
+## Resources
 
-1. **Tiered Export Structure**
-   - Main API (`pasco-ble`): Stable, user-facing exports
-   - Internal API (`pasco-ble/internal`): Advanced utilities for extension developers
-   - Clear separation prevents users from depending on implementation details
-
-2. **Browser Support Utilities**
-   - `checkBrowserSupport()`: Detailed browser compatibility check
-   - `isWebBluetoothSupported()`: Simple boolean check
-   - Helpful error messages for unsupported browsers
-
-3. **TypeScript Path Aliases**
-   - `@/types/*`, `@/utils/*`, `@/device/*`, `@/ble/*`
-   - Cleaner imports for internal development
-
-4. **CI/CD Pipeline**
-   - GitHub Actions for automated builds, linting, and type checking
-   - Dependabot for dependency updates
-   - Release workflow for NPM publishing with provenance
-
-5. **Development Requirements**
-   - Node.js >= 22.0.0 required for development
-   - ES2022 target with ESNext modules
+- **pasco-ble npm**: [npmjs.com/package/pasco-ble](https://www.npmjs.com/package/pasco-ble)
+- **Library source**: [github.com/veillette/pascoTS](https://github.com/veillette/pascoTS)
+- **Web Bluetooth**: [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API)
+- **Chart.js**: [chartjs.org](https://www.chartjs.org/)
+- **Plotly.js**: [plotly.com/javascript](https://plotly.com/javascript/)
