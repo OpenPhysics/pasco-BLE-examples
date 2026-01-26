@@ -145,6 +145,7 @@
                     <li>Scroll to zoom in/out</li>
                     <li>Right-click and drag to pan</li>
                 </ul>
+                <div id="shortcutsHelp"></div>
             </section>
         </footer>
 
@@ -172,7 +173,9 @@
             createPreferences,
             createDataPlayback,
             checkBrowserSupport,
-            createAutoReconnect
+            createAutoReconnect,
+            createKeyboardShortcuts,
+            createShortcutsHelp
         } from './common.js';
 
         // Check browser support first
@@ -604,6 +607,42 @@
         });
 
         setupDisconnectOnUnload(() => device);
+
+        // Set up keyboard shortcuts
+        const shortcuts = createKeyboardShortcuts();
+
+        shortcuts.register(' ', () => {
+            if (device?.isConnected()) {
+                if (isRecording) {
+                    stopRecording();
+                } else {
+                    startRecording();
+                }
+            } else if (!connectBtn.disabled) {
+                connect();
+            }
+        }, 'Start/Stop Recording or Connect');
+
+        shortcuts.register('escape', () => {
+            if (device?.isConnected()) {
+                disconnect();
+            }
+        }, 'Disconnect');
+
+        shortcuts.register('c', () => {
+            clearData();
+        }, 'Clear data');
+
+        shortcuts.register('e', () => {
+            if (dataPoints.length > 0) {
+                const columns = ['time', 'position', 'velocity'];
+                const filename = generateExportFilename('smart-cart-data');
+                exportToCSV(dataPoints, columns, filename);
+            }
+        }, 'Export CSV');
+
+        // Render shortcuts help panel
+        createShortcutsHelp(shortcuts, document.getElementById('shortcutsHelp'));
     </script>
 </body>
 </html>

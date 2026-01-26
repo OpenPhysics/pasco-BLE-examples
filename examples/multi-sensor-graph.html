@@ -123,6 +123,7 @@
                     <li>PASCO Wireless Sensors (Rotary Motion, Motion, or Force Acceleration)</li>
                     <li>Sensors must be powered on</li>
                 </ul>
+                <div id="shortcutsHelp"></div>
             </section>
         </footer>
 
@@ -146,7 +147,9 @@
             exportToCSV,
             generateExportFilename,
             checkBrowserSupport,
-            createAutoReconnect
+            createAutoReconnect,
+            createKeyboardShortcuts,
+            createShortcutsHelp
         } from './common.js';
 
         // Check browser support first
@@ -490,6 +493,30 @@
                 if (sensor.device && sensor.device.isConnected()) sensor.device.disconnect();
             }
         });
+
+        // Set up keyboard shortcuts
+        const shortcuts = createKeyboardShortcuts();
+
+        shortcuts.register(' ', () => {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }, 'Start/Stop Recording');
+
+        shortcuts.register('c', () => {
+            clearGraph();
+        }, 'Clear graph');
+
+        shortcuts.register('e', () => {
+            if (chart.data.datasets.some(ds => ds.data.length > 0)) {
+                exportBtn.click();
+            }
+        }, 'Export CSV');
+
+        // Render shortcuts help panel
+        createShortcutsHelp(shortcuts, document.getElementById('shortcutsHelp'));
     </script>
 </body>
 </html>
