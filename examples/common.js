@@ -753,3 +753,150 @@ export function createDataPlayback(options) {
     },
   };
 }
+
+// ============================================================================
+// Connection Quality / Sample Rate Tracking
+// ============================================================================
+
+/**
+ * Create a sample rate tracker for monitoring connection quality
+ * @param {Object} options - Tracker options
+ * @param {number} [options.windowSize=1000] - Time window in ms for calculating rate
+ * @param {number} [options.updateInterval=500] - How often to update the display (ms)
+ * @param {function} [options.onUpdate] - Callback when rate is updated (rate, quality)
+ * @returns {Object} Sample rate tracker controller
+ */
+export function createSampleRateTracker(options = {}) {
+  const { windowSize = 1000, updateInterval = 500, onUpdate } = options;
+
+  const timestamps = [];
+  let intervalId = null;
+  let lastRate = 0;
+
+  /**
+   * Get quality level based on sample rate
+   * @param {number} rate - Samples per second
+   * @param {number} expectedRate - Expected rate (default 10 Hz)
+   * @returns {'good'|'fair'|'poor'} Quality level
+   */
+  function getQuality(rate, expectedRate = 10) {
+    if (rate >= expectedRate * 0.8) return 'good';
+    if (rate >= expectedRate * 0.5) return 'fair';
+    return 'poor';
+  }
+
+  function calculateRate() {
+    const now = performance.now();
+    // Remove timestamps outside the window
+    while (timestamps.length > 0 && now - timestamps[0] > windowSize) {
+      timestamps.shift();
+    }
+    // Calculate rate (samples per second)
+    return (timestamps.length / windowSize) * 1000;
+  }
+
+  function update() {
+    lastRate = calculateRate();
+    const quality = getQuality(lastRate);
+    onUpdate?.(lastRate, quality);
+  }
+
+  return {
+    /** Record a sample timestamp */
+    recordSample() {
+      timestamps.push(performance.now());
+    },
+
+    /** Get current sample rate (samples/second) */
+    getRate() {
+      return calculateRate();
+    },
+
+    /** Get quality assessment */
+    getQuality(expectedRate = 10) {
+      return getQuality(calculateRate(), expectedRate);
+    },
+
+    /** Start automatic updates */
+    start() {
+      if (intervalId !== null) return;
+      intervalId = setInterval(update, updateInterval);
+      update(); // Initial update
+    },
+
+    /** Stop automatic updates */
+    stop() {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    },
+
+    /** Reset the tracker */
+    reset() {
+      timestamps.length = 0;
+      lastRate = 0;
+    },
+
+    /** Get last calculated rate */
+    getLastRate() {
+      return lastRate;
+    },
+  };
+}
+
+/**
+ * Create and attach a connection quality indicator to an element
+ * @param {HTMLElement} container - Container element for the indicator
+ * @returns {Object} Controller with tracker and update methods
+ */
+export function createConnectionQualityIndicator(container) {
+  // Create indicator HTML
+  container.innerHTML = `
+    <div class="connection-quality" aria-live="polite">
+      <span class="quality-label">Sample Rate:</span>
+      <span class="quality-value">--</span>
+      <span class="quality-unit">Hz</span>
+      <span class="quality-indicator" aria-label="Connection quality"></span>
+    </div>
+  `;
+
+  const valueEl = container.querySelector('.quality-value');
+  const indicatorEl = container.querySelector('.quality-indicator');
+
+  const tracker = createSampleRateTracker({
+    onUpdate: (rate, quality) => {
+      valueEl.textContent = rate.toFixed(1);
+      indicatorEl.className = `quality-indicator quality-${quality}`;
+      indicatorEl.setAttribute('aria-label', `Connection quality: ${quality}`);
+    },
+  });
+
+  return {
+    tracker,
+
+    /** Record a sample (call this each time you read data) */
+    recordSample() {
+      tracker.recordSample();
+    },
+
+    /** Start monitoring */
+    start() {
+      tracker.start();
+    },
+
+    /** Stop monitoring */
+    stop() {
+      tracker.stop();
+      valueEl.textContent = '--';
+      indicatorEl.className = 'quality-indicator';
+    },
+
+    /** Reset and clear display */
+    reset() {
+      tracker.reset();
+      valueEl.textContent = '--';
+      indicatorEl.className = 'quality-indicator';
+    },
+  };
+}

@@ -209,6 +209,57 @@ figure.chart-container {
   color: #2e7d32;
 }
 
+/* Connection Quality Indicator */
+.connection-quality {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+
+.quality-label {
+  color: #666;
+}
+
+.quality-value {
+  font-weight: 600;
+  min-width: 32px;
+  text-align: right;
+}
+
+.quality-unit {
+  color: #888;
+  font-size: 12px;
+}
+
+.quality-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #bdbdbd;
+  margin-left: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.quality-indicator.quality-good {
+  background: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.quality-indicator.quality-fair {
+  background: #ff9800;
+  box-shadow: 0 0 4px rgba(255, 152, 0, 0.5);
+}
+
+.quality-indicator.quality-poor {
+  background: #f44336;
+  box-shadow: 0 0 4px rgba(244, 67, 54, 0.5);
+}
+
 /* Buttons */
 button {
   padding: 10px 20px;
