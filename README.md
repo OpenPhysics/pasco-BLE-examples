@@ -4,6 +4,8 @@ Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pas
 
 > **Note:** These examples use the `pasco-ble` npm package. For library documentation and API reference, see the [pasco-ble repository](https://github.com/veillette/pascoTS).
 
+**Live Demo:** [phasematching.github.io/pasco-BLE-examples/examples/](https://phasematching.github.io/pasco-BLE-examples/examples/)
+
 ## Quick Start
 
 1. Open any `.html` file directly in Chrome or Edge
