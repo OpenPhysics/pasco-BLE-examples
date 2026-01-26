@@ -535,6 +535,27 @@ button:disabled {
   opacity: 1;
 }
 
+/* Browser compatibility warning */
+.browser-warning {
+  background: #fff3e0;
+  color: #e65100;
+  padding: 16px;
+  border-radius: 4px;
+  border-left: 4px solid #f57c00;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.browser-warning a {
+  color: #e65100;
+  font-weight: 500;
+}
+
+.browser-warning a:hover {
+  text-decoration: none;
+}
+
 .info {
   background: #e3f2fd;
   color: #1565c0;

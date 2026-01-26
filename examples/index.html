@@ -117,34 +117,36 @@
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <main class="container" id="main-content">
-        <div class="hero">
+        <header class="hero" role="banner">
             <h1>PASCO BLE Examples</h1>
             <p>Browser demos for the <a href="https://www.npmjs.com/package/pasco-ble" target="_blank" rel="noopener">pasco-ble</a> npm package</p>
-        </div>
+        </header>
 
-        <div class="requirements">
-            <h3>Requirements</h3>
+        <aside class="requirements" role="note" aria-labelledby="requirements-heading">
+            <h3 id="requirements-heading">Requirements</h3>
             <ul>
                 <li>A Chromium-based browser (Chrome, Edge, Opera) - Web Bluetooth is not supported in Firefox or Safari</li>
                 <li>A PASCO Wireless BLE sensor or controller</li>
                 <li>Bluetooth enabled on your device</li>
             </ul>
-        </div>
+        </aside>
 
-        <section class="category">
-            <h2>Getting Started</h2>
-            <div class="example-grid">
+        <div id="browser-warning" style="display: none;"></div>
+
+        <nav class="category" aria-labelledby="getting-started-heading">
+            <h2 id="getting-started-heading">Getting Started</h2>
+            <div class="example-grid" role="list">
                 <a href="basic-usage.html" class="example-card">
                     <h3>Basic Usage</h3>
                     <p>Learn the fundamentals: connecting to a device, reading measurements, and disconnecting. Start here if you're new to pasco-ble.</p>
                     <span class="tag">Beginner</span>
                 </a>
             </div>
-        </section>
+        </nav>
 
-        <section class="category">
-            <h2>Sensor Examples</h2>
-            <div class="example-grid">
+        <section class="category" aria-labelledby="sensor-examples-heading">
+            <h2 id="sensor-examples-heading">Sensor Examples</h2>
+            <div class="example-grid" role="list">
                 <a href="force-sensor.html" class="example-card">
                     <h3>Force Sensor</h3>
                     <p>Real-time force measurement display using the PASCO Wireless Force Acceleration sensor with a large, easy-to-read value display.</p>
@@ -163,9 +165,9 @@
             </div>
         </section>
 
-        <section class="category">
-            <h2>Controllers</h2>
-            <div class="example-grid">
+        <section class="category" aria-labelledby="controllers-heading">
+            <h2 id="controllers-heading">Controllers</h2>
+            <div class="example-grid" role="list">
                 <a href="code-node.html" class="example-card">
                     <h3>Code.Node</h3>
                     <p>Control the PASCO Code.Node LED matrix, RGB LED, and speaker via Web Bluetooth for interactive projects.</p>
@@ -179,9 +181,9 @@
             </div>
         </section>
 
-        <section class="category">
-            <h2>Advanced Graphing</h2>
-            <div class="example-grid">
+        <section class="category" aria-labelledby="advanced-graphing-heading">
+            <h2 id="advanced-graphing-heading">Advanced Graphing</h2>
+            <div class="example-grid" role="list">
                 <a href="sensor-xy-graph.html" class="example-card">
                     <h3>X-Y Parametric Graph</h3>
                     <p>Create parametric X-Y plots from any sensor data using Chart.js. Supports custom equations and multiple data series.</p>
@@ -195,8 +197,8 @@
             </div>
         </section>
 
-        <footer class="card">
-            <h2>Resources</h2>
+        <footer class="card" aria-labelledby="resources-heading">
+            <h2 id="resources-heading">Resources</h2>
             <ul>
                 <li><a href="https://www.npmjs.com/package/pasco-ble" target="_blank" rel="noopener">pasco-ble on npm</a></li>
                 <li><a href="https://github.com/veillette/pascoTS" target="_blank" rel="noopener">pasco-ble source code (pascoTS)</a></li>
@@ -204,5 +206,10 @@
             </ul>
         </footer>
     </main>
+
+    <script type="module">
+        import { checkBrowserSupport } from './common.js';
+        checkBrowserSupport();
+    </script>
 </body>
 </html>

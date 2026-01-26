@@ -27,6 +27,43 @@ export const RECONNECT_MAX_ATTEMPTS = 3;
 export const RECONNECT_BASE_DELAY_MS = 1000;
 
 // ============================================================================
+// Browser Support
+// ============================================================================
+
+/**
+ * Check if Web Bluetooth is supported in the current browser
+ * @returns {boolean} True if Web Bluetooth is available
+ */
+export function isWebBluetoothSupported() {
+  return typeof navigator !== 'undefined' && 'bluetooth' in navigator;
+}
+
+/**
+ * Show a browser support warning banner if Web Bluetooth is not available
+ * @param {string} [containerId='browser-warning'] - ID of container element to show warning in
+ * @returns {boolean} True if browser is supported, false otherwise
+ */
+export function checkBrowserSupport(containerId = 'browser-warning') {
+  if (isWebBluetoothSupported()) {
+    return true;
+  }
+
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.innerHTML = `
+      <div class="browser-warning" role="alert">
+        <strong>Browser Not Supported:</strong> Web Bluetooth is required but not available in your browser.
+        Please use <a href="https://www.google.com/chrome/" target="_blank" rel="noopener">Chrome</a>,
+        <a href="https://www.microsoft.com/edge" target="_blank" rel="noopener">Edge</a>, or another Chromium-based browser.
+      </div>
+    `;
+    container.style.display = 'block';
+  }
+
+  return false;
+}
+
+// ============================================================================
 // Status and Error Handling
 // ============================================================================
 

@@ -16,8 +16,16 @@ Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pas
 ```bash
 git clone https://github.com/phasematching/pasco-BLE-examples.git
 cd pasco-BLE-examples
-npm install
+npm install        # Required before running any npm scripts
 npm run serve
+```
+
+### Code Quality
+
+```bash
+npm install        # If not already done
+npm run check      # Run linting and formatting checks
+npm run check:fix  # Auto-fix issues
 ```
 
 1. Open `http://localhost:3000/examples/` in Chrome or Edge.
