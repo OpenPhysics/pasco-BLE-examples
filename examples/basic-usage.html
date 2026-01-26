@@ -22,6 +22,7 @@
                 <button id="connectBtn" class="btn-primary">Connect to PASCO Device</button>
                 <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
             </nav>
+            <div id="qualityIndicator" style="margin-top: 10px; display: none;"></div>
         </section>
 
         <div class="content-grid">
@@ -51,6 +52,7 @@
                     <li>Chrome or Edge browser (Web Bluetooth)</li>
                     <li>Any PASCO BLE sensor device</li>
                 </ul>
+                <div id="shortcutsHelp"></div>
             </section>
         </footer>
 
@@ -73,7 +75,10 @@
             showError as showErrorUtil,
             createLogger,
             formatNumber,
-            setupDisconnectOnUnload
+            setupDisconnectOnUnload,
+            createConnectionQualityIndicator,
+            createKeyboardShortcuts,
+            createShortcutsHelp
         } from './common.js';
 
         const connectBtn = document.getElementById('connectBtn');
@@ -83,9 +88,13 @@
         const measurementsList = document.getElementById('measurementsList');
         const errorDiv = document.getElementById('errorDiv');
         const logDiv = document.getElementById('log');
+        const qualityContainer = document.getElementById('qualityIndicator');
 
         let device = null;
         let readingInterval = null;
+
+        // Initialize connection quality indicator
+        const qualityIndicator = createConnectionQualityIndicator(qualityContainer);
 
         const log = createLogger(logDiv);
         const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
@@ -120,6 +129,8 @@
                 log(`Available measurements: ${measurements.join(', ')}`);
 
                 measurementsCard.style.display = 'block';
+                qualityContainer.style.display = 'block';
+                qualityIndicator.start();
                 startReading();
 
             } catch (error) {
@@ -155,6 +166,8 @@
                 disconnectBtn.disabled = true;
                 measurementsCard.style.display = 'none';
                 measurementsList.innerHTML = '';
+                qualityIndicator.stop();
+                qualityContainer.style.display = 'none';
 
             } catch (error) {
                 console.error('Disconnect error:', error);
@@ -173,6 +186,9 @@
                 try {
                     const measurements = device.getMeasurementList();
                     const data = await device.readDataList(measurements);
+
+                    // Record successful sample for quality tracking
+                    qualityIndicator.recordSample();
 
                     let html = '';
                     for (const name of measurements) {
@@ -204,6 +220,31 @@
         connectBtn.addEventListener('click', connect);
         disconnectBtn.addEventListener('click', disconnect);
         setupDisconnectOnUnload(() => device);
+
+        // Set up keyboard shortcuts
+        const shortcuts = createKeyboardShortcuts();
+
+        shortcuts.register(' ', () => {
+            if (device?.isConnected()) {
+                disconnect();
+            } else if (!connectBtn.disabled) {
+                connect();
+            }
+        }, 'Connect / Disconnect');
+
+        shortcuts.register('escape', () => {
+            if (device?.isConnected()) {
+                disconnect();
+            }
+        }, 'Disconnect');
+
+        shortcuts.register('l', () => {
+            logDiv.innerHTML = '';
+            log('Log cleared');
+        }, 'Clear log');
+
+        // Render shortcuts help panel
+        createShortcutsHelp(shortcuts, document.getElementById('shortcutsHelp'));
 
         log('Ready. Click "Connect" to scan for devices.');
     </script>

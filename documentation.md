@@ -40,6 +40,8 @@ Open `http://localhost:3000/examples/` in your browser.
 
 ### Development Commands
 
+**Note:** Run `npm install` first to install dependencies before using these commands.
+
 ```bash
 npm run serve      # Start local server
 npm run check      # Run linting and formatting checks
@@ -527,6 +529,9 @@ import {
 This project uses [Biome](https://biomejs.dev/) for linting and formatting JavaScript, JSON, and CSS files.
 
 ```bash
+# Install dependencies (required first)
+npm install
+
 # Check for issues (run before committing)
 npm run check
 

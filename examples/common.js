@@ -27,6 +27,43 @@ export const RECONNECT_MAX_ATTEMPTS = 3;
 export const RECONNECT_BASE_DELAY_MS = 1000;
 
 // ============================================================================
+// Browser Support
+// ============================================================================
+
+/**
+ * Check if Web Bluetooth is supported in the current browser
+ * @returns {boolean} True if Web Bluetooth is available
+ */
+export function isWebBluetoothSupported() {
+  return typeof navigator !== 'undefined' && 'bluetooth' in navigator;
+}
+
+/**
+ * Show a browser support warning banner if Web Bluetooth is not available
+ * @param {string} [containerId='browser-warning'] - ID of container element to show warning in
+ * @returns {boolean} True if browser is supported, false otherwise
+ */
+export function checkBrowserSupport(containerId = 'browser-warning') {
+  if (isWebBluetoothSupported()) {
+    return true;
+  }
+
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.innerHTML = `
+      <div class="browser-warning" role="alert">
+        <strong>Browser Not Supported:</strong> Web Bluetooth is required but not available in your browser.
+        Please use <a href="https://www.google.com/chrome/" target="_blank" rel="noopener">Chrome</a>,
+        <a href="https://www.microsoft.com/edge" target="_blank" rel="noopener">Edge</a>, or another Chromium-based browser.
+      </div>
+    `;
+    container.style.display = 'block';
+  }
+
+  return false;
+}
+
+// ============================================================================
 // Status and Error Handling
 // ============================================================================
 
@@ -713,6 +750,294 @@ export function createDataPlayback(options) {
     },
     destroy() {
       pause();
+    },
+  };
+}
+
+// ============================================================================
+// Keyboard Shortcuts
+// ============================================================================
+
+/**
+ * Check if an element is an input field where shortcuts should be ignored
+ * @param {HTMLElement} element - Element to check
+ * @returns {boolean} True if element is an input field
+ */
+function isInputElement(element) {
+  const tagName = element.tagName.toLowerCase();
+  const inputTags = ['input', 'textarea', 'select'];
+  return inputTags.includes(tagName) || element.isContentEditable;
+}
+
+/**
+ * Build a key identifier from a keyboard event
+ * @param {KeyboardEvent} event - Keyboard event
+ * @returns {string} Key identifier (e.g., 'ctrl+s', 'escape')
+ */
+function buildKeyId(event) {
+  const parts = [];
+  if (event.ctrlKey || event.metaKey) parts.push('ctrl');
+  if (event.altKey) parts.push('alt');
+  if (event.shiftKey) parts.push('shift');
+  parts.push(event.key.toLowerCase());
+  return parts.join('+');
+}
+
+/**
+ * Create a keyboard shortcut manager
+ * @param {Object} options - Manager options
+ * @param {boolean} [options.ignoreInInputs=true] - Ignore shortcuts when typing in inputs
+ * @returns {Object} Shortcut manager with register/unregister methods
+ */
+export function createKeyboardShortcuts(options = {}) {
+  const { ignoreInInputs = true } = options;
+  const shortcuts = new Map();
+
+  function handleKeydown(event) {
+    if (ignoreInInputs && isInputElement(event.target)) {
+      return;
+    }
+
+    const keyId = buildKeyId(event);
+    const shortcut = shortcuts.get(keyId);
+
+    if (shortcut && !shortcut.disabled) {
+      event.preventDefault();
+      shortcut.callback(event);
+    }
+  }
+
+  // Attach listener
+  document.addEventListener('keydown', handleKeydown);
+
+  return {
+    /**
+     * Register a keyboard shortcut
+     * @param {string} key - Key combination (e.g., 'c', 'escape', 'ctrl+s')
+     * @param {function} callback - Function to call when shortcut is triggered
+     * @param {string} [description] - Human-readable description
+     */
+    register(key, callback, description = '') {
+      const keyId = key.toLowerCase().replace(/\s/g, '');
+      shortcuts.set(keyId, { callback, description, disabled: false });
+    },
+
+    /**
+     * Unregister a keyboard shortcut
+     * @param {string} key - Key combination to remove
+     */
+    unregister(key) {
+      shortcuts.delete(key.toLowerCase().replace(/\s/g, ''));
+    },
+
+    /**
+     * Enable or disable a shortcut
+     * @param {string} key - Key combination
+     * @param {boolean} enabled - Whether to enable
+     */
+    setEnabled(key, enabled) {
+      const shortcut = shortcuts.get(key.toLowerCase().replace(/\s/g, ''));
+      if (shortcut) {
+        shortcut.disabled = !enabled;
+      }
+    },
+
+    /**
+     * Get all registered shortcuts with descriptions
+     * @returns {Array<{key: string, description: string}>}
+     */
+    getShortcuts() {
+      return Array.from(shortcuts.entries())
+        .filter(([, s]) => s.description)
+        .map(([key, s]) => ({
+          key: key.replace(/\+/g, ' + ').toUpperCase(),
+          description: s.description,
+        }));
+    },
+
+    /**
+     * Destroy the manager and remove event listener
+     */
+    destroy() {
+      document.removeEventListener('keydown', handleKeydown);
+      shortcuts.clear();
+    },
+  };
+}
+
+/**
+ * Create a keyboard shortcuts help panel
+ * @param {Object} shortcutManager - Keyboard shortcut manager instance
+ * @param {HTMLElement} container - Container element for the help panel
+ */
+export function createShortcutsHelp(shortcutManager, container) {
+  function render() {
+    const shortcuts = shortcutManager.getShortcuts();
+    if (shortcuts.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const items = shortcuts
+      .map((s) => `<li><kbd>${escapeHtml(s.key)}</kbd> ${escapeHtml(s.description)}</li>`)
+      .join('');
+
+    container.innerHTML = `
+      <details class="shortcuts-help">
+        <summary>Keyboard Shortcuts</summary>
+        <ul>${items}</ul>
+      </details>
+    `;
+  }
+
+  render();
+
+  return { render };
+}
+
+// ============================================================================
+// Connection Quality / Sample Rate Tracking
+// ============================================================================
+
+/**
+ * Create a sample rate tracker for monitoring connection quality
+ * @param {Object} options - Tracker options
+ * @param {number} [options.windowSize=1000] - Time window in ms for calculating rate
+ * @param {number} [options.updateInterval=500] - How often to update the display (ms)
+ * @param {function} [options.onUpdate] - Callback when rate is updated (rate, quality)
+ * @returns {Object} Sample rate tracker controller
+ */
+export function createSampleRateTracker(options = {}) {
+  const { windowSize = 1000, updateInterval = 500, onUpdate } = options;
+
+  const timestamps = [];
+  let intervalId = null;
+  let lastRate = 0;
+
+  /**
+   * Get quality level based on sample rate
+   * @param {number} rate - Samples per second
+   * @param {number} expectedRate - Expected rate (default 10 Hz)
+   * @returns {'good'|'fair'|'poor'} Quality level
+   */
+  function getQuality(rate, expectedRate = 10) {
+    if (rate >= expectedRate * 0.8) return 'good';
+    if (rate >= expectedRate * 0.5) return 'fair';
+    return 'poor';
+  }
+
+  function calculateRate() {
+    const now = performance.now();
+    // Remove timestamps outside the window
+    while (timestamps.length > 0 && now - timestamps[0] > windowSize) {
+      timestamps.shift();
+    }
+    // Calculate rate (samples per second)
+    return (timestamps.length / windowSize) * 1000;
+  }
+
+  function update() {
+    lastRate = calculateRate();
+    const quality = getQuality(lastRate);
+    onUpdate?.(lastRate, quality);
+  }
+
+  return {
+    /** Record a sample timestamp */
+    recordSample() {
+      timestamps.push(performance.now());
+    },
+
+    /** Get current sample rate (samples/second) */
+    getRate() {
+      return calculateRate();
+    },
+
+    /** Get quality assessment */
+    getQuality(expectedRate = 10) {
+      return getQuality(calculateRate(), expectedRate);
+    },
+
+    /** Start automatic updates */
+    start() {
+      if (intervalId !== null) return;
+      intervalId = setInterval(update, updateInterval);
+      update(); // Initial update
+    },
+
+    /** Stop automatic updates */
+    stop() {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    },
+
+    /** Reset the tracker */
+    reset() {
+      timestamps.length = 0;
+      lastRate = 0;
+    },
+
+    /** Get last calculated rate */
+    getLastRate() {
+      return lastRate;
+    },
+  };
+}
+
+/**
+ * Create and attach a connection quality indicator to an element
+ * @param {HTMLElement} container - Container element for the indicator
+ * @returns {Object} Controller with tracker and update methods
+ */
+export function createConnectionQualityIndicator(container) {
+  // Create indicator HTML
+  container.innerHTML = `
+    <div class="connection-quality" aria-live="polite">
+      <span class="quality-label">Sample Rate:</span>
+      <span class="quality-value">--</span>
+      <span class="quality-unit">Hz</span>
+      <span class="quality-indicator" aria-label="Connection quality"></span>
+    </div>
+  `;
+
+  const valueEl = container.querySelector('.quality-value');
+  const indicatorEl = container.querySelector('.quality-indicator');
+
+  const tracker = createSampleRateTracker({
+    onUpdate: (rate, quality) => {
+      valueEl.textContent = rate.toFixed(1);
+      indicatorEl.className = `quality-indicator quality-${quality}`;
+      indicatorEl.setAttribute('aria-label', `Connection quality: ${quality}`);
+    },
+  });
+
+  return {
+    tracker,
+
+    /** Record a sample (call this each time you read data) */
+    recordSample() {
+      tracker.recordSample();
+    },
+
+    /** Start monitoring */
+    start() {
+      tracker.start();
+    },
+
+    /** Stop monitoring */
+    stop() {
+      tracker.stop();
+      valueEl.textContent = '--';
+      indicatorEl.className = 'quality-indicator';
+    },
+
+    /** Reset and clear display */
+    reset() {
+      tracker.reset();
+      valueEl.textContent = '--';
+      indicatorEl.className = 'quality-indicator';
     },
   };
 }
