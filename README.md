@@ -10,11 +10,6 @@ Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pas
 
 ## Quick Start for Developers
 
-1. Open any `.html` file directly in Chrome or Edge
-2. Click "Connect" to scan for PASCO devices
-3. Select your sensor from the browser's Bluetooth dialog
-
-No build step required - examples load the library from CDN via ES modules.
 
 ### Local Development
 
@@ -25,7 +20,11 @@ npm install
 npm run serve
 ```
 
-Then open `http://localhost:3000/examples/` in Chrome or Edge.
+1. Open `http://localhost:3000/examples/` in Chrome or Edge.
+2. Click "Connect" to scan for PASCO devices
+3. Select your sensor from the browser's Bluetooth dialog
+
+No build step required - examples load the library from CDN via ES modules.
 
 ## Examples
 
