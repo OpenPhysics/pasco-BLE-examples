@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PASCO BLE Examples - Browser demos for the pasco-ble npm package">
+    <meta name="theme-color" content="#1976d2">
+    <title>PASCO BLE Examples</title>
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .example-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .example-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .example-card h3 {
+            color: #1976d2;
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+        }
+
+        .example-card p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .example-card .tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 10px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .category {
+            margin-bottom: 30px;
+        }
+
+        .category h2 {
+            color: #333;
+            border-bottom: 2px solid #1976d2;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .hero h1 {
+            color: white;
+            margin: 0 0 10px 0;
+        }
+
+        .hero p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .hero a {
+            color: #bbdefb;
+        }
+
+        .requirements {
+            background: #fff3e0;
+            border-left: 4px solid #f57c00;
+            padding: 15px;
+            border-radius: 0 4px 4px 0;
+            margin-bottom: 30px;
+        }
+
+        .requirements h3 {
+            margin: 0 0 10px 0;
+            color: #e65100;
+        }
+
+        .requirements ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .requirements li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <main class="container" id="main-content">
+        <div class="hero">
+            <h1>PASCO BLE Examples</h1>
+            <p>Browser demos for the <a href="https://www.npmjs.com/package/pasco-ble" target="_blank" rel="noopener">pasco-ble</a> npm package</p>
+        </div>
+
+        <div class="requirements">
+            <h3>Requirements</h3>
+            <ul>
+                <li>A Chromium-based browser (Chrome, Edge, Opera) - Web Bluetooth is not supported in Firefox or Safari</li>
+                <li>A PASCO Wireless BLE sensor or controller</li>
+                <li>Bluetooth enabled on your device</li>
+            </ul>
+        </div>
+
+        <section class="category">
+            <h2>Getting Started</h2>
+            <div class="example-grid">
+                <a href="basic-usage.html" class="example-card">
+                    <h3>Basic Usage</h3>
+                    <p>Learn the fundamentals: connecting to a device, reading measurements, and disconnecting. Start here if you're new to pasco-ble.</p>
+                    <span class="tag">Beginner</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="category">
+            <h2>Sensor Examples</h2>
+            <div class="example-grid">
+                <a href="force-sensor.html" class="example-card">
+                    <h3>Force Sensor</h3>
+                    <p>Real-time force measurement display using the PASCO Wireless Force Acceleration sensor with a large, easy-to-read value display.</p>
+                    <span class="tag">Sensor</span>
+                </a>
+                <a href="motion-sensor.html" class="example-card">
+                    <h3>Motion Sensor</h3>
+                    <p>Real-time position and velocity tracking using the PASCO Wireless Motion Sensor with live graphing.</p>
+                    <span class="tag">Sensor</span>
+                </a>
+                <a href="smart-cart.html" class="example-card">
+                    <h3>Smart Cart 3D Graph</h3>
+                    <p>3D position-velocity-time visualization of PASCO Wireless Smart Cart data using Plotly.js.</p>
+                    <span class="tag">Sensor</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="category">
+            <h2>Controllers</h2>
+            <div class="example-grid">
+                <a href="code-node.html" class="example-card">
+                    <h3>Code.Node</h3>
+                    <p>Control the PASCO Code.Node LED matrix, RGB LED, and speaker via Web Bluetooth for interactive projects.</p>
+                    <span class="tag">Controller</span>
+                </a>
+                <a href="control-node.html" class="example-card">
+                    <h3>Control.Node</h3>
+                    <p>Control the PASCO Control.Node stepper motors, servos, and speaker for robotics and automation projects.</p>
+                    <span class="tag">Controller</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="category">
+            <h2>Advanced Graphing</h2>
+            <div class="example-grid">
+                <a href="sensor-xy-graph.html" class="example-card">
+                    <h3>X-Y Parametric Graph</h3>
+                    <p>Create parametric X-Y plots from any sensor data using Chart.js. Supports custom equations and multiple data series.</p>
+                    <span class="tag">Advanced</span>
+                </a>
+                <a href="multi-sensor-graph.html" class="example-card">
+                    <h3>Multi-Sensor Graph</h3>
+                    <p>Connect multiple PASCO sensors simultaneously for classroom setups. Graph data from several devices on one chart.</p>
+                    <span class="tag">Advanced</span>
+                </a>
+            </div>
+        </section>
+
+        <footer class="card">
+            <h2>Resources</h2>
+            <ul>
+                <li><a href="https://www.npmjs.com/package/pasco-ble" target="_blank" rel="noopener">pasco-ble on npm</a></li>
+                <li><a href="https://github.com/veillette/pascoTS" target="_blank" rel="noopener">pasco-ble source code (pascoTS)</a></li>
+                <li><a href="https://esm.sh/pasco-ble" target="_blank" rel="noopener">CDN: esm.sh/pasco-ble</a></li>
+            </ul>
+        </footer>
+    </main>
+</body>
+</html>
