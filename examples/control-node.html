@@ -16,15 +16,9 @@
             <h1>Control.Node Controller</h1>
         </header>
 
-        <div id="browser-warning" style="display: none;"></div>
+        <pasco-browser-warning></pasco-browser-warning>
 
-        <section class="card" aria-label="Connection controls">
-            <p id="status" class="status disconnected">Disconnected</p>
-            <nav class="button-row">
-                <button id="connectBtn" class="btn-primary">Connect to Control.Node</button>
-                <button id="disconnectBtn" class="btn-danger" disabled>Disconnect</button>
-            </nav>
-        </section>
+        <pasco-connection-panel device-name="Control.Node"></pasco-connection-panel>
 
         <article id="controlsCard" style="display: none;" aria-label="Device controls">
             <div class="content-grid">
@@ -102,15 +96,7 @@
                     </fieldset>
                 </section>
 
-                <section class="card" aria-label="Sensor data">
-                    <h2>Sensor Readings</h2>
-                    <dl id="measurementsList">
-                        <div class="measurement-row">
-                            <dt class="measurement-name">No data</dt>
-                            <dd class="measurement-value">--</dd>
-                        </div>
-                    </dl>
-                </section>
+                <pasco-measurements-list title="Sensor Readings"></pasco-measurements-list>
             </div>
 
             <section class="card" aria-label="Reset controls">
@@ -120,30 +106,23 @@
             </section>
         </article>
 
-        <section class="card" aria-label="Console output">
-            <h2>Console Log</h2>
-            <pre class="log" id="log" role="log" aria-live="polite"></pre>
-        </section>
+        <pasco-console-log></pasco-console-log>
 
-        <footer class="card">
-            <section class="info">
-                <h2>About this example</h2>
-                <p>Demonstrates Control.Node features:</p>
-                <ul>
-                    <li>Stepper motor control (continuous &amp; angle-based)</li>
-                    <li>Servo motor positioning</li>
-                    <li>Speaker frequency control</li>
-                    <li>Reading sensor data from plugin ports</li>
-                </ul>
-                <h2>Requirements</h2>
-                <ul>
-                    <li>Chrome or Edge browser (Web Bluetooth)</li>
-                    <li>PASCO Control.Node device</li>
-                </ul>
-            </section>
-        </footer>
+        <pasco-page-footer>
+            <span slot="description">Demonstrates Control.Node features:</span>
+            <ul slot="features">
+                <li>Stepper motor control (continuous &amp; angle-based)</li>
+                <li>Servo motor positioning</li>
+                <li>Speaker frequency control</li>
+                <li>Reading sensor data from plugin ports</li>
+            </ul>
+            <ul slot="requirements">
+                <li>Chrome or Edge browser (Web Bluetooth)</li>
+                <li>PASCO Control.Node device</li>
+            </ul>
+        </pasco-page-footer>
 
-        <aside id="errorDiv" role="alert" aria-live="assertive"></aside>
+        <pasco-error-display></pasco-error-display>
     </main>
 
     <script type="importmap">
@@ -157,29 +136,27 @@
 
     <script type="module">
         import { ControlNodeDevice } from 'pasco-ble';
-        import {
-            setStatus as setStatusUtil,
-            showError as showErrorUtil,
-            createLogger,
-            formatNumber,
-            escapeHtml,
-            setupDisconnectOnUnload,
-            checkBrowserSupport
-        } from './common.js';
+        import { formatNumber, setupDisconnectOnUnload } from './common.js';
+        import './components.js';
 
-        // Check browser support first
-        if (!checkBrowserSupport()) {
-            document.getElementById('connectBtn').disabled = true;
+        // Get component references
+        const browserWarning = document.querySelector('pasco-browser-warning');
+        const connectionPanel = document.querySelector('pasco-connection-panel');
+        const measurementsList = document.querySelector('pasco-measurements-list');
+        const consoleLog = document.querySelector('pasco-console-log');
+        const errorDisplay = document.querySelector('pasco-error-display');
+
+        // Check browser support
+        if (!browserWarning.check()) {
+            connectionPanel.disableConnect();
         }
 
-        const connectBtn = document.getElementById('connectBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const statusDiv = document.getElementById('status');
-        const controlsCard = document.getElementById('controlsCard');
-        const errorDiv = document.getElementById('errorDiv');
-        const logDiv = document.getElementById('log');
-        const measurementsList = document.getElementById('measurementsList');
+        // Create convenience functions
+        const log = consoleLog.createLogger();
+        const showError = errorDisplay.createShowError();
 
+        // Get control elements
+        const controlsCard = document.getElementById('controlsCard');
         const stepperASpeed = document.getElementById('stepperASpeed');
         const stepperBSpeed = document.getElementById('stepperBSpeed');
         const stepperASpeedVal = document.getElementById('stepperASpeedVal');
@@ -194,16 +171,11 @@
         let controlNode = null;
         let readingInterval = null;
 
-        const log = createLogger(logDiv);
-        const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
-        const showError = (message) => showErrorUtil(errorDiv, message);
-
         async function connect() {
             try {
                 log('Scanning for Control.Node devices...');
-                setStatus('connecting', 'Select your Control.Node...');
-                connectBtn.disabled = true;
-                errorDiv.innerHTML = '';
+                connectionPanel.setStatus('connecting', 'Select your Control.Node...');
+                errorDisplay.clear();
 
                 controlNode = new ControlNodeDevice();
                 const devices = await controlNode.scan('//control.Node');
@@ -213,14 +185,13 @@
                 }
 
                 log(`Found: ${devices[0].name}`);
-                setStatus('connecting', 'Connecting...');
+                connectionPanel.setStatus('connecting', 'Connecting...');
                 await controlNode.connect(devices[0]);
 
                 log('Connected!');
-                setStatus('connected', `Connected: ${devices[0].name}`);
-                connectBtn.disabled = true;
-                disconnectBtn.disabled = false;
+                connectionPanel.setStatus('connected', `Connected: ${devices[0].name}`);
                 controlsCard.style.display = 'block';
+                measurementsList.show();
 
                 const measurements = controlNode.getMeasurementList();
                 log(`Available measurements: ${measurements.join(', ')}`);
@@ -230,9 +201,7 @@
             } catch (error) {
                 console.error('Connection error:', error);
                 log(`Error: ${error.message}`);
-                setStatus('disconnected', 'Disconnected');
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
+                connectionPanel.setStatus('disconnected', 'Disconnected');
 
                 if (error.message.includes('User cancelled')) {
                     showError('Connection cancelled by user');
@@ -253,10 +222,9 @@
                     controlNode = null;
                 }
                 log('Disconnected');
-                setStatus('disconnected', 'Disconnected');
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
+                connectionPanel.setStatus('disconnected', 'Disconnected');
                 controlsCard.style.display = 'none';
+                measurementsList.hide();
             } catch (error) {
                 log(`Disconnect error: ${error.message}`);
             }
@@ -272,19 +240,13 @@
                     const measurements = controlNode.getMeasurementList();
                     const data = await controlNode.readDataList(measurements);
 
-                    let html = '';
-                    for (const name of measurements) {
-                        const value = data[name];
-                        const unit = controlNode.getMeasurementUnit(name) || '';
-                        const displayValue = formatNumber(value);
-                        html += `
-                            <div class="measurement-row">
-                                <dt class="measurement-name">${escapeHtml(name)}</dt>
-                                <dd class="measurement-value">${escapeHtml(displayValue)} ${escapeHtml(unit)}</dd>
-                            </div>
-                        `;
-                    }
-                    measurementsList.innerHTML = html || '<div class="measurement-row"><dt>No sensors</dt><dd>--</dd></div>';
+                    const formattedMeasurements = measurements.map(name => ({
+                        name,
+                        value: formatNumber(data[name]),
+                        unit: controlNode.getMeasurementUnit(name) || ''
+                    }));
+
+                    measurementsList.update(formattedMeasurements);
                 } catch (error) {
                     console.error('Read error:', error);
                 }
@@ -408,8 +370,9 @@
             speakerFreqVal.textContent = `${speakerFreq.value} Hz`;
         });
 
-        connectBtn.addEventListener('click', connect);
-        disconnectBtn.addEventListener('click', disconnect);
+        // Event listeners for connection panel
+        connectionPanel.addEventListener('connect', connect);
+        connectionPanel.addEventListener('disconnect', disconnect);
         setupDisconnectOnUnload(() => controlNode);
 
         log('Ready. Click "Connect" to connect to a Control.Node.');
