@@ -1,12 +1,14 @@
 # PASCO BLE Examples
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Try%20Now-blue?style=for-the-badge&logo=github)](https://phasematching.github.io/pasco-BLE-examples/examples/)
+
 Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pasco-ble) library for PASCO wireless BLE sensors.
 
-> **Note:** These examples use the `pasco-ble` npm package. For library documentation and API reference, see the [pasco-ble repository](https://github.com/veillette/pascoTS).
+> **Note:** These examples use the `pasco-ble` npm package. For library documentation and API reference, see the [pasco-ble repository](https://github.com/veillette/pascoTS).# PASCO BLE Examples
 
 **Live Demo:** [phasematching.github.io/pasco-BLE-examples/examples/](https://phasematching.github.io/pasco-BLE-examples/examples/)
 
-## Quick Start
+## Quick Start for Developers
 
 1. Open any `.html` file directly in Chrome or Edge
 2. Click "Connect" to scan for PASCO devices
