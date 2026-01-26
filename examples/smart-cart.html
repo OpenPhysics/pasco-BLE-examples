@@ -18,6 +18,8 @@
             <h1>Smart Cart 3D Graph</h1>
         </header>
 
+        <div id="browser-warning" style="display: none;"></div>
+
         <section class="card" aria-label="Introduction">
             <p class="info">
                 <strong>About:</strong> This example visualizes PASCO Wireless Smart Cart data in 3D,
@@ -168,8 +170,15 @@
             exportToCSV,
             generateExportFilename,
             createPreferences,
-            createDataPlayback
+            createDataPlayback,
+            checkBrowserSupport,
+            createAutoReconnect
         } from './common.js';
+
+        // Check browser support first
+        if (!checkBrowserSupport()) {
+            document.getElementById('connectBtn').disabled = true;
+        }
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -207,6 +216,8 @@
         let recordingInterval = null;
         let startTime = null;
         let lastSampleTime = null;
+        let lastConnectedDevice = null;
+        let autoReconnect = null;
 
         const setStatus = (status, text) => setStatusUtil(statusDiv, status, text);
         const showError = (message) => showErrorUtil(errorDiv, message);
@@ -282,23 +293,34 @@
             document.getElementById('timeValue').textContent = time.toFixed(2);
         }
 
-        async function connect() {
+        async function connect(isReconnect = false) {
             try {
-                setStatus('connecting', 'Select your Smart Cart...');
-                connectBtn.disabled = true;
-                errorDiv.innerHTML = '';
+                if (!isReconnect) {
+                    setStatus('connecting', 'Select your Smart Cart...');
+                    connectBtn.disabled = true;
+                    errorDiv.innerHTML = '';
 
-                device = new PASCOBLEDevice();
-                const devices = await device.scan('Smart Cart');
+                    device = new PASCOBLEDevice();
+                    const devices = await device.scan('Smart Cart');
 
-                if (devices.length === 0) {
-                    throw new Error('No device selected');
+                    if (devices.length === 0) {
+                        throw new Error('No device selected');
+                    }
+
+                    lastConnectedDevice = devices[0];
+                    setStatus('connecting', 'Connecting...');
+                    await device.connect(devices[0]);
+                } else {
+                    // Reconnect to last known device
+                    setStatus('connecting', 'Reconnecting...');
+                    device = new PASCOBLEDevice();
+                    const devices = await device.scan('Smart Cart');
+                    const targetDevice = devices.find(d => d.name === lastConnectedDevice?.name) || devices[0];
+                    if (!targetDevice) throw new Error('Device not found');
+                    await device.connect(targetDevice);
                 }
 
-                setStatus('connecting', 'Connecting...');
-                await device.connect(devices[0]);
-
-                setStatus('connected', `Connected: ${devices[0].name}`);
+                setStatus('connected', `Connected: ${lastConnectedDevice?.name || 'Unknown'}`);
                 connectBtn.disabled = true;
                 disconnectBtn.disabled = false;
 
@@ -317,34 +339,74 @@
 
                 initPlot();
 
+                // Set up auto-reconnect
+                if (!autoReconnect) {
+                    autoReconnect = createAutoReconnect({
+                        connect: () => connect(true),
+                        onReconnecting: (attempt, max) => {
+                            setStatus('connecting', `Reconnecting (${attempt}/${max})...`);
+                        },
+                        onReconnected: () => {
+                            console.log('Smart Cart reconnected successfully');
+                            // Resume recording if it was active
+                            if (isRecording && !recordingInterval) {
+                                startRecording();
+                            }
+                        },
+                        onReconnectFailed: () => {
+                            setStatus('disconnected', 'Reconnect failed');
+                            connectBtn.disabled = false;
+                            disconnectBtn.disabled = true;
+                            stopRecording();
+                        }
+                    });
+                }
+
             } catch (error) {
                 console.error('Connection error:', error);
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
 
-                if (error.message.includes('User cancelled')) {
-                    showError('Connection cancelled by user');
-                } else if (error.message.includes('No device selected')) {
-                    showError('No device selected');
-                } else {
-                    showError(`Connection failed: ${error.message}`);
+                if (!isReconnect) {
+                    if (error.message.includes('User cancelled')) {
+                        showError('Connection cancelled by user');
+                    } else if (error.message.includes('No device selected')) {
+                        showError('No device selected');
+                    } else {
+                        showError(`Connection failed: ${error.message}`);
+                    }
                 }
+                throw error; // Re-throw for auto-reconnect to handle
             }
         }
 
-        async function disconnect() {
+        async function disconnect(unexpected = false) {
             try {
+                // Stop auto-reconnect if manually disconnecting
+                if (!unexpected && autoReconnect) {
+                    autoReconnect.stop();
+                }
+
                 stopRecording();
                 if (device) {
                     await device.disconnect();
                     device = null;
                 }
+
+                // If unexpected disconnect and we have auto-reconnect, try to reconnect
+                if (unexpected && autoReconnect && lastConnectedDevice) {
+                    autoReconnect.reset();
+                    autoReconnect.start();
+                    return;
+                }
+
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
                 disconnectBtn.disabled = true;
                 configCard.style.display = 'none';
                 chartCard.style.display = 'none';
+                lastConnectedDevice = null;
             } catch (error) {
                 showError(`Disconnect error: ${error.message}`);
             }
@@ -379,8 +441,17 @@
             const intervalMs = 1000 / sampleRate;
 
             recordingInterval = setInterval(async () => {
-                if (!device || !device.isConnected() || !isRecording) {
+                if (!device || !isRecording) {
                     stopRecording();
+                    return;
+                }
+
+                // Check for unexpected disconnection
+                if (!device.isConnected() && lastConnectedDevice) {
+                    console.log('Smart Cart unexpectedly disconnected, attempting reconnect...');
+                    clearInterval(recordingInterval);
+                    recordingInterval = null;
+                    disconnect(true); // Trigger auto-reconnect
                     return;
                 }
 
