@@ -26,7 +26,7 @@ Detailed guide to the PASCO BLE examples and how to use the [pasco-ble](https://
 
 ```bash
 # Clone the repository
-git clone https://github.com/veillette/pasco-BLE-examples.git
+git clone https://github.com/phasematching/pasco-BLE-examples.git
 cd pasco-BLE-examples
 
 # Install dependencies
