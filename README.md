@@ -62,6 +62,7 @@ pasco-BLE-examples/
 │   ├── index.html          # Main navigation page
 │   ├── common.css          # Shared styles for all examples
 │   ├── common.js           # Shared utility functions
+│   ├── components.js       # Reusable Web Components
 │   ├── basic-usage.html    # Entry-level example
 │   ├── force-sensor.html   # Force sensor demo
 │   ├── motion-sensor.html  # Motion sensor demo
@@ -102,6 +103,7 @@ Unified styling with:
 - Card-based UI components
 - Status indicators and buttons
 - Chart and graph containers
+- Accessibility features (skip links, focus indicators)
 
 ### common.js
 
@@ -114,6 +116,22 @@ Utility functions:
 - `setupDisconnectOnUnload()` - Clean disconnect on page unload
 - `hexToRgb()` - Color conversion for LED control
 - `debounce()` / `throttle()` - Function rate limiting
+- `exportToCSV()` - Export data to CSV files
+- `createAutoReconnect()` - Auto-reconnect on disconnect
+- `createDataPlayback()` - Data playback controls
+- `createKeyboardShortcuts()` - Keyboard shortcut manager
+- `createConnectionQualityIndicator()` - Sample rate monitoring
+
+### components.js
+
+Reusable Web Components for consistent UI:
+- `<pasco-connection-panel>` - Connect/disconnect with status
+- `<pasco-console-log>` - Console-style log output
+- `<pasco-error-display>` - Error messages with auto-dismiss
+- `<pasco-browser-warning>` - Browser support check
+- `<pasco-measurements-list>` - Display sensor measurements
+- `<pasco-primary-reading>` - Large single-value display
+- `<pasco-page-footer>` - About section with slots
 
 ## External Libraries
 
