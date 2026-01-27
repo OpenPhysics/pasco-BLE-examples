@@ -719,24 +719,6 @@ If you know your device's ID (shown on the device or in previous connections):
 await device.connectById('055-808');
 ```
 
-### Check Browser Support
-
-```javascript
-import { checkBrowserSupport, isWebBluetoothSupported } from 'pasco-ble';
-
-// Simple check
-if (!isWebBluetoothSupported()) {
-  alert('Please use Chrome or Edge');
-}
-
-// Detailed check
-const support = checkBrowserSupport();
-if (!support.supported) {
-  console.log(support.message);  // Helpful error message
-  console.log(support.browser);  // Detected browser name
-}
-```
-
 ### Discover Available Measurements
 
 ```javascript
@@ -759,15 +741,10 @@ console.log(values);  // [12.5, 0.98, -0.02]
 ### Handle Disconnection
 
 ```javascript
-// Using setupDisconnectOnUnload utility (recommended)
-setupDisconnectOnUnload(() => device);
+import { setupDisconnectOnUnload } from './common.js';
 
-// Or manually with event listener
-window.addEventListener('beforeunload', async () => {
-  if (device.isConnected()) {
-    await device.disconnect();
-  }
-});
+// Automatically disconnect when user closes/navigates away from page
+setupDisconnectOnUnload(() => device);
 ```
 
 ---
