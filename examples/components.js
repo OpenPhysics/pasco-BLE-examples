@@ -597,11 +597,11 @@ customElements.define('pasco-primary-reading', PrimaryReading);
 
 // Export for programmatic use
 export {
+  BrowserWarning,
   ConnectionPanel,
   ConsoleLog,
   ErrorDisplay,
-  PageFooter,
-  BrowserWarning,
   MeasurementsList,
+  PageFooter,
   PrimaryReading,
 };
