@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/OpenPhysics/pasco-BLE-examples#readme",
   "dependencies": {
-    "pasco-ble": "^0.3.0"
+    "pasco-ble": "^0.3.67"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14"
