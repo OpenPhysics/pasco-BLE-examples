@@ -8,7 +8,6 @@ Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pas
 
 ## Quick Start for Developers
 
-
 ### Local Development
 
 ```bash
@@ -70,7 +69,8 @@ pasco-BLE-examples/
 │   ├── multi-sensor-graph.html # Multi-device graphing
 │   └── smart-cart.html     # 3D visualization
 ├── package.json
-└── README.md
+├── README.md
+└── documentation.md        # Detailed examples guide
 ```
 
 ## How Examples Load the Library
@@ -117,8 +117,12 @@ Utility functions:
 - `exportToCSV()` - Export data to CSV files
 - `createAutoReconnect()` - Auto-reconnect on disconnect
 - `createDataPlayback()` - Data playback controls
-- `createKeyboardShortcuts()` - Keyboard shortcut manager
-- `createConnectionQualityIndicator()` - Sample rate monitoring
+- `createKeyboardShortcuts()` / `createShortcutsHelp()` - Keyboard shortcut manager and help overlay
+- `createSampleRateTracker()` / `createConnectionQualityIndicator()` - Sample rate monitoring
+- `createThrottledChartUpdater()` - Rate-limited chart redraws
+- `createPreferences()` - Persisted user preferences
+- `connectDevice()` / `disconnectDevice()` - Connection helpers
+- `escapeHtml()`, `clamp()`, `delay()` - Small general-purpose helpers
 
 ### components.js
 

@@ -57,7 +57,7 @@ npm run format     # Run formatting only
 
 ### Running Examples Directly
 
-Examples can also be opened directly in Chrome/Edge from your file system - no server needed! Just double-click any `.html` file.
+Serve the examples over HTTP (`npm run serve`) rather than double-clicking the `.html` files: the pages import `common.js` and `components.js` as ES modules, which browsers block on `file://` URLs.
 
 ---
 
@@ -1320,8 +1320,9 @@ The project enforces consistent code style:
 Pull requests are automatically checked by the CI pipeline:
 
 1. **Lint** - Runs Biome checks
-2. **Validate** - Verifies required files exist
-3. **Deploy** - Deploys to GitHub Pages (main branch only)
+2. **Validate** - Verifies required files exist, HTML validity, and internal links
+3. **Accessibility** - Non-blocking pa11y audit
+4. **Deploy** - Deploys to GitHub Pages (main branch only)
 
 ---
 
