@@ -1,18 +1,18 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.12/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "correctness": {
-        "recommended": true,
+        "preset": "recommended",
         "noNodejsModules": "off",
         "noUndeclaredDependencies": "off",
         "useImportExtensions": "off"
       },
       "style": {
-        "recommended": true,
+        "preset": "recommended",
         "noDefaultExport": "off",
         "useNamingConvention": {
           "level": "warn",
@@ -28,30 +28,30 @@
         "noHeadElement": "off"
       },
       "suspicious": {
-        "recommended": true,
+        "preset": "recommended",
         "noConsole": "off",
         "noExplicitAny": "off"
       },
       "complexity": {
-        "recommended": true,
+        "preset": "recommended",
         "noExcessiveCognitiveComplexity": "warn",
         "noExcessiveNestedTestSuites": "off"
       },
       "performance": {
-        "recommended": true,
+        "preset": "recommended",
         "noBarrelFile": "off",
         "noReExportAll": "off",
         "noImgElement": "off"
       },
       "nursery": {
-        "recommended": true
+        "preset": "recommended"
       },
       "a11y": {
-        "recommended": true,
+        "preset": "recommended",
         "useValidAutocomplete": "off"
       },
       "security": {
-        "recommended": true
+        "preset": "recommended"
       }
     }
   },
