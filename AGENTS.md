@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance for AI assistants working on the pasco-ble-examples codebase.
 
@@ -41,7 +41,7 @@ pasco-BLE-examples/
 ├── package.json                # Examples package config
 ├── README.md                   # User documentation
 ├── documentation.md            # Detailed examples guide
-└── CLAUDE.md                   # This file
+└── AGENTS.md                   # This file
 ```
 
 ## Linting and Formatting

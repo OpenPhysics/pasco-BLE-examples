@@ -34,7 +34,7 @@ This repository demonstrates **excellent code quality** and follows best practic
 ### Documentation
 - Comprehensive README with troubleshooting guide
 - Detailed documentation.md with API references
-- Clear CLAUDE.md for AI assistants
+- Clear AGENTS.md for AI assistants
 
 ---
 
