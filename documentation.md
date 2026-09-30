@@ -226,7 +226,7 @@ The recommended way to use `pasco-ble` in browser examples:
 <script type="importmap">
 {
   "imports": {
-    "pasco-ble": "https://esm.sh/pasco-ble"
+    "pasco-ble": "https://esm.sh/pasco-ble@0.3.70"
   }
 }
 </script>
@@ -1090,7 +1090,7 @@ This is the recommended template using Web Components for consistent UI:
   <script type="importmap">
   {
     "imports": {
-      "pasco-ble": "https://esm.sh/pasco-ble"
+      "pasco-ble": "https://esm.sh/pasco-ble@0.3.70"
     }
   }
   </script>

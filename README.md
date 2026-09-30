@@ -81,7 +81,7 @@ Examples use ES module imports via importmap:
 <script type="importmap">
 {
     "imports": {
-        "pasco-ble": "https://esm.sh/pasco-ble"
+        "pasco-ble": "https://esm.sh/pasco-ble@0.3.70"
     }
 }
 </script>
@@ -159,7 +159,7 @@ Some examples use additional charting libraries loaded from CDN:
 
 - **pasco-ble npm**: [npmjs.com/package/pasco-ble](https://www.npmjs.com/package/pasco-ble)
 - **pasco-ble source**: [github.com/OpenPhysics/pascoTS](https://github.com/OpenPhysics/pascoTS)
-- **CDN**: [esm.sh/pasco-ble](https://esm.sh/pasco-ble)
+- **CDN**: [esm.sh/pasco-ble@0.3.70](https://esm.sh/pasco-ble@0.3.70)
 
 ## License
 

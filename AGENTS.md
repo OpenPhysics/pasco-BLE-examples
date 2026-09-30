@@ -92,7 +92,7 @@ Examples use ES module imports via importmap to load `pasco-ble` from CDN:
 <script type="importmap">
 {
   "imports": {
-    "pasco-ble": "https://esm.sh/pasco-ble"
+    "pasco-ble": "https://esm.sh/pasco-ble@0.3.70"
   }
 }
 </script>
@@ -132,5 +132,5 @@ The GitHub Actions CI pipeline runs on PRs and pushes to main:
 
 - **pasco-ble npm**: https://www.npmjs.com/package/pasco-ble
 - **pasco-ble source**: https://github.com/OpenPhysics/pascoTS
-- **CDN**: https://esm.sh/pasco-ble
+- **CDN**: https://esm.sh/pasco-ble@0.3.70
 - **Biome docs**: https://biomejs.dev/
