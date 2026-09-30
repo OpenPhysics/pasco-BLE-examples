@@ -237,14 +237,6 @@ The recommended way to use `pasco-ble` in browser examples:
 </script>
 ```
 
-### Alternative: Direct URL Import
-
-```html
-<script type="module">
-  import { PASCOBLEDevice } from 'https://unpkg.com/pasco-ble/dist/index.js';
-</script>
-```
-
 ### Available Exports
 
 ```javascript

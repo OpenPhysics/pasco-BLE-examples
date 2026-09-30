@@ -4,9 +4,7 @@
 
 Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pasco-ble) library for PASCO wireless BLE sensors.
 
-> **Note:** These examples use the `pasco-ble` npm package. For library documentation and API reference, see the [pasco-ble repository](https://github.com/OpenPhysics/pascoTS).# PASCO BLE Examples
-
-**Live Demo:** [openphysics.github.io/pasco-BLE-examples/examples/](https://openphysics.github.io/pasco-BLE-examples/examples/)
+> **Note:** These examples use the `pasco-ble` npm package. For library documentation and API reference, see the [pasco-ble repository](https://github.com/OpenPhysics/pascoTS).
 
 ## Quick Start for Developers
 

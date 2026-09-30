@@ -27,8 +27,10 @@ pasco-BLE-examples/
 │   └── workflows/
 │       └── ci.yml              # CI pipeline (lint, validate, deploy)
 ├── examples/
+│   ├── index.html              # Main navigation page
 │   ├── common.css              # Shared styles
 │   ├── common.js               # Shared utility functions
+│   ├── components.js           # Reusable web components
 │   ├── basic-usage.html        # Entry-level example
 │   ├── force-sensor.html       # Force sensor demo
 │   ├── motion-sensor.html      # Motion sensor demo
@@ -111,7 +113,7 @@ Examples use ES module imports via importmap to load `pasco-ble` from CDN:
 
 1. **Do not modify library code** - This repo only contains examples
 2. **Examples should be self-contained** - Each HTML file should work independently
-3. **Use CDN imports** - Don't add build steps; examples should work by opening HTML files directly
+3. **Use CDN imports** - Don't add a build step; serve the static examples with `npm run serve`
 4. **Follow existing patterns** - Use common.css and common.js utilities
 5. **Test in Chrome/Edge** - Web Bluetooth only works in Chromium browsers
 6. **Run linting before committing** - Use `npm run check` to verify code quality
@@ -122,12 +124,13 @@ Examples use ES module imports via importmap to load `pasco-ble` from CDN:
 The GitHub Actions CI pipeline runs on PRs and pushes to main:
 
 1. **Lint** - Runs Biome checks (`npm run check`)
-2. **Validate** - Verifies required files exist
-3. **Deploy** - Deploys to GitHub Pages (main branch only)
+2. **Validate** - Checks required files, HTML, and internal links
+3. **Accessibility** - Non-blocking pa11y audit
+4. **Deploy** - Deploys to GitHub Pages (main branch only)
 
 ## Resources
 
 - **pasco-ble npm**: https://www.npmjs.com/package/pasco-ble
 - **pasco-ble source**: https://github.com/OpenPhysics/pascoTS
-- **CDN**: https://esm.sh/pasco-ble or https://unpkg.com/pasco-ble/dist/index.js
+- **CDN**: https://esm.sh/pasco-ble
 - **Biome docs**: https://biomejs.dev/
