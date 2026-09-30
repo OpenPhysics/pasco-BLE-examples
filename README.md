@@ -38,7 +38,7 @@ No build step required - examples load the library from CDN via ES modules.
 |---------|-------------|----------|
 | [basic-usage.html](examples/basic-usage.html) | Connect and read all measurements | Any PASCO sensor |
 | [force-sensor.html](examples/force-sensor.html) | Large force display with all measurements | Wireless Force Acceleration |
-| [motion-sensor.html](examples/motion-sensor.html) | Position and velocity tracking | Wireless Motion Sensor |
+| [motion-sensor.html](examples/motion-sensor.html) | Position tracking | Wireless Motion Sensor |
 | [code-node.html](examples/code-node.html) | LED matrix, RGB LED, speaker control | Code.Node |
 | [control-node.html](examples/control-node.html) | Stepper motors, servos, speaker | Control.Node |
 | [sensor-xy-graph.html](examples/sensor-xy-graph.html) | Parametric X-Y plotting with Chart.js | Any PASCO sensor |

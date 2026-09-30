@@ -96,11 +96,11 @@ Examples can also be opened directly in Chrome/Edge from your file system - no s
 
 ### motion-sensor.html
 
-**Purpose**: Position and velocity tracking with the Wireless Motion Sensor.
+**Purpose**: Position tracking with the Wireless Motion Sensor.
 
 **Features**:
-- Position display
-- Velocity calculation
+- Large position display
+- All available measurements shown
 - Real-time updates
 
 **Hardware**: Wireless Motion Sensor
