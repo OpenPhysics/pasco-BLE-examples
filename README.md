@@ -1,12 +1,12 @@
 # PASCO BLE Examples
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Try%20Now-blue?style=for-the-badge&logo=github)](https://phasematching.github.io/pasco-BLE-examples/examples/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Try%20Now-blue?style=for-the-badge&logo=github)](https://openphysics.github.io/pasco-BLE-examples/examples/)
 
 Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pasco-ble) library for PASCO wireless BLE sensors.
 
-> **Note:** These examples use the `pasco-ble` npm package. For library documentation and API reference, see the [pasco-ble repository](https://github.com/veillette/pascoTS).# PASCO BLE Examples
+> **Note:** These examples use the `pasco-ble` npm package. For library documentation and API reference, see the [pasco-ble repository](https://github.com/OpenPhysics/pascoTS).# PASCO BLE Examples
 
-**Live Demo:** [phasematching.github.io/pasco-BLE-examples/examples/](https://phasematching.github.io/pasco-BLE-examples/examples/)
+**Live Demo:** [openphysics.github.io/pasco-BLE-examples/examples/](https://openphysics.github.io/pasco-BLE-examples/examples/)
 
 ## Quick Start for Developers
 
@@ -14,7 +14,7 @@ Browser examples demonstrating the [pasco-ble](https://www.npmjs.com/package/pas
 ### Local Development
 
 ```bash
-git clone https://github.com/phasematching/pasco-BLE-examples.git
+git clone https://github.com/OpenPhysics/pasco-BLE-examples.git
 cd pasco-BLE-examples
 npm install        # Required before running any npm scripts
 npm run serve
@@ -156,7 +156,7 @@ Some examples use additional charting libraries loaded from CDN:
 ## Resources
 
 - **pasco-ble npm**: [npmjs.com/package/pasco-ble](https://www.npmjs.com/package/pasco-ble)
-- **pasco-ble source**: [github.com/veillette/pascoTS](https://github.com/veillette/pascoTS)
+- **pasco-ble source**: [github.com/OpenPhysics/pascoTS](https://github.com/OpenPhysics/pascoTS)
 - **CDN**: [esm.sh/pasco-ble](https://esm.sh/pasco-ble)
 
 ## License

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Browser examples for the pasco-ble library - demonstrating PASCO wireless BLE sensors using Web Bluetooth",
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "serve": "npx serve .",
     "start": "npx serve .",
@@ -26,9 +29,9 @@
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/phasematching/pasco-BLE-examples.git"
+    "url": "git+https://github.com/OpenPhysics/pasco-BLE-examples.git"
   },
-  "homepage": "https://github.com/phasematching/pasco-BLE-examples#readme",
+  "homepage": "https://github.com/OpenPhysics/pasco-BLE-examples#readme",
   "dependencies": {
     "pasco-ble": "^0.3.0"
   },

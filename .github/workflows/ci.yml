@@ -17,8 +17,19 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
+  security-events: write
+  pull-requests: write
 
 jobs:
+  # Shared OpenPhysics security checks (relay)
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    uses: OpenPhysics/relay/.github/workflows/shared-dependency-review.yml@main
+
+  codeql:
+    uses: OpenPhysics/relay/.github/workflows/shared-codeql.yml@main
+
   # Lint with Biome
   lint:
     name: Lint
@@ -30,7 +41,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -51,7 +62,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Check HTML files exist
@@ -102,7 +113,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies

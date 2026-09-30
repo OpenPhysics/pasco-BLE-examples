@@ -6,7 +6,7 @@ This file provides guidance for AI assistants working on the pasco-ble-examples 
 
 This repository contains **browser examples** demonstrating how to use the [pasco-ble](https://www.npmjs.com/package/pasco-ble) npm package for PASCO wireless BLE sensors.
 
-**Important:** This is NOT the library source code. The library is maintained at [veillette/pascoTS](https://github.com/veillette/pascoTS). This repository only contains usage examples.
+**Important:** This is NOT the library source code. The library is maintained at [OpenPhysics/pascoTS](https://github.com/OpenPhysics/pascoTS). This repository only contains usage examples.
 
 ## Quick Reference
 
@@ -128,6 +128,6 @@ The GitHub Actions CI pipeline runs on PRs and pushes to main:
 ## Resources
 
 - **pasco-ble npm**: https://www.npmjs.com/package/pasco-ble
-- **pasco-ble source**: https://github.com/veillette/pascoTS
+- **pasco-ble source**: https://github.com/OpenPhysics/pascoTS
 - **CDN**: https://esm.sh/pasco-ble or https://unpkg.com/pasco-ble/dist/index.js
 - **Biome docs**: https://biomejs.dev/

@@ -31,7 +31,7 @@ Detailed guide to the PASCO BLE examples and how to use the [pasco-ble](https://
 
 ```bash
 # Clone the repository
-git clone https://github.com/phasematching/pasco-BLE-examples.git
+git clone https://github.com/OpenPhysics/pasco-BLE-examples.git
 cd pasco-BLE-examples
 
 # Install dependencies
@@ -1336,7 +1336,7 @@ Pull requests are automatically checked by the CI pipeline:
 ## Resources
 
 - **pasco-ble npm**: [npmjs.com/package/pasco-ble](https://www.npmjs.com/package/pasco-ble)
-- **Library source**: [github.com/veillette/pascoTS](https://github.com/veillette/pascoTS)
+- **Library source**: [github.com/OpenPhysics/pascoTS](https://github.com/OpenPhysics/pascoTS)
 - **Web Bluetooth**: [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API)
 - **Chart.js**: [chartjs.org](https://www.chartjs.org/)
 - **Plotly.js**: [plotly.com/javascript](https://plotly.com/javascript/)
