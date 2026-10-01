@@ -218,6 +218,7 @@
         let device = null;
         let dataPoints = [];
         let isRecording = false;
+        let resumeAfterReconnect = false;
         let recordingInterval = null;
         let startTime = null;
         let lastSampleTime = null;
@@ -319,10 +320,8 @@
                     // Reconnect to last known device
                     setStatus('connecting', 'Reconnecting...');
                     device = new PASCOBLEDevice();
-                    const devices = await device.scan('Smart Cart');
-                    const targetDevice = devices.find(d => d.name === lastConnectedDevice?.name) || devices[0];
-                    if (!targetDevice) throw new Error('Device not found');
-                    await device.connect(targetDevice);
+                    if (!lastConnectedDevice) throw new Error('Device not found');
+                    await device.connect(lastConnectedDevice);
                 }
 
                 setStatus('connected', `Connected: ${lastConnectedDevice?.name || 'Unknown'}`);
@@ -354,11 +353,13 @@
                         onReconnected: () => {
                             console.log('Smart Cart reconnected successfully');
                             // Resume recording if it was active
-                            if (isRecording && !recordingInterval) {
-                                startRecording();
+                            if (resumeAfterReconnect && !recordingInterval) {
+                                resumeAfterReconnect = false;
+                                startRecording(true);
                             }
                         },
                         onReconnectFailed: () => {
+                            resumeAfterReconnect = false;
                             setStatus('disconnected', 'Reconnect failed');
                             connectBtn.disabled = false;
                             disconnectBtn.disabled = true;
@@ -388,6 +389,7 @@
 
         async function disconnect(unexpected = false) {
             try {
+                resumeAfterReconnect = unexpected && isRecording;
                 // Stop auto-reconnect if manually disconnecting
                 if (!unexpected && autoReconnect) {
                     autoReconnect.stop();
@@ -405,6 +407,7 @@
                     autoReconnect.start();
                     return;
                 }
+                resumeAfterReconnect = false;
 
                 setStatus('disconnected', 'Disconnected');
                 connectBtn.disabled = false;
@@ -432,11 +435,11 @@
             }
         }
 
-        function startRecording() {
+        function startRecording(resume = false) {
             if (!device || !device.isConnected()) return;
 
             isRecording = true;
-            startTime = Date.now();
+            if (!resume) startTime = Date.now();
             lastSampleTime = null;
             startBtn.disabled = true;
             stopBtn.disabled = false;
@@ -572,9 +575,9 @@
             playbackTime.textContent = `${formatTime(0)} / ${formatTime(total)}`;
         }
 
-        connectBtn.addEventListener('click', connect);
-        disconnectBtn.addEventListener('click', disconnect);
-        startBtn.addEventListener('click', startRecording);
+        connectBtn.addEventListener('click', () => connect());
+        disconnectBtn.addEventListener('click', () => disconnect());
+        startBtn.addEventListener('click', () => startRecording());
         stopBtn.addEventListener('click', stopRecording);
         clearBtn.addEventListener('click', clearData);
         exportBtn.addEventListener('click', () => {
