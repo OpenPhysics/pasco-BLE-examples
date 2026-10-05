@@ -232,6 +232,7 @@
         });
 
         let isRecording = false;
+        let readInFlight = false;
         let startTime = null;
         let readingInterval = null;
         const maxDataPoints = 1000;
@@ -260,9 +261,11 @@
 
         function deviceMatchesIdFilter(deviceName, filter) {
             if (!filter) return true;
-            const match = deviceName.match(/(\d+)-(\d+)$/);
-            if (!match) return true;
-            const deviceId = parseInt(match[1]);
+            if (!deviceName) return false;
+            // Serial is NNN-NNN before the optional interface suffix: "Temperature 123-456-1".
+            const match = deviceName.match(/(\d{3})-(\d{3})(?:-\d+)?$/);
+            if (!match) return false;
+            const deviceId = parseInt(match[1], 10);
             return deviceId >= filter.min && deviceId <= filter.max;
         }
 
@@ -288,14 +291,14 @@
                     sensor.lastConnectedDevice = selectedDevice;
                     setStatus(sensor, 'connecting', 'Connecting...');
                     await sensor.device.connect(selectedDevice);
+                    watchDisconnect(sensorKey);
                 } else {
-                    // Reconnect to last known device
+                    // Reconnect on the BluetoothDevice from the original scan. scan() needs a user gesture.
                     setStatus(sensor, 'connecting', 'Reconnecting...');
                     sensor.device = new PASCOBLEDevice();
-                    const devices = await sensor.device.scan(sensor.filter);
-                    const targetDevice = devices.find(d => d.name === sensor.lastConnectedDevice?.name) || devices[0];
-                    if (!targetDevice) throw new Error('Device not found');
-                    await sensor.device.connect(targetDevice);
+                    if (!sensor.lastConnectedDevice) throw new Error('Device not found');
+                    await sensor.device.connect(sensor.lastConnectedDevice);
+                    watchDisconnect(sensorKey);
                 }
 
                 setStatus(sensor, 'connected', `Connected: ${sensor.lastConnectedDevice?.name || 'Unknown'}`);
@@ -342,6 +345,15 @@
                 }
                 throw error; // Re-throw for auto-reconnect to handle
             }
+        }
+
+        function watchDisconnect(sensorKey) {
+            const sensor = sensors[sensorKey];
+            sensor.device.on('disconnected', (event) => {
+                if (event?.reason !== 'unexpected') return;
+                if (!sensor.lastConnectedDevice) return;
+                disconnectSensor(sensorKey, true);
+            });
         }
 
         async function disconnectSensor(sensorKey, unexpected = false) {
@@ -392,34 +404,23 @@
             const datasetIndices = { rotary: 0, motion: 1, force: 2 };
 
             for (const [key, sensor] of Object.entries(sensors)) {
-                if (sensor.device) {
-                    // Check for unexpected disconnection
-                    if (!sensor.device.isConnected() && sensor.lastConnectedDevice) {
-                        console.log(`${sensor.name} unexpectedly disconnected, attempting reconnect...`);
-                        disconnectSensor(key, true); // Trigger auto-reconnect
-                        continue;
-                    }
-
-                    if (sensor.device.isConnected()) {
-                        const measurementName = sensor.elements.measurement.value;
-                        if (measurementName) {
-                            try {
-                                const data = await sensor.device.readData(measurementName);
-                                if (data !== null && data !== undefined) {
-                                    sensor.elements.value.textContent = formatNumber(data);
-                                    if (isRecording) {
-                                        const datasetIndex = datasetIndices[key];
-                                        chart.data.datasets[datasetIndex].data.push({ x: currentTime, y: data });
-                                        if (chart.data.datasets[datasetIndex].data.length > maxDataPoints) {
-                                            chart.data.datasets[datasetIndex].data.shift();
-                                        }
-                                    }
-                                }
-                            } catch (error) {
-                                console.error(`Read error for ${key}:`, error);
+                if (!sensor.device?.isConnected()) continue;
+                const measurementName = sensor.elements.measurement.value;
+                if (!measurementName) continue;
+                try {
+                    const data = await sensor.device.readData(measurementName);
+                    if (data !== null && data !== undefined) {
+                        sensor.elements.value.textContent = formatNumber(data);
+                        if (isRecording) {
+                            const datasetIndex = datasetIndices[key];
+                            chart.data.datasets[datasetIndex].data.push({ x: currentTime, y: data });
+                            if (chart.data.datasets[datasetIndex].data.length > maxDataPoints) {
+                                chart.data.datasets[datasetIndex].data.shift();
                             }
                         }
                     }
+                } catch (error) {
+                    console.error(`Read error for ${key}:`, error);
                 }
             }
             if (isRecording) {
@@ -433,7 +434,15 @@
             startTime = Date.now();
             startBtn.disabled = true;
             stopBtn.disabled = false;
-            readingInterval = setInterval(readSensorData, 50);
+            readingInterval = setInterval(async () => {
+                if (readInFlight) return;
+                readInFlight = true;
+                try {
+                    await readSensorData();
+                } finally {
+                    readInFlight = false;
+                }
+            }, 50);
         }
 
         function stopRecording() {

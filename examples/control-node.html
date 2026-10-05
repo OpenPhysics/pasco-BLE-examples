@@ -170,6 +170,7 @@
 
         let controlNode = null;
         let readingInterval = null;
+        let readInFlight = false;
 
         async function connect() {
             try {
@@ -232,10 +233,12 @@
 
         function startReading() {
             readingInterval = setInterval(async () => {
+                if (readInFlight) return;
                 if (!controlNode || !controlNode.isConnected()) {
                     stopReading();
                     return;
                 }
+                readInFlight = true;
                 try {
                     const measurements = controlNode.getMeasurementList();
                     const data = await controlNode.readDataList(measurements);
@@ -249,6 +252,8 @@
                     measurementsList.update(formattedMeasurements);
                 } catch (error) {
                     console.error('Read error:', error);
+                } finally {
+                    readInFlight = false;
                 }
             }, 200);
         }
@@ -289,7 +294,7 @@
                 const motor = document.getElementById('stepperSelect').value;
                 const angle = parseInt(document.getElementById('rotateAngle').value);
                 log(`Rotating stepper ${motor} through ${angle} degrees...`);
-                await controlNode.rotateStepperThrough(motor, angle, 360, 360, true);
+                await controlNode.rotateStepperThrough(motor, 360, 360, angle, true);
                 log('Rotation complete');
             } catch (error) {
                 log(`Error: ${error.message}`);

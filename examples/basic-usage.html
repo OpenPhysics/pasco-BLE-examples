@@ -87,6 +87,7 @@
 
         let device = null;
         let readingInterval = null;
+        let readInFlight = false;
 
         async function connect() {
             try {
@@ -158,11 +159,13 @@
 
         function startReading() {
             readingInterval = setInterval(async () => {
+                if (readInFlight) return;
                 if (!device || !device.isConnected()) {
                     stopReading();
                     return;
                 }
 
+                readInFlight = true;
                 try {
                     const measurements = device.getMeasurementList();
                     const data = await device.readDataList(measurements);
@@ -181,6 +184,8 @@
 
                 } catch (error) {
                     console.error('Read error:', error);
+                } finally {
+                    readInFlight = false;
                 }
             }, 100);
         }

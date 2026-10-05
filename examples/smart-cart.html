@@ -220,6 +220,7 @@
         let isRecording = false;
         let resumeAfterReconnect = false;
         let recordingInterval = null;
+        let readInFlight = false;
         let startTime = null;
         let lastSampleTime = null;
         let lastConnectedDevice = null;
@@ -316,12 +317,14 @@
                     lastConnectedDevice = devices[0];
                     setStatus('connecting', 'Connecting...');
                     await device.connect(devices[0]);
+                    watchDisconnect(device);
                 } else {
-                    // Reconnect to last known device
+                    // Reconnect on the BluetoothDevice from the original scan. scan() needs a user gesture.
                     setStatus('connecting', 'Reconnecting...');
                     device = new PASCOBLEDevice();
                     if (!lastConnectedDevice) throw new Error('Device not found');
                     await device.connect(lastConnectedDevice);
+                    watchDisconnect(device);
                 }
 
                 setStatus('connected', `Connected: ${lastConnectedDevice?.name || 'Unknown'}`);
@@ -387,6 +390,14 @@
             }
         }
 
+        function watchDisconnect(dev) {
+            dev.on('disconnected', (event) => {
+                if (event?.reason !== 'unexpected') return;
+                if (!lastConnectedDevice) return;
+                disconnect(true);
+            });
+        }
+
         async function disconnect(unexpected = false) {
             try {
                 resumeAfterReconnect = unexpected && isRecording;
@@ -424,7 +435,18 @@
             if (!device || !device.isConnected()) return null;
 
             try {
-                const data = await device.readDataList(['Position', 'Velocity']);
+                const available = device.getMeasurementList();
+                let request = ['Position', 'Velocity'].filter((name) => available.includes(name));
+                if (!request.includes('Position')) request = ['Position', ...request];
+                let data;
+                try {
+                    data = await device.readDataList(request);
+                } catch (error) {
+                    // The page loads pasco-ble@0.3.70 from esm.sh. That build omits Velocity,
+                    // so a combined read throws. Position is still plotted.
+                    if (!request.includes('Velocity') || request.length === 1) throw error;
+                    data = await device.readDataList(['Position']);
+                }
                 return {
                     position: data['Position'] ?? 0,
                     velocity: data['Velocity'] ?? 0
@@ -449,41 +471,38 @@
             const intervalMs = 1000 / sampleRate;
 
             recordingInterval = setInterval(async () => {
+                if (readInFlight) return;
                 if (!device || !isRecording) {
                     stopRecording();
                     return;
                 }
 
-                // Check for unexpected disconnection
-                if (!device.isConnected() && lastConnectedDevice) {
-                    console.log('Smart Cart unexpectedly disconnected, attempting reconnect...');
-                    clearInterval(recordingInterval);
-                    recordingInterval = null;
-                    disconnect(true); // Trigger auto-reconnect
-                    return;
-                }
+                readInFlight = true;
+                try {
+                    const now = Date.now();
+                    const time = (now - startTime) / 1000;
+                    const cartData = await readCartData();
 
-                const now = Date.now();
-                const time = (now - startTime) / 1000;
-                const cartData = await readCartData();
+                    if (cartData) {
+                        dataPoints.push({
+                            time: time,
+                            position: cartData.position,
+                            velocity: cartData.velocity
+                        });
 
-                if (cartData) {
-                    dataPoints.push({
-                        time: time,
-                        position: cartData.position,
-                        velocity: cartData.velocity
-                    });
+                        updateCurrentValues(cartData.position, cartData.velocity, time);
+                        updatePlot();
+                        updateStats();
 
-                    updateCurrentValues(cartData.position, cartData.velocity, time);
-                    updatePlot();
-                    updateStats();
-
-                    if (showActualRateSelect.value === 'yes' && lastSampleTime !== null && dataPoints.length > 2) {
-                        const actualInterval = (now - lastSampleTime) / 1000;
-                        const actualRate = 1 / actualInterval;
-                        actualRateDisplay.textContent = `Actual sample rate: ${actualRate.toFixed(1)} Hz`;
+                        if (showActualRateSelect.value === 'yes' && lastSampleTime !== null && dataPoints.length > 2) {
+                            const actualInterval = (now - lastSampleTime) / 1000;
+                            const actualRate = 1 / actualInterval;
+                            actualRateDisplay.textContent = `Actual sample rate: ${actualRate.toFixed(1)} Hz`;
+                        }
+                        lastSampleTime = now;
                     }
-                    lastSampleTime = now;
+                } finally {
+                    readInFlight = false;
                 }
             }, intervalMs);
         }

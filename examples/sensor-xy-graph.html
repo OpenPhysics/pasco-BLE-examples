@@ -196,6 +196,7 @@
         let dataPoints = [];
         let isRecording = false;
         let recordingInterval = null;
+        let readInFlight = false;
         let startTime = null;
         let playback = null;
 
@@ -404,11 +405,13 @@
             yAxisSelect.disabled = true;
 
             recordingInterval = setInterval(async () => {
+                if (readInFlight) return;
                 if (!device || !device.isConnected() || !isRecording) {
                     stopRecording();
                     return;
                 }
 
+                readInFlight = true;
                 try {
                     const measurements = device.getMeasurementList();
                     const data = await device.readDataList(measurements);
@@ -425,6 +428,8 @@
                     updateStats();
                 } catch (error) {
                     console.error('Read error:', error);
+                } finally {
+                    readInFlight = false;
                 }
             }, 50);
         }

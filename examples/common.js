@@ -717,12 +717,16 @@ export function createDataPlayback(options) {
   }
 
   function setSpeed(speed) {
-    playbackSpeed = speed;
-    if (isPlaying) {
-      // Adjust start time to maintain position at new speed
-      pausedAtTime = performance.now() - startTime;
-      startTime = performance.now() - (pausedAtTime / speed) * playbackSpeed;
+    if (!(speed > 0)) return;
+    if (isPlaying && startTime !== null) {
+      const mediaPositionMs = (performance.now() - startTime) * playbackSpeed;
+      playbackSpeed = speed;
+      startTime = performance.now() - mediaPositionMs / playbackSpeed;
+      return;
     }
+    const mediaPositionMs = pausedAtTime * playbackSpeed;
+    playbackSpeed = speed;
+    pausedAtTime = mediaPositionMs / playbackSpeed;
   }
 
   return {
