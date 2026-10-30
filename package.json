@@ -4,7 +4,14 @@
   "description": "Browser examples for the pasco-ble library - demonstrating PASCO wireless BLE sensors using Web Bluetooth",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": ">=26"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=26",
+      "onFail": "error"
+    }
   },
   "scripts": {
     "serve": "npx serve .",
