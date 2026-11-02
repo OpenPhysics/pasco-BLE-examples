@@ -62,7 +62,7 @@ npm run check:fix  # Auto-fix all fixable issues
 
 The `biome.json` configures strict linting with all recommended rules enabled:
 
-- **JavaScript**: Single quotes, semicolons, 2-space indent, trailing commas
+- **JavaScript**: Single quotes, semicolons, 2-space indent, trailing commas (`es5`), line width 100
 - **CSS**: 2-space indent, double quotes
 - **JSON**: 2-space indent, no trailing commas
 - **Line endings**: LF enforced
